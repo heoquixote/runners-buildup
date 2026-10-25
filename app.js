@@ -22,7 +22,7 @@ const SESSION_KEY = "qaqc-session";
 const ADMIN_KEY = "qaqc-admin";
 const draftKey = (sid, pid) => `qaqc-draft:${sid}:${pid}`;
 
-// 글자 크기: 문제 설명·결과·코드 편집기에만 적용 (레이아웃은 그대로)
+// 코드 편집기 글자 크기
 const FONT_STEPS = [0.9, 1, 1.15, 1.3, 1.5];
 let fontScale = FONT_STEPS.includes(store.get("rb-font")) ? store.get("rb-font") : 1;
 function applyFontScale() {
@@ -143,14 +143,13 @@ function topbar({ admin = false } = {}) {
     : state.session
       ? `<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
       : `<a class="btn ghost small" href="#/guide">사용 방법</a>`;
-  const font = admin ? "" : `<div class="font-ctl" role="group" aria-label="글자 크기"><button class="btn ghost small" data-font="-1" aria-label="글자 작게">가−</button><span data-font-label>${Math.round(fontScale * 100)}%</span><button class="btn ghost small" data-font="1" aria-label="글자 크게">가+</button></div>`;
   return `<header class="topbar"><div class="topbar-inner">
     <div class="brand-block">
-      <a class="brand" href="${admin ? "#/admin" : "#/"}"><img class="brand-mark" src="assets/dl-mark.webp" alt="" width="34" height="35">
+      <a class="brand" href="${admin ? "#/admin" : "#/"}"><img class="brand-mark" src="assets/dl-logo.png" alt="Data Learners" width="40" height="35">
         <span><span class="brand-name">DATA LEARNERS${admin ? " · ADMIN" : ""}</span><br><span class="brand-course">Runners Build-up · Python Track</span></span></a>
       ${orgBadge(admin)}
     </div>
-    ${demo}<span class="spacer"></span>${font}${right}
+    ${demo}<span class="spacer"></span>${right}
   </div></header>`;
 }
 
@@ -234,7 +233,7 @@ function viewLogin() {
 }
 
 function authHead(active) {
-  return `<div><img src="assets/dl-mark.webp" alt="Data Learners" width="44" height="46" class="auth-mark"><div class="eyebrow">Data Learners · Python Track</div><h1>러너즈빌드업</h1>
+  return `<div><img src="assets/dl-logo.png" alt="Data Learners" width="56" height="49" class="auth-mark"><div class="eyebrow">Data Learners · Python Track</div><h1>러너즈빌드업</h1>
     <p class="lead">QA/QC 실무 예제로 파이썬을 복습하고 바로 채점받으세요.</p></div>
     <nav class="login-switch" aria-label="로그인 또는 회원가입">
       <a href="#/" ${active === "login" ? 'aria-current="page"' : ""}>로그인</a>
@@ -464,16 +463,6 @@ function viewHome() {
     <div class="meter"><div class="meter-label"><span>해결한 문제</span><b>${solved} / ${PROBLEMS.length}</b></div>
     <div class="meter-bar"><span style="width:${pct}%"></span></div></div></div>
     ${todayHtml()}
-    <section class="panel lime quick-guide" aria-labelledby="qg-title">
-      <div class="qg-head"><div><div class="eyebrow">How to</div><h2 id="qg-title">사용 방법</h2></div>
-        <a class="btn small" href="#/guide">코드 작성법 자세히 보기</a></div>
-      <ol class="qg-steps">
-        <li><b>문제 고르기</b><span>아래 목록에서 문제를 누르면 왼쪽에 설명, 오른쪽에 코드 편집기가 열립니다.</span></li>
-        <li><b>실행으로 확인</b><span><kbd>실행</kbd>은 내 코드를 돌려 출력만 보여 줍니다. 기록되지 않으니 마음껏 눌러 보세요.</span></li>
-        <li><b>제출로 채점</b><span><kbd>제출</kbd>하면 숨은 테스트까지 채점되고 기록이 남습니다. 처음 맞히면 몇 번째인지 알려 드려요.</span></li>
-        <li><b>막히면 힌트</b><span>설명 아래 힌트를 하나씩 열어 보세요. 유형별 작성법은 <a href="#/guide">사용 방법</a>에 있습니다.</span></li>
-      </ol>
-    </section>
     ${units}
   </main>`;
   bindTopbar();
@@ -663,6 +652,7 @@ function viewProblem(p) {
         <div class="panel editor-wrap">
           <div class="editor-head"><span class="mono">main.py</span><span class="spacer"></span>
             <span class="engine"></span>
+            <div class="font-ctl" role="group" aria-label="코드 글자 크기"><button class="btn ghost small" data-font="-1" aria-label="코드 글자 작게">가−</button><span data-font-label>${Math.round(fontScale * 100)}%</span><button class="btn ghost small" data-font="1" aria-label="코드 글자 크게">가+</button></div>
             <button class="btn ghost small" id="reset-btn" title="시작 코드로 되돌리기">초기화</button></div>
           <textarea id="code"></textarea>
         </div>

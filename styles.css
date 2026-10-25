@@ -74,7 +74,7 @@ em, i { font-style: normal; }
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
 }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
-.brand-mark { width: 34px; height: auto; display: block; flex: none; }
+.brand-mark { width: 40px; height: auto; display: block; flex: none; }
 .brand-block { display: grid; gap: 6px; }
 .org-badge {
   display: inline-flex; align-items: center; gap: 7px; width: max-content;
@@ -82,7 +82,7 @@ em, i { font-style: normal; }
 }
 .org-badge img { width: 18px; height: 18px; display: block; }
 .org-badge b { color: var(--ink); font-weight: 700; }
-.auth-mark { display: block; width: 44px; height: auto; margin-bottom: 14px; }
+.auth-mark { display: block; width: 56px; height: auto; margin-bottom: 14px; }
 .brand-name { font: 700 16px/1.2 var(--font-en); letter-spacing: 0.01em; }
 .brand-course { font: 600 12px/1.4 var(--font-en); color: var(--accent); letter-spacing: 0.16em; text-transform: uppercase; }
 .topbar .spacer { flex: 1; }
@@ -495,15 +495,13 @@ kbd {
 }
 .guide-table td, .guide-table th { font-size: 14px; }
 
-/* ── 글자 크기 (--fs) ── */
+/* ── 코드 편집기 글자 크기 (--fs) ── */
 :root { --fs: 1; }
-.read-body, .result-body, .guide-sec, .quick-guide .qg-steps { zoom: var(--fs); }
 .CodeMirror { font-size: calc(14px * var(--fs)); }
-.stdin textarea { font-size: calc(13px * var(--fs)); }
 .font-ctl { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: var(--radius); padding: 2px; }
 .font-ctl .btn { min-height: 28px; padding: 0 8px; font-size: 13px; }
 .font-ctl span { font: 600 12px/1 var(--font-en); color: var(--muted); min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; }
-@media (max-width: 560px) { .font-ctl span { display: none; } }
+.editor-head .font-ctl { margin-right: 4px; }
 
 /* ── 이 문제에서 쓰는 함수 ── */
 .uses { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 8px; background: var(--accent-soft); }
