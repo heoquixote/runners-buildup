@@ -43,6 +43,9 @@ create table if not exists public.app_settings (
   value text not null
 );
 
+-- 가입할 때 쓴 가입 코드 (예: QAQC8). 코드별로 기관 로고 표시에 쓴다.
+alter table public.students add column if not exists join_code text;
+
 alter table public.students enable row level security;
 alter table public.sessions enable row level security;
 alter table public.submissions enable row level security;
@@ -117,7 +120,7 @@ begin
   update students set failed_count = 0, locked_until = null where name = v_name;
   insert into sessions (student_id) values (v_student.id) returning token into v_token;
   return json_build_object('ok', true, 'token', v_token, 'student',
-    json_build_object('id', v_student.id, 'name', v_student.name));
+    json_build_object('id', v_student.id, 'name', v_student.name, 'org', v_student.join_code));
 end;
 $$;
 
@@ -145,10 +148,12 @@ begin
   if exists (select 1 from students where name = v_name) then
     return json_build_object('ok', false, 'error', 'name_taken');
   end if;
-  insert into students (name, pin_hash) values (v_name, crypt(p_pin, gen_salt('bf', 8)))
+  insert into students (name, pin_hash, join_code)
+    values (v_name, crypt(p_pin, gen_salt('bf', 8)), nullif(upper(trim(coalesce(p_join_code, ''))), ''))
     returning id into v_id;
   insert into sessions (student_id) values (v_id) returning token into v_token;
-  return json_build_object('ok', true, 'token', v_token, 'student', json_build_object('id', v_id, 'name', v_name));
+  return json_build_object('ok', true, 'token', v_token, 'student',
+    json_build_object('id', v_id, 'name', v_name, 'org', nullif(upper(trim(coalesce(p_join_code, ''))), '')));
 end;
 $$;
 
@@ -167,7 +172,7 @@ begin
   return (
     select json_build_object(
       'ok', true,
-      'student', json_build_object('id', s.id, 'name', s.name),
+      'student', json_build_object('id', s.id, 'name', s.name, 'org', s.join_code),
       'progress', coalesce((
         select json_object_agg(problem_id, json_build_object('attempts', attempts, 'solved', solved))
         from (
@@ -367,6 +372,26 @@ begin
 end;
 $$;
 
+-- 오늘의 과제: 강사가 고른 문제 번호 목록 (JSON 배열 문자열)
+create or replace function public.get_today()
+returns json language sql stable security definer set search_path = public as $$
+  select json_build_object('ok', true, 'ids',
+    coalesce((select value::json from app_settings where key = 'today_problems'), '[]'::json));
+$$;
+
+create or replace function public.admin_set_today(p_token uuid, p_ids text[])
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_ids json := to_json(coalesce(p_ids, '{}')::text[]);
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  if coalesce(array_length(p_ids, 1), 0) > 20 then return json_build_object('ok', false, 'error', 'too_many'); end if;
+  insert into app_settings (key, value) values ('today_problems', v_ids::text)
+  on conflict (key) do update set value = excluded.value;
+  return json_build_object('ok', true, 'ids', v_ids);
+end;
+$$;
+
 -- SQL Editor 전용 (브라우저에서 호출 불가)
 create or replace function public.set_admin_password(p_password text)
 returns void language plpgsql security definer set search_path = public, extensions as $$
@@ -388,6 +413,8 @@ grant execute on function
   public.signup_info(),
   public.admin_get_join_code(uuid),
   public.admin_set_join_code(uuid, text),
+  public.get_today(),
+  public.admin_set_today(uuid, text[]),
   public.student_me(uuid),
   public.student_submit(uuid, text, text, boolean, int, int, jsonb),
   public.student_history(uuid, text),

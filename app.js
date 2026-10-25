@@ -22,6 +22,22 @@ const SESSION_KEY = "qaqc-session";
 const ADMIN_KEY = "qaqc-admin";
 const draftKey = (sid, pid) => `qaqc-draft:${sid}:${pid}`;
 
+// 글자 크기: 문제 설명·결과·코드 편집기에만 적용 (레이아웃은 그대로)
+const FONT_STEPS = [0.9, 1, 1.15, 1.3, 1.5];
+let fontScale = FONT_STEPS.includes(store.get("rb-font")) ? store.get("rb-font") : 1;
+function applyFontScale() {
+  document.documentElement.style.setProperty("--fs", fontScale);
+  document.querySelectorAll("[data-font-label]").forEach((el) => (el.textContent = Math.round(fontScale * 100) + "%"));
+  editor?.refresh();
+}
+function changeFont(dir) {
+  const i = FONT_STEPS.indexOf(fontScale) + dir;
+  if (i < 0 || i >= FONT_STEPS.length) return;
+  fontScale = FONT_STEPS[i];
+  store.set("rb-font", fontScale);
+  applyFontScale();
+}
+
 let toastTimer;
 function toast(message) {
   const el = document.getElementById("toast");
@@ -74,6 +90,7 @@ const state = {
   adminToken: store.get(ADMIN_KEY),
   progress: {},
   progressLoaded: false,
+  today: [],
   runner: "idle",
 };
 let editor = null;
@@ -96,6 +113,11 @@ async function loadProgress() {
   try {
     const res = await api.me(state.session.token);
     state.progress = res.progress || {};
+    if (res.student) {
+      state.session.student = res.student;
+      store.set(SESSION_KEY, state.session);
+    }
+    try { state.today = (await api.getToday()).ids || []; } catch { state.today = []; }
     state.progressLoaded = true;
   } catch (err) {
     if (err.code === "session") logout(true);
@@ -121,14 +143,27 @@ function topbar({ admin = false } = {}) {
     : state.session
       ? `<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
       : `<a class="btn ghost small" href="#/guide">사용 방법</a>`;
+  const font = admin ? "" : `<div class="font-ctl" role="group" aria-label="글자 크기"><button class="btn ghost small" data-font="-1" aria-label="글자 작게">가−</button><span data-font-label>${Math.round(fontScale * 100)}%</span><button class="btn ghost small" data-font="1" aria-label="글자 크게">가+</button></div>`;
   return `<header class="topbar"><div class="topbar-inner">
-    <a class="brand" href="${admin ? "#/admin" : "#/"}"><span class="brand-mark">RB</span>
-      <span><span class="brand-name">RUNNERS BUILD-UP${admin ? " · ADMIN" : ""}</span><br><span class="brand-course">Python Track · ${esc(CONFIG.COURSE_NAME)}</span></span></a>
-    ${demo}<span class="spacer"></span>${right}
+    <div class="brand-block">
+      <a class="brand" href="${admin ? "#/admin" : "#/"}"><img class="brand-mark" src="assets/dl-mark.webp" alt="" width="34" height="35">
+        <span><span class="brand-name">DATA LEARNERS${admin ? " · ADMIN" : ""}</span><br><span class="brand-course">Runners Build-up · Python Track</span></span></a>
+      ${orgBadge(admin)}
+    </div>
+    ${demo}<span class="spacer"></span>${font}${right}
   </div></header>`;
 }
 
+// 가입 코드별 기관 표시 (QAQC8 코드로 가입한 수강생에게만)
+const ORGS = { QAQC8: { logo: "assets/sparta.png", name: "팀스파르타", course: "QAQC 8기" } };
+function orgBadge(admin) {
+  const org = admin ? null : ORGS[state.session?.student?.org];
+  if (!org) return "";
+  return `<div class="org-badge"><img src="${org.logo}" alt="${esc(org.name)}" width="18" height="18"><span>${esc(org.name)}</span><b>${esc(org.course)}</b></div>`;
+}
+
 function bindTopbar() {
+  $app.querySelectorAll("[data-font]").forEach((b) => b.addEventListener("click", () => changeFont(Number(b.dataset.font))));
   $app.querySelector('[data-act="logout"]')?.addEventListener("click", () => logout(false));
   $app.querySelector('[data-act="admin-logout"]')?.addEventListener("click", () => {
     state.adminToken = null;
@@ -199,7 +234,7 @@ function viewLogin() {
 }
 
 function authHead(active) {
-  return `<div><div class="eyebrow">Python Track · ${esc(CONFIG.COURSE_NAME)}</div><h1>러너즈빌드업</h1>
+  return `<div><img src="assets/dl-mark.webp" alt="Data Learners" width="44" height="46" class="auth-mark"><div class="eyebrow">Data Learners · Python Track</div><h1>러너즈빌드업</h1>
     <p class="lead">QA/QC 실무 예제로 파이썬을 복습하고 바로 채점받으세요.</p></div>
     <nav class="login-switch" aria-label="로그인 또는 회원가입">
       <a href="#/" ${active === "login" ? 'aria-current="page"' : ""}>로그인</a>
@@ -380,6 +415,28 @@ function statusPill(pid) {
   return `<span class="status tried">시도 ${p.attempts}회</span>`;
 }
 
+function todayHtml() {
+  const picked = (state.today || []).filter((id) => byId[id]);
+  // 강사가 정하지 않았으면 아직 안 푼 문제 5개를 순서대로 추천
+  const ids = picked.length ? picked : PROBLEMS.filter((p) => !state.progress[p.id]?.solved).slice(0, 5).map((p) => p.id);
+  if (!ids.length) return "";
+  const done = ids.filter((id) => state.progress[id]?.solved).length;
+  return `<section class="today" aria-labelledby="today-title">
+    <div class="today-head"><div><div class="eyebrow">Today</div><h2 id="today-title">오늘 해야 할 과제입니다</h2>
+      <p class="muted">${picked.length ? "강사님이 오늘 풀 문제로 골랐습니다." : "아직 풀지 않은 문제를 순서대로 골랐습니다."}</p></div>
+      <div class="today-count"><b>${done}</b> / ${ids.length} 완료</div></div>
+    <ol class="today-list">${ids.map((id, i) => {
+      const p = byId[id];
+      const solved = state.progress[id]?.solved;
+      return `<li><a class="today-card panel${solved ? " done" : ""}" href="#/p/${id}">
+        <span class="today-no">${String(i + 1).padStart(2, "0")}</span>
+        <span class="pid">${id} · ${TYPE_LABEL[p.type]}</span>
+        <span class="today-title">${esc(p.title)}</span>
+        ${statusPill(id)}</a></li>`;
+    }).join("")}</ol>
+  </section>`;
+}
+
 function viewHome() {
   const solved = PROBLEMS.filter((p) => state.progress[p.id]?.solved).length;
   const pct = Math.round((solved / PROBLEMS.length) * 100);
@@ -406,6 +463,7 @@ function viewHome() {
     <p>문제를 고르고 브라우저에서 바로 코드를 실행하고 제출하세요. 설치할 것은 없습니다.</p></div>
     <div class="meter"><div class="meter-label"><span>해결한 문제</span><b>${solved} / ${PROBLEMS.length}</b></div>
     <div class="meter-bar"><span style="width:${pct}%"></span></div></div></div>
+    ${todayHtml()}
     <section class="panel lime quick-guide" aria-labelledby="qg-title">
       <div class="qg-head"><div><div class="eyebrow">How to</div><h2 id="qg-title">사용 방법</h2></div>
         <a class="btn small" href="#/guide">코드 작성법 자세히 보기</a></div>
@@ -451,6 +509,7 @@ function problemTab(p) {
   return `<div class="meta-line"><span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}<span class="muted" style="font-size:13px">원본: ${esc(p.origin)}</span></div>
     <h1>${p.id}. ${esc(p.title)}</h1>
     <div class="note">${p.desc}</div>
+    ${p.uses?.length ? `<div class="uses"><h4>이 문제에서 쓰는 함수 · 문법</h4><dl>${p.uses.map(([k, v]) => `<div><dt><code>${esc(k)}</code></dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>` : ""}
     <div class="note"><h4>${p.type === "steps" ? "채점 방식" : "입출력 예"}</h4>${examplesHtml(p)}
     ${hidden ? `<p class="muted" style="font-size:13px">제출하면 비공개 테스트 ${hidden}개가 더 채점됩니다.</p>` : ""}
     ${p.type === "io" ? `<p class="muted" style="font-size:13px">input()의 안내 문구는 채점에 영향을 주지 않습니다.</p>` : ""}</div>
@@ -884,7 +943,12 @@ async function openSubmissionDrawer(student, p) {
 async function adminRoster(body) {
   const { students } = await api.roster(state.adminToken);
   body.innerHTML = `<div class="roster-grid"><div style="display:grid;gap:16px;align-content:start">
-    <section class="panel lime card-pad"><h3>회원가입 코드</h3>
+    <section class="panel lime card-pad"><h3>오늘의 과제</h3>
+      <p class="muted" style="margin:0;font-size:14px">수강생 홈 맨 위에 '오늘 해야 할 과제'로 보입니다. 5문제를 권장하고, 하나도 고르지 않으면 각자 안 푼 문제 5개가 자동으로 보입니다.</p>
+      <div class="today-pick">${UNITS.map((u) => `<fieldset><legend>UNIT ${u.id} ${esc(u.title)}</legend>${PROBLEMS.filter((p) => p.unit === u.id).map((p) => `<label><input type="checkbox" value="${p.id}"> <span class="mono">${p.id}</span> ${esc(p.title)}</label>`).join("")}</fieldset>`).join("")}</div>
+      <div class="toolbar"><span class="muted" id="today-n" style="font-size:14px"></span><span class="spacer"></span><button class="btn small ghost" id="today-clear">모두 해제</button><button class="btn primary" id="today-save">저장</button></div>
+    </section>
+    <section class="panel card-pad"><h3>회원가입 코드</h3>
       <p class="muted" style="margin:0;font-size:14px">수강생이 직접 가입할 때 입력하는 코드입니다. 수업 첫날 화면에 띄워 주세요. 비워 두면 누구나 가입할 수 있습니다.</p>
       <div class="toolbar"><div class="field" style="flex:1;min-width:160px"><input id="join-code" maxlength="30" autocomplete="off" aria-label="회원가입 코드" placeholder="비어 있음 = 누구나 가입"></div>
         <button class="btn primary" id="join-save">저장</button></div>
@@ -902,6 +966,27 @@ async function adminRoster(body) {
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
     </section></div>`;
+
+  const boxes = [...body.querySelectorAll(".today-pick input")];
+  const countToday = () => {
+    const n = boxes.filter((b) => b.checked).length;
+    body.querySelector("#today-n").textContent = `${n}문제 선택${n > 5 ? " (5문제 권장)" : ""}`;
+  };
+  boxes.forEach((b) => b.addEventListener("change", countToday));
+  api.getToday().then((res) => { boxes.forEach((b) => (b.checked = (res.ids || []).includes(b.value))); countToday(); }).catch(() => {});
+  body.querySelector("#today-clear").addEventListener("click", () => { boxes.forEach((b) => (b.checked = false)); countToday(); });
+  body.querySelector("#today-save").addEventListener("click", async (e) => {
+    e.target.disabled = true;
+    try {
+      const ids = boxes.filter((b) => b.checked).map((b) => b.value);
+      await api.setToday(state.adminToken, ids);
+      toast(ids.length ? `오늘의 과제 ${ids.length}문제를 저장했습니다.` : "오늘의 과제를 비웠습니다. 수강생마다 안 푼 문제가 자동으로 보입니다.");
+    } catch (err) {
+      toast(errorMessage(err));
+    } finally {
+      e.target.disabled = false;
+    }
+  });
 
   const joinInput = body.querySelector("#join-code");
   api.getJoinCode(state.adminToken).then((res) => (joinInput.value = res.join_code || "")).catch(() => {});
@@ -1011,4 +1096,5 @@ async function adminStats(body) {
     </tbody></table></div></div>`;
 }
 
+applyFontScale();
 route();

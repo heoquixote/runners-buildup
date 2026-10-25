@@ -42,6 +42,8 @@ class SupabaseApi {
   login(name, pin) { return this.call("student_login", { p_name: name, p_pin: pin }); }
   signup(name, pin, joinCode) { return this.call("student_signup", { p_name: name, p_pin: pin, p_join_code: joinCode }); }
   signupInfo() { return this.call("signup_info", {}); }
+  getToday() { return this.call("get_today", {}); }
+  setToday(token, ids) { return this.call("admin_set_today", { p_token: token, p_ids: ids }); }
   me(token) { return this.call("student_me", { p_token: token }); }
   submit(token, problemId, code, result) {
     return this.call("student_submit", {
@@ -122,7 +124,7 @@ class DemoApi {
     const token = crypto.randomUUID();
     db.sessions[token] = { student_id: student.id };
     this.save(db);
-    return { ok: true, token, student: { id: student.id, name: student.name } };
+    return { ok: true, token, student: { id: student.id, name: student.name, org: student.org || null } };
   }
   async signupInfo() {
     return { ok: true, join_code_required: !!this.load().join_code };
@@ -135,11 +137,22 @@ class DemoApi {
     if (db.join_code && (joinCode || "").trim().toUpperCase() !== db.join_code) throw new ApiError("join_code");
     if (db.students.some((s) => s.name === name)) throw new ApiError("name_taken");
     const id = crypto.randomUUID();
-    db.students.push({ id, name, pin, created_at: new Date().toISOString() });
+    const org = (joinCode || "").trim().toUpperCase() || null;
+    db.students.push({ id, name, pin, org, created_at: new Date().toISOString() });
     const token = crypto.randomUUID();
     db.sessions[token] = { student_id: id };
     this.save(db);
-    return { ok: true, token, student: { id, name } };
+    return { ok: true, token, student: { id, name, org } };
+  }
+  async getToday() {
+    return { ok: true, ids: this.load().today || [] };
+  }
+  async setToday(token, ids) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    db.today = ids.slice(0, 20);
+    this.save(db);
+    return { ok: true, ids: db.today };
   }
   async getJoinCode(token) {
     const db = this.load();
@@ -169,7 +182,7 @@ class DemoApi {
       p.attempts++;
       p.solved ||= sub.passed;
     }
-    return { ok: true, student: { id: sid, name: student.name }, progress };
+    return { ok: true, student: { id: sid, name: student.name, org: student.org || null }, progress };
   }
   async submit(token, problemId, code, result) {
     const db = this.load();
@@ -301,6 +314,7 @@ function seedDemo() {
     id: "demo-" + i,
     name,
     pin: pins[i],
+    org: "QAQC8",
     created_at: new Date(now - 86400000).toISOString(),
   }));
   const submissions = [];
@@ -323,7 +337,7 @@ function seedDemo() {
   add("demo-1", "1-2", true, 35);
   add("demo-3", "1-5", false, 30);
   add("demo-3", "1-5", false, 28);
-  return { students, sessions: {}, submissions, join_code: "QAQC8" };
+  return { students, sessions: {}, submissions, join_code: "QAQC8", today: ["1-1", "1-5", "2-2", "3-1", "4-1"] };
 }
 
 export function resetDemo() {

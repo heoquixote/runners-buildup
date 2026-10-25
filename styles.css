@@ -74,11 +74,15 @@ em, i { font-style: normal; }
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
 }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
-.brand-mark {
-  width: 32px; height: 32px; background: var(--accent); color: var(--accent-ink);
-  display: grid; place-items: center; font: 700 13px/1 var(--font-en); letter-spacing: 0.02em;
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
+.brand-mark { width: 34px; height: auto; display: block; flex: none; }
+.brand-block { display: grid; gap: 6px; }
+.org-badge {
+  display: inline-flex; align-items: center; gap: 7px; width: max-content;
+  padding: 3px 10px 3px 4px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 13px; color: var(--ink-2);
 }
+.org-badge img { width: 18px; height: 18px; border-radius: 4px; display: block; }
+.org-badge b { color: var(--ink); font-weight: 700; }
+.auth-mark { display: block; width: 44px; height: auto; margin-bottom: 14px; }
 .brand-name { font: 700 16px/1.2 var(--font-en); letter-spacing: 0.01em; }
 .brand-course { font: 600 12px/1.4 var(--font-en); color: var(--accent); letter-spacing: 0.16em; text-transform: uppercase; }
 .topbar .spacer { flex: 1; }
@@ -490,3 +494,54 @@ kbd {
   border-left: 3px solid var(--track); border-radius: var(--radius); overflow-x: auto; font-size: 13px; line-height: 1.6; color: var(--ink);
 }
 .guide-table td, .guide-table th { font-size: 14px; }
+
+/* ── 글자 크기 (--fs) ── */
+:root { --fs: 1; }
+.read-body, .result-body, .guide-sec, .quick-guide .qg-steps { zoom: var(--fs); }
+.CodeMirror { font-size: calc(14px * var(--fs)); }
+.stdin textarea { font-size: calc(13px * var(--fs)); }
+.font-ctl { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: var(--radius); padding: 2px; }
+.font-ctl .btn { min-height: 28px; padding: 0 8px; font-size: 13px; }
+.font-ctl span { font: 600 12px/1 var(--font-en); color: var(--muted); min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .font-ctl span { display: none; } }
+
+/* ── 이 문제에서 쓰는 함수 ── */
+.uses { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 8px; background: var(--accent-soft); }
+.uses h4 { margin: 0 !important; font-size: 14px; color: var(--accent) !important; }
+.uses dl { margin: 0; display: grid; gap: 6px; }
+.uses dl > div { display: grid; grid-template-columns: minmax(120px, max-content) 1fr; gap: 4px 12px; align-items: baseline; }
+@media (max-width: 520px) { .uses dl > div { grid-template-columns: minmax(0, 1fr); } }
+.uses dt code { background: var(--code-bg) !important; color: var(--ink) !important; border: 1px solid var(--line); }
+.uses dd { margin: 0; font-size: 14px; color: var(--ink-2); }
+
+/* ── 오늘의 과제 ── */
+.today { display: grid; gap: 14px; }
+.today-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; }
+.today-head h2 { font-size: 24px; margin-top: 8px; }
+.today-head p { margin: 4px 0 0; font-size: 14px; }
+.today-count { font: 600 15px/1 var(--font-en); color: var(--muted); }
+.today-count b { color: var(--accent); font-size: 28px; }
+.today-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1000px) { .today-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .today-list { grid-template-columns: minmax(0, 1fr); } }
+.today-card {
+  height: 100%; display: grid; gap: 6px; align-content: start; padding: 18px 16px 16px;
+  text-decoration: none; color: inherit; transition: transform .15s ease, border-color .15s ease;
+}
+.today-card::before { background: linear-gradient(90deg, var(--accent), transparent 60%); }
+.today-card:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+.today-card:hover .today-title { color: var(--accent); }
+.today-card.done { opacity: .72; }
+.today-card.done::before { background: linear-gradient(90deg, var(--pass), transparent 60%); }
+.today-no { font: 700 26px/1 var(--font-en); color: var(--accent); }
+.today-card .pid { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.today-title { font-weight: 600; font-size: 15px; line-height: 1.45; min-height: 2.9em; }
+.today-card .status { justify-self: start; margin-top: 4px; }
+@media (prefers-reduced-motion: reduce) { .today-card { transition: none; } .today-card:hover { transform: none; } }
+
+/* 어드민 · 오늘의 과제 선택 */
+.today-pick { display: grid; gap: 10px; max-height: 360px; overflow: auto; padding-right: 4px; }
+.today-pick fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.today-pick legend { font: 600 12px/1 var(--font-en); letter-spacing: .1em; color: var(--track); padding: 0 4px; text-transform: uppercase; }
+.today-pick label { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
+.today-pick input { accent-color: #c8ff3d; width: 16px; height: 16px; }
