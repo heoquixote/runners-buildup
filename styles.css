@@ -556,3 +556,15 @@ kbd {
 .prow.challenge .pid { color: var(--orange); }
 .brand-course.org { display: inline-flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: .06em; }
 .brand-course.org img { width: 14px; height: 14px; display: block; }
+
+/* ── 어드민 그룹 선택 ── */
+.admin-bar { display: flex; align-items: end; gap: 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.admin-bar .admin-tabs { border-bottom: 0; flex: 1; }
+.group-select { display: inline-flex; align-items: center; gap: 8px; padding-bottom: 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.group-select select {
+  background: var(--code-bg); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  padding: 7px 10px; font-size: 14px; max-width: 280px;
+}
+.group-form { align-items: stretch; }
+.group-form .field { min-width: 120px; }
+.pin-list .num { text-align: right; white-space: nowrap; }

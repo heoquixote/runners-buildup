@@ -42,8 +42,7 @@ class SupabaseApi {
   login(name, pin) { return this.call("student_login", { p_name: name, p_pin: pin }); }
   signup(name, pin, joinCode) { return this.call("student_signup", { p_name: name, p_pin: pin, p_join_code: joinCode }); }
   signupInfo() { return this.call("signup_info", {}); }
-  getToday() { return this.call("get_today", {}); }
-  setToday(token, ids) { return this.call("admin_set_today", { p_token: token, p_ids: ids }); }
+  getToday(token) { return this.call("get_today", { p_token: token }); }
   me(token) { return this.call("student_me", { p_token: token }); }
   submit(token, problemId, code, result) {
     return this.call("student_submit", {
@@ -59,12 +58,15 @@ class SupabaseApi {
   history(token, problemId) { return this.call("student_history", { p_token: token, p_problem_id: problemId }); }
   adminLogin(password) { return this.call("admin_login", { p_password: password }); }
   roster(token) { return this.call("admin_roster", { p_token: token }); }
-  addStudents(token, names) { return this.call("admin_add_students", { p_token: token, p_names: names }); }
+  addStudents(token, names, group) { return this.call("admin_add_students", { p_token: token, p_names: names, p_group: group || null }); }
   resetPin(token, id) { return this.call("admin_reset_pin", { p_token: token, p_student_id: id }); }
   deleteStudent(token, id) { return this.call("admin_delete_student", { p_token: token, p_student_id: id }); }
   matrix(token) { return this.call("admin_matrix", { p_token: token }); }
-  getJoinCode(token) { return this.call("admin_get_join_code", { p_token: token }); }
-  setJoinCode(token, code) { return this.call("admin_set_join_code", { p_token: token, p_code: code }); }
+  groups(token) { return this.call("admin_groups", { p_token: token }); }
+  saveGroup(token, code, label) { return this.call("admin_save_group", { p_token: token, p_code: code, p_label: label }); }
+  deleteGroup(token, code) { return this.call("admin_delete_group", { p_token: token, p_code: code }); }
+  adminGetToday(token, group) { return this.call("admin_get_today", { p_token: token, p_group: group || null }); }
+  setToday(token, ids, group) { return this.call("admin_set_today", { p_token: token, p_ids: ids, p_group: group || null }); }
   submissions(token, studentId, problemId) {
     return this.call("admin_submissions", { p_token: token, p_student_id: studentId, p_problem_id: problemId });
   }
@@ -85,6 +87,10 @@ function slimCases(cases) {
 const DEMO_KEY = "qaqc-demo-db-v1";
 const DEMO_ADMIN_PASSWORD = "demo1234";
 
+function labelOf(db, code) {
+  return db.groups.find((g) => g.code === code)?.label || null;
+}
+
 class DemoApi {
   constructor() {
     this.mode = "demo";
@@ -92,7 +98,14 @@ class DemoApi {
   load() {
     try {
       const raw = localStorage.getItem(DEMO_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const db = JSON.parse(raw);
+        if (!Array.isArray(db.groups)) {
+          db.groups = [{ code: "QAQC8", label: "Team Sparta · QAQC 8기" }];
+          db.today = { QAQC8: Array.isArray(db.today) ? db.today : [] };
+        }
+        return db;
+      }
     } catch {}
     return seedDemo();
   }
@@ -124,47 +137,70 @@ class DemoApi {
     const token = crypto.randomUUID();
     db.sessions[token] = { student_id: student.id };
     this.save(db);
-    return { ok: true, token, student: { id: student.id, name: student.name, org: student.org || null } };
+    return { ok: true, token, student: { id: student.id, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) } };
   }
   async signupInfo() {
-    return { ok: true, join_code_required: !!this.load().join_code };
+    return { ok: true, join_code_required: this.load().groups.length > 0 };
   }
   async signup(name, pin, joinCode) {
     const db = this.load();
     name = name.trim().replace(/\s+/g, " ");
     if (!name || name.length > 40) throw new ApiError("name_format");
     if (!/^\d{4}$/.test(pin)) throw new ApiError("pin_format");
-    if (db.join_code && (joinCode || "").trim().toUpperCase() !== db.join_code) throw new ApiError("join_code");
+    let org = (joinCode || "").trim().toUpperCase() || null;
+    if (db.groups.length && !db.groups.some((g) => g.code === org)) throw new ApiError("join_code");
+    if (!db.groups.length) org = null;
     if (db.students.some((s) => s.name === name)) throw new ApiError("name_taken");
     const id = crypto.randomUUID();
-    const org = (joinCode || "").trim().toUpperCase() || null;
     db.students.push({ id, name, pin, org, created_at: new Date().toISOString() });
     const token = crypto.randomUUID();
     db.sessions[token] = { student_id: id };
     this.save(db);
-    return { ok: true, token, student: { id, name, org } };
+    return { ok: true, token, student: { id, name, org, org_label: labelOf(db, org) } };
   }
-  async getToday() {
-    return { ok: true, ids: this.load().today || [] };
+  async getToday(token) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    const org = db.students.find((s) => s.id === sid)?.org || "";
+    return { ok: true, ids: db.today[org] || [] };
   }
-  async setToday(token, ids) {
+  async adminGetToday(token, group) {
     const db = this.load();
     this.requireAdmin(db, token);
-    db.today = ids.slice(0, 20);
+    return { ok: true, ids: db.today[group || ""] || [] };
+  }
+  async setToday(token, ids, group) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    db.today[group || ""] = ids.slice(0, 20);
     this.save(db);
-    return { ok: true, ids: db.today };
+    return { ok: true, ids: db.today[group || ""] };
   }
-  async getJoinCode(token) {
+  async groups(token) {
     const db = this.load();
     this.requireAdmin(db, token);
-    return { ok: true, join_code: db.join_code || "" };
+    return { ok: true, groups: db.groups.map((g) => ({ ...g, count: db.students.filter((s) => s.org === g.code).length })) };
   }
-  async setJoinCode(token, code) {
+  async saveGroup(token, code, label) {
     const db = this.load();
     this.requireAdmin(db, token);
-    db.join_code = (code || "").trim().toUpperCase().slice(0, 30);
+    code = (code || "").replace(/\s/g, "").toUpperCase();
+    label = (label || "").trim();
+    if (!/^[A-Z0-9_-]{1,30}$/.test(code) || !label || label.length > 60) throw new ApiError("code_format");
+    const g = db.groups.find((x) => x.code === code);
+    if (g) g.label = label;
+    else db.groups.push({ code, label });
     this.save(db);
-    return { ok: true, join_code: db.join_code };
+    return { ok: true, code, label };
+  }
+  async deleteGroup(token, code) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    if (db.students.some((s) => s.org === code)) throw new ApiError("group_in_use");
+    db.groups = db.groups.filter((g) => g.code !== code);
+    delete db.today[code];
+    this.save(db);
+    return { ok: true };
   }
   studentOf(db, token) {
     const s = db.sessions[token];
@@ -182,7 +218,7 @@ class DemoApi {
       p.attempts++;
       p.solved ||= sub.passed;
     }
-    return { ok: true, student: { id: sid, name: student.name, org: student.org || null }, progress };
+    return { ok: true, student: { id: sid, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) }, progress };
   }
   async submit(token, problemId, code, result) {
     const db = this.load();
@@ -203,12 +239,14 @@ class DemoApi {
     });
     this.save(db);
     if (!result.passed || already) return { ok: true, first_solve: false };
+    const org = db.students.find((s) => s.id === sid)?.org || null;
+    const sameGroup = new Set(db.students.filter((s) => (s.org || null) === org).map((s) => s.id));
     const firsts = {};
-    for (const s of db.submissions.filter((x) => x.problem_id === problemId && x.passed)) {
+    for (const s of db.submissions.filter((x) => x.problem_id === problemId && x.passed && sameGroup.has(x.student_id))) {
       if (!firsts[s.student_id] || s.created_at < firsts[s.student_id]) firsts[s.student_id] = s.created_at;
     }
     const rank = Object.values(firsts).filter((t) => t <= firsts[sid]).length;
-    return { ok: true, first_solve: true, rank, total: db.students.length };
+    return { ok: true, first_solve: true, rank, total: sameGroup.size };
   }
   async history(token, problemId) {
     const db = this.load();
@@ -234,7 +272,7 @@ class DemoApi {
     const db = this.load();
     this.requireAdmin(db, token);
     const students = db.students
-      .map((s) => ({ id: s.id, name: s.name, created_at: s.created_at, locked: (s.locked_until || 0) > Date.now() }))
+      .map((s) => ({ id: s.id, name: s.name, group: s.org || null, created_at: s.created_at, locked: (s.locked_until || 0) > Date.now() }))
       .sort((a, b) => a.name.localeCompare(b.name, "ko"));
     return { ok: true, students };
   }
@@ -244,16 +282,17 @@ class DemoApi {
     while (db.students.some((s) => s.name === name && s.pin === pin));
     return pin;
   }
-  async addStudents(token, names) {
+  async addStudents(token, names, group) {
     const db = this.load();
     this.requireAdmin(db, token);
+    if (group && !db.groups.some((g) => g.code === group)) throw new ApiError("not_found");
     const created = [];
     for (let name of names) {
       name = name.trim();
       if (!name) continue;
       const pin = this.newPin(db, name);
       const id = crypto.randomUUID();
-      db.students.push({ id, name, pin, created_at: new Date().toISOString() });
+      db.students.push({ id, name, pin, org: group || null, created_at: new Date().toISOString() });
       created.push({ id, name, pin });
     }
     this.save(db);
@@ -337,7 +376,11 @@ function seedDemo() {
   add("demo-1", "1-2", true, 35);
   add("demo-3", "1-5", false, 30);
   add("demo-3", "1-5", false, 28);
-  return { students, sessions: {}, submissions, join_code: "QAQC8", today: ["1-1", "1-5", "2-2", "3-1", "4-1"] };
+  return {
+    students, sessions: {}, submissions,
+    groups: [{ code: "QAQC8", label: "Team Sparta · QAQC 8기" }],
+    today: { QAQC8: ["1-1", "1-5", "2-2", "3-1", "4-1"] },
+  };
 }
 
 export function resetDemo() {

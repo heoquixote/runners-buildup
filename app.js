@@ -76,6 +76,9 @@ function errorMessage(err) {
       name_format: "이름은 1~40자로 입력하세요.",
       name_taken: "이미 가입된 이름입니다. 본인이면 로그인하고, 동명이인이면 이름 뒤에 숫자를 붙여 주세요 (예: 김민수2).",
       join_code: "가입 코드가 맞지 않습니다. 강사님이 알려 준 코드를 확인하세요.",
+      code_format: "그룹 코드는 영문·숫자 30자 이내, 이름은 60자 이내로 입력하세요.",
+      group_in_use: "이 그룹에 수강생이 있어 삭제할 수 없습니다. 수강생을 먼저 삭제하세요.",
+      not_found: "대상을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.",
       locked: "5번 틀려서 잠시 잠겼습니다. 5분 뒤에 다시 시도하거나 강사님께 번호 재발급을 요청하세요.",
       session: "로그인이 만료되었습니다. 다시 로그인해 주세요.",
       network: "서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.",
@@ -90,6 +93,8 @@ const state = {
   adminToken: store.get(ADMIN_KEY),
   progress: {},
   progressLoaded: false,
+  adminGroup: store.get("rb-admin-group") ?? "", // "" 전체, "-" 그룹 없음, 그 외 그룹 코드
+  groups: [],
   today: [],
   runner: "idle",
 };
@@ -117,7 +122,7 @@ async function loadProgress() {
       state.session.student = res.student;
       store.set(SESSION_KEY, state.session);
     }
-    try { state.today = (await api.getToday()).ids || []; } catch { state.today = []; }
+    try { state.today = (await api.getToday(state.session.token)).ids || []; } catch { state.today = []; }
     state.progressLoaded = true;
   } catch (err) {
     if (err.code === "session") logout(true);
@@ -153,11 +158,12 @@ function topbar({ admin = false } = {}) {
 }
 
 // 가입 코드별 표시: QAQC8 코드로 가입한 수강생은 로고 아래 줄이 기관·기수로 바뀐다
-const ORGS = { QAQC8: { logo: "assets/sparta.png", name: "Team Sparta", course: "QAQC 8기" } };
+const GROUP_LOGOS = { QAQC8: "assets/sparta.png" };
 function brandSub(admin) {
-  const org = admin ? null : ORGS[state.session?.student?.org];
-  if (!org) return `<span class="brand-course">Runners Build-up · Python Track</span>`;
-  return `<span class="brand-course org"><img src="${org.logo}" alt="" width="14" height="14">${esc(org.name)} · ${esc(org.course)}</span>`;
+  const st = admin ? null : state.session?.student;
+  if (!st?.org_label) return `<span class="brand-course">Runners Build-up · Python Track</span>`;
+  const logo = GROUP_LOGOS[st.org] ? `<img src="${GROUP_LOGOS[st.org]}" alt="" width="14" height="14">` : "";
+  return `<span class="brand-course org">${logo}${esc(st.org_label)}</span>`;
 }
 
 function bindTopbar() {
@@ -780,7 +786,8 @@ function routeAdmin(hash) {
   const section = hash.split("/")[2] || "matrix";
   const tabs = [["matrix", "제출 현황"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
   $app.innerHTML = `${topbar({ admin: true })}<main class="page wide">
-    <nav class="admin-tabs">${tabs.map(([k, l]) => `<a href="#/admin/${k}" ${k === section ? 'aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
+    <div class="admin-bar"><nav class="admin-tabs">${tabs.map(([k, l]) => `<a href="#/admin/${k}" ${k === section ? 'aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
+      <label class="group-select"><span>그룹</span><select id="group-select"><option value="">전체</option></select></label></div>
     <div id="admin-body"><p class="muted">불러오는 중…</p></div></main>`;
   bindTopbar();
   const body = $app.querySelector("#admin-body");
@@ -793,9 +800,24 @@ function routeAdmin(hash) {
     }
     body.innerHTML = `<p class="form-error">${esc(errorMessage(err))}</p>`;
   };
-  if (section === "roster") return adminRoster(body).catch(fail);
-  if (section === "stats") return adminStats(body).catch(fail);
-  return adminMatrix(body).catch(fail);
+  const sel = $app.querySelector("#group-select");
+  const run = () => {
+    if (section === "roster") return adminRoster(body).catch(fail);
+    if (section === "stats") return adminStats(body).catch(fail);
+    return adminMatrix(body).catch(fail);
+  };
+  api.groups(state.adminToken).then((res) => {
+    state.groups = res.groups || [];
+    sel.innerHTML = `<option value="">전체</option>${state.groups.map((g) => `<option value="${esc(g.code)}">${esc(g.label)} (${esc(g.code)})</option>`).join("")}<option value="-">그룹 없음</option>`;
+    if (state.adminGroup && ![...sel.options].some((o) => o.value === state.adminGroup)) state.adminGroup = "";
+    sel.value = state.adminGroup;
+    run();
+  }).catch(fail);
+  sel.addEventListener("change", () => {
+    state.adminGroup = sel.value;
+    store.set("rb-admin-group", sel.value);
+    run();
+  });
 }
 
 function viewAdminLogin() {
@@ -825,11 +847,17 @@ function viewAdminLogin() {
   form.querySelector("#admin-pw").focus();
 }
 
+const inGroup = (s) => !state.adminGroup || (state.adminGroup === "-" ? !s.group : s.group === state.adminGroup);
+const groupLabel = (code) => state.groups.find((g) => g.code === code)?.label || code || "그룹 없음";
+
 async function loadAdminData() {
   const [roster, matrix] = await Promise.all([api.roster(state.adminToken), api.matrix(state.adminToken)]);
+  const students = roster.students.filter(inGroup);
+  const ids = new Set(students.map((s) => s.id));
+  const raw = matrix.cells.filter((c) => ids.has(c.student_id));
   const cells = {};
-  for (const c of matrix.cells) cells[c.student_id + "|" + c.problem_id] = c;
-  return { students: roster.students, cells, raw: matrix.cells };
+  for (const c of raw) cells[c.student_id + "|" + c.problem_id] = c;
+  return { students, cells, raw };
 }
 
 function downloadCsv(filename, rows) {
@@ -930,27 +958,35 @@ async function openSubmissionDrawer(student, p) {
 }
 
 async function adminRoster(body) {
-  const { students } = await api.roster(state.adminToken);
+  const students = (await api.roster(state.adminToken)).students.filter(inGroup);
+  const g = state.adminGroup;
+  const groupName = g ? (g === "-" ? "그룹 없음" : groupLabel(g)) : "";
+  const pickGroup = `<p class="muted" style="margin:0;font-size:14px">위쪽 <b>그룹</b>에서 그룹을 먼저 고르세요.</p>`;
   body.innerHTML = `<div class="roster-grid"><div style="display:grid;gap:16px;align-content:start">
-    <section class="panel lime card-pad"><h3>오늘의 과제</h3>
-      <p class="muted" style="margin:0;font-size:14px">수강생 홈 맨 위에 '오늘 해야 할 과제'로 보입니다. 5문제를 권장하고, 하나도 고르지 않으면 각자 안 푼 문제 5개가 자동으로 보입니다.</p>
+    <section class="panel lime card-pad"><h3>그룹 관리</h3>
+      <p class="muted" style="margin:0;font-size:14px">그룹 코드가 곧 회원가입 코드입니다. 수강생이 가입할 때 넣은 코드로 그룹이 나뉘고, 로고 아래에 그룹 이름이 보입니다. 순위('n명 중 k번째')도 같은 그룹 안에서 매깁니다.</p>
+      <div class="table-scroll"><table class="pin-list"><thead><tr><th>코드</th><th>표시 이름</th><th class="num">수강생</th><th></th></tr></thead><tbody>
+      ${state.groups.map((x) => `<tr data-code="${esc(x.code)}"><td class="pin">${esc(x.code)}</td><td>${esc(x.label)}</td><td class="num">${x.count}명</td>
+        <td class="act"><button class="btn small" data-edit-group>이름 수정</button> <button class="btn small danger" data-del-group>삭제</button></td></tr>`).join("") || `<tr><td colspan="4" class="muted">그룹이 없으면 누구나 코드 없이 가입할 수 있습니다.</td></tr>`}
+      </tbody></table></div>
+      <div class="toolbar group-form"><div class="field"><input id="g-code" maxlength="30" autocomplete="off" placeholder="코드 (예: QAQC9)" aria-label="그룹 코드"></div>
+        <div class="field" style="flex:1"><input id="g-label" maxlength="60" autocomplete="off" placeholder="표시 이름 (예: Team Sparta · QAQC 9기)" aria-label="그룹 표시 이름"></div>
+        <button class="btn primary" id="g-save">그룹 추가</button></div>
+    </section>
+    <section class="panel card-pad"><h3>오늘의 과제${groupName ? ` · ${esc(groupName)}` : ""}</h3>
+      ${g ? `<p class="muted" style="margin:0;font-size:14px">이 그룹 수강생의 홈 맨 위에 '오늘 해야 할 과제'로 보입니다. 5문제를 권장하고, 하나도 고르지 않으면 각자 안 푼 문제 5개가 자동으로 보입니다.</p>` : pickGroup}
       <div class="today-pick">${UNITS.map((u) => `<fieldset><legend>UNIT ${u.id} ${esc(u.title)}</legend>${PROBLEMS.filter((p) => p.unit === u.id).map((p) => `<label><input type="checkbox" value="${p.id}"> <span class="mono">${p.id}</span> ${esc(p.title)}</label>`).join("")}</fieldset>`).join("")}</div>
-      <div class="toolbar"><span class="muted" id="today-n" style="font-size:14px"></span><span class="spacer"></span><button class="btn small ghost" id="today-clear">모두 해제</button><button class="btn primary" id="today-save">저장</button></div>
+      <div class="toolbar"><span class="muted" id="today-n" style="font-size:14px"></span><span class="spacer"></span><button class="btn small ghost" id="today-clear">모두 해제</button><button class="btn primary" id="today-save" ${g ? "" : "disabled"}>저장</button></div>
     </section>
-    <section class="panel card-pad"><h3>회원가입 코드</h3>
-      <p class="muted" style="margin:0;font-size:14px">수강생이 직접 가입할 때 입력하는 코드입니다. 수업 첫날 화면에 띄워 주세요. 비워 두면 누구나 가입할 수 있습니다.</p>
-      <div class="toolbar"><div class="field" style="flex:1;min-width:160px"><input id="join-code" maxlength="30" autocomplete="off" aria-label="회원가입 코드" placeholder="비어 있음 = 누구나 가입"></div>
-        <button class="btn primary" id="join-save">저장</button></div>
-    </section>
-    <section class="panel card-pad"><h3>수강생 직접 등록</h3>
-      <p class="muted" style="margin:0;font-size:14px">한 줄에 한 명씩 이름을 붙여넣으세요. 등록하면 4자리 번호가 자동으로 발급됩니다. 번호는 이 화면에서 <b>한 번만</b> 보이니 바로 복사해 두세요.</p>
+    <section class="panel card-pad"><h3>수강생 직접 등록${groupName ? ` · ${esc(groupName)}` : ""}</h3>
+      <p class="muted" style="margin:0;font-size:14px">한 줄에 한 명씩 이름을 붙여넣으세요. 등록하면 4자리 번호가 자동으로 발급되고 ${g && g !== "-" ? "이 그룹에 들어갑니다" : "그룹 없이 등록됩니다"}. 번호는 이 화면에서 <b>한 번만</b> 보이니 바로 복사해 두세요.</p>
       <div class="field"><label for="names">이름 목록</label><textarea id="names" placeholder="홍길동&#10;김품질&#10;이검사"></textarea></div>
       <div><button class="btn primary" id="add-btn">등록하고 번호 발급</button></div>
       <div id="new-pins"></div>
     </section></div>
-    <section class="panel card-pad"><div class="toolbar"><h3>등록된 수강생 ${students.length}명</h3></div>
-      ${students.length ? `<div class="table-scroll"><table class="pin-list"><thead><tr><th>이름</th><th>등록일</th><th></th></tr></thead><tbody>
-      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}</td><td class="muted">${fmtTime(s.created_at)}</td>
+    <section class="panel card-pad"><div class="toolbar"><h3>${groupName ? esc(groupName) + " · " : ""}등록된 수강생 ${students.length}명</h3></div>
+      ${students.length ? `<div class="table-scroll"><table class="pin-list"><thead><tr><th>이름</th><th>그룹</th><th>등록일</th><th></th></tr></thead><tbody>
+      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
         <td class="act"><span class="pin-slot"></span> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
@@ -962,13 +998,16 @@ async function adminRoster(body) {
     body.querySelector("#today-n").textContent = `${n}문제 선택${n > 5 ? " (5문제 권장)" : ""}`;
   };
   boxes.forEach((b) => b.addEventListener("change", countToday));
-  api.getToday().then((res) => { boxes.forEach((b) => (b.checked = (res.ids || []).includes(b.value))); countToday(); }).catch(() => {});
+  const todayKey = g === "-" ? "" : g;
+  if (!g) boxes.forEach((b) => (b.disabled = true));
+  else api.adminGetToday(state.adminToken, todayKey).then((res) => { boxes.forEach((b) => (b.checked = (res.ids || []).includes(b.value))); countToday(); }).catch(() => {});
+  countToday();
   body.querySelector("#today-clear").addEventListener("click", () => { boxes.forEach((b) => (b.checked = false)); countToday(); });
   body.querySelector("#today-save").addEventListener("click", async (e) => {
     e.target.disabled = true;
     try {
       const ids = boxes.filter((b) => b.checked).map((b) => b.value);
-      await api.setToday(state.adminToken, ids);
+      await api.setToday(state.adminToken, ids, todayKey);
       toast(ids.length ? `오늘의 과제 ${ids.length}문제를 저장했습니다.` : "오늘의 과제를 비웠습니다. 수강생마다 안 푼 문제가 자동으로 보입니다.");
     } catch (err) {
       toast(errorMessage(err));
@@ -977,19 +1016,50 @@ async function adminRoster(body) {
     }
   });
 
-  const joinInput = body.querySelector("#join-code");
-  api.getJoinCode(state.adminToken).then((res) => (joinInput.value = res.join_code || "")).catch(() => {});
-  body.querySelector("#join-save").addEventListener("click", async (e) => {
+  body.querySelector("#g-save").addEventListener("click", async (e) => {
+    const code = body.querySelector("#g-code").value;
+    const label = body.querySelector("#g-label").value;
     e.target.disabled = true;
     try {
-      const res = await api.setJoinCode(state.adminToken, joinInput.value);
-      joinInput.value = res.join_code;
-      toast(res.join_code ? `가입 코드를 ${res.join_code}(으)로 저장했습니다.` : "가입 코드를 비웠습니다. 누구나 가입할 수 있습니다.");
+      const res = await api.saveGroup(state.adminToken, code, label);
+      toast(`${res.label} (${res.code}) 그룹을 저장했습니다. 가입 코드는 ${res.code}입니다.`);
+      routeAdmin("#/admin/roster");
     } catch (err) {
       toast(errorMessage(err));
-    } finally {
       e.target.disabled = false;
     }
+  });
+  body.querySelectorAll("tr[data-code]").forEach((tr) => {
+    const code = tr.dataset.code;
+    tr.querySelector("[data-edit-group]").addEventListener("click", async () => {
+      const cur = state.groups.find((x) => x.code === code);
+      const label = prompt(`${code} 그룹의 표시 이름`, cur?.label || "");
+      if (label == null) return;
+      try {
+        await api.saveGroup(state.adminToken, code, label);
+        toast("그룹 이름을 바꿨습니다.");
+        routeAdmin("#/admin/roster");
+      } catch (err) {
+        toast(errorMessage(err));
+      }
+    });
+    const del = tr.querySelector("[data-del-group]");
+    let armed = false;
+    del.addEventListener("click", async () => {
+      if (!armed) {
+        armed = true;
+        del.textContent = "정말 삭제?";
+        setTimeout(() => { armed = false; del.textContent = "삭제"; }, 3000);
+        return;
+      }
+      try {
+        await api.deleteGroup(state.adminToken, code);
+        toast(`${code} 그룹을 삭제했습니다.`);
+        routeAdmin("#/admin/roster");
+      } catch (err) {
+        toast(errorMessage(err));
+      }
+    });
   });
 
   body.querySelector("#add-btn").addEventListener("click", async (e) => {
@@ -997,7 +1067,7 @@ async function adminRoster(body) {
     if (!names.length) return toast("이름을 한 줄에 한 명씩 입력하세요.");
     e.target.disabled = true;
     try {
-      const res = await api.addStudents(state.adminToken, names);
+      const res = await api.addStudents(state.adminToken, names, g && g !== "-" ? g : null);
       const text = res.created.map((c) => `${c.name}\t${c.pin}`).join("\n");
       body.querySelector("#names").value = "";
       body.querySelector("#new-pins").innerHTML = `<div class="new-pins"><b>${res.created.length}명 등록 완료. 번호를 지금 복사해 두세요.</b>
