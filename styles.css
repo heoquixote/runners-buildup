@@ -80,7 +80,7 @@ em, i { font-style: normal; }
   display: inline-flex; align-items: center; gap: 7px; width: max-content;
   padding: 3px 10px 3px 4px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 13px; color: var(--ink-2);
 }
-.org-badge img { width: 18px; height: 18px; border-radius: 4px; display: block; }
+.org-badge img { width: 18px; height: 18px; display: block; }
 .org-badge b { color: var(--ink); font-weight: 700; }
 .auth-mark { display: block; width: 44px; height: auto; margin-bottom: 14px; }
 .brand-name { font: 700 16px/1.2 var(--font-en); letter-spacing: 0.01em; }
