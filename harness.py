@@ -1,11 +1,15 @@
 # 채점 하네스: Pyodide(브라우저)와 CPython(로컬 검증 스크립트)에서 똑같이 동작한다.
 # JS 쪽은 run_json / grade_json 두 함수만 호출한다.
 import builtins
+import contextlib
 import copy
 import io
 import json
 import math
+import os
+import shutil
 import sys
+import tempfile
 import traceback
 
 FILENAME = "<내 코드>"
@@ -177,10 +181,29 @@ def _call_solution(ns, args):
         sys.stdout = old_out
 
 
+@contextlib.contextmanager
+def _workdir(problem, test=None):
+    """파일 입출력 문제용: 빈 임시 폴더에 문제 파일을 만들어 두고 그 안에서 실행한다."""
+    files = dict(problem.get("files") or {})
+    files.update((test or {}).get("files") or {})
+    old = os.getcwd()
+    path = tempfile.mkdtemp(prefix="rb-")
+    try:
+        for name, text in files.items():
+            with open(os.path.join(path, name), "w", encoding="utf-8", newline="") as f:
+                f.write(text)
+        os.chdir(path)
+        yield path
+    finally:
+        os.chdir(old)
+        shutil.rmtree(path, ignore_errors=True)
+
+
 def _grade_io(problem, code):
     cases = []
     for test in problem["tests"]:
-        out, error, _ = _exec(code, test.get("stdin", ""))
+        with _workdir(problem, test):
+            out, error, _ = _exec(code, test.get("stdin", ""))
         passed = error is None and _norm_lines(out) == _norm_lines(test["expected"])
         cases.append({
             "hidden": bool(test.get("hidden")),
@@ -197,10 +220,11 @@ def _grade_function(problem, code):
     tol = problem.get("tolerance", 1e-6)
     cases = []
     for test in problem["tests"]:
-        _, error, ns = _exec(code)
-        result = None
-        if error is None:
-            result, error = _call_solution(ns, test["args"])
+        with _workdir(problem, test):
+            _, error, ns = _exec(code)
+            result = None
+            if error is None:
+                result, error = _call_solution(ns, test["args"])
         passed = error is None and _same(result, test["expected"], tol)
         note = ""
         if error is None and result is None and test["expected"] is not None:
@@ -218,6 +242,11 @@ def _grade_function(problem, code):
 
 
 def _grade_steps(problem, code):
+    with _workdir(problem):
+        return _grade_steps_in_dir(problem, code)
+
+
+def _grade_steps_in_dir(problem, code):
     out, error, ns = _exec(code)
     env = dict(ns)
     try:
@@ -272,13 +301,20 @@ def grade(problem, code):
 
 def run(problem, code, stdin=""):
     """채점 없이 실행. 함수형은 공개 예시로 solution을 호출해 결과를 덧붙인다."""
+    first = next((t for t in problem.get("tests") or [] if not t.get("hidden")), None)
+    with _workdir(problem, first):
+        return _run_in_dir(problem, code, stdin)
+
+
+def _run_in_dir(problem, code, stdin):
     out, error, ns = _exec(code, stdin, echo=True)
     calls = []
     if error is None and problem["type"] == "function":
         for test in problem["tests"]:
             if test.get("hidden"):
                 continue
-            result, call_error = _call_solution(ns, test["args"])
+            with _workdir(problem, test):
+                result, call_error = _call_solution(ns, test["args"])
             label = "solution(" + ", ".join(_repr(a) for a in test["args"]) + ")"
             calls.append({
                 "call": label,

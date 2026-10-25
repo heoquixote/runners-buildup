@@ -2,11 +2,24 @@
 // type: "io"(stdin → stdout) | "function"(solution 반환값) | "steps"(변수 검사)
 // tests[].hidden 이 true 인 케이스는 학생에게 입력·기대값을 보여주지 않는다.
 // 모든 모범답안은 `node scripts/verify.mjs` 로 자동 검증한다.
+// 1회차 교안 유닛(1~6)은 problems-day1.js, 이후 연습 유닛(7~)은 이 파일에 있다.
+import { DAY1_UNITS, DAY1_PROBLEMS, DAY1_QUIZZES } from "./problems-day1.js";
 
-export const UNITS = [
+// 트랙: 왼쪽 내비게이션의 과목 선택. SQL은 문제를 추가하면 ready: true 로 연다.
+export const TRACKS = [
+  { id: "python", label: "Python", ready: true },
+  { id: "sql", label: "SQL", ready: false },
+];
+// 트랙 안의 묶음 (회차). 유닛의 part 값으로 연결한다.
+export const PARTS = [
+  { id: "py-1", track: "python", label: "1회차 · 파이썬 기초 문법" },
+  { id: "py-2", track: "python", label: "심화 연습 · 제어문 · 함수 · NumPy · 파일" },
+];
+
+const MORE_UNITS = [
   {
-    id: 1,
-    title: "기초 문법과 제어문",
+    id: 7,
+    title: "제어문 (if · for · while)",
     summary: "input, 형변환, if, for, while",
     note: `
 <h4>input()은 항상 문자열을 돌려줍니다</h4>
@@ -23,8 +36,8 @@ x = float(input("측정값: "))</pre>
 <p>"조건을 만족할 때까지 반복"은 <code>while True:</code> 안에서 조건을 만족하면 <code>break</code>로 빠져나옵니다.</p>`,
   },
   {
-    id: 2,
-    title: "문자열 다루기",
+    id: 8,
+    title: "문자열 활용 (함수 문제)",
     summary: "인덱싱, 슬라이싱, 결합, len, split",
     note: `
 <h4>인덱싱</h4>
@@ -45,7 +58,7 @@ print(String[3:])   # lo, World</pre>
 <p class="qc">활용: 로그 <code>'ERROR,Temp,A20240901,High'</code>를 쉼표로 나눠 상태, 종류, 일시, 값을 추출</p>`,
   },
   {
-    id: 3,
+    id: 9,
     title: "알고리즘 (함수형)",
     summary: "solution 함수, return, min/max, enumerate, 딕셔너리",
     note: `
@@ -61,7 +74,7 @@ for i, v in enumerate(values):
 [c for c in codes if len(c) != 8]   # 조건에 맞는 것만 모으기</pre>`,
   },
   {
-    id: 4,
+    id: 10,
     title: "NumPy 품질 데이터",
     summary: "배열 연산, 통계량, 불리언 인덱싱, axis, 이상치",
     note: `
@@ -80,13 +93,48 @@ sensor_data[bool_idx]             # 조건을 만족하는 값만
 sensor_data[bool_idx] = -1        # 조건을 만족하는 값을 한 번에 변경</pre>
 <p class="qc">채점은 출력 문자열이 아니라 문제에서 정한 <b>변수 값</b>으로 합니다. 변수 이름을 그대로 쓰세요.</p>`,
   },
+  {
+    id: 11,
+    title: "파일 입출력 (CSV · JSON)",
+    summary: "open, with, read/readlines, csv, json",
+    note: `
+<h4>파일은 프로그램이 끝나도 남습니다</h4>
+<p>변수는 프로그램이 끝나면 사라지지만, 파일에 쓰면 남습니다. 파일에서 읽기가 <b>입력</b>, 파일에 쓰기가 <b>출력</b>입니다.</p>
+<h4>with open()</h4>
+<pre>with open("memo.txt", "w", encoding="utf-8") as f:
+    f.write("LOT-001 OK\n")      # 줄바꿈은 직접 넣는다</pre>
+<p><code>with</code>를 쓰면 블록이 끝날 때 파일이 자동으로 닫힙니다. 한글이 있으면 <code>encoding="utf-8"</code>을 꼭 쓰세요.</p>
+<table class="ex-table"><thead><tr><th>모드</th><th>뜻</th></tr></thead><tbody>
+<tr><td><code>"r"</code></td><td>읽기 (기본값)</td></tr><tr><td><code>"w"</code></td><td>쓰기. 기존 내용을 지우고 새로 씀</td></tr>
+<tr><td><code>"a"</code></td><td>이어 쓰기. 기존 내용 뒤에 붙임</td></tr></tbody></table>
+<h4>읽기 세 가지</h4>
+<pre>f.read()        # 전체를 문자열 하나로
+f.readline()    # 한 줄
+f.readlines()   # 모든 줄을 리스트로 (각 줄 끝에 \n 포함)</pre>
+<h4>CSV</h4>
+<pre>import csv
+with open("measure.csv", encoding="utf-8") as f:
+    for row in csv.DictReader(f):     # 첫 줄을 키로 쓰는 딕셔너리
+        print(row["lot"], float(row["value"]))   # 값은 모두 문자열!</pre>
+<p>쓸 때는 <code>open(..., "w", newline="")</code>으로 열어야 빈 줄이 끼지 않습니다.</p>
+<h4>JSON</h4>
+<pre>import json
+json.dump(data, f, ensure_ascii=False, indent=2)   # 파이썬 → 파일
+data = json.load(f)                                # 파일 → 파이썬</pre>
+<p class="qc">현장 활용: 검사 장비가 남긴 CSV 로그 집계, 설비 설정값(JSON) 관리</p>`,
+  },
+];
+
+export const UNITS = [
+  ...DAY1_UNITS.map((u) => ({ ...u, track: "python", part: "py-1" })),
+  ...MORE_UNITS.map((u) => ({ ...u, track: "python", part: "py-2" })),
 ];
 
 export const PROBLEMS = [
-  // ── 단원 1 ─────────────────────────────────────────────
+  // ── 단원 7 ─────────────────────────────────────────────
   {
-    id: "1-1",
-    unit: 1,
+    id: "7-1",
+    unit: 7,
     title: "로트 번호로 생산 라인 배정",
     type: "io",
     level: 1,
@@ -112,8 +160,8 @@ else:
     ],
   },
   {
-    id: "1-2",
-    unit: 1,
+    id: "7-2",
+    unit: 7,
     title: "시료 라벨 출력",
     type: "io",
     level: 1,
@@ -134,8 +182,8 @@ for i in range(1, n + 1):
     ],
   },
   {
-    id: "1-3",
-    unit: 1,
+    id: "7-3",
+    unit: 7,
     title: "발취 검사 대상 번호",
     type: "io",
     level: 1,
@@ -157,8 +205,8 @@ for i in range(1, N + 1):
     ],
   },
   {
-    id: "1-4",
-    unit: 1,
+    id: "7-4",
+    unit: 7,
     title: "불량 수 막대 표시",
     type: "io",
     level: 1,
@@ -184,8 +232,8 @@ print()
     ],
   },
   {
-    id: "1-5",
-    unit: 1,
+    id: "7-5",
+    unit: 7,
     title: "규격 안에 들어올 때까지 재측정",
     type: "io",
     level: 3,
@@ -217,10 +265,10 @@ while True:
     ],
   },
 
-  // ── 단원 2 ─────────────────────────────────────────────
+  // ── 단원 8 ─────────────────────────────────────────────
   {
-    id: "2-1",
-    unit: 2,
+    id: "8-1",
+    unit: 8,
     title: "장비 모델명에서 일련번호 추출",
     type: "function",
     level: 1,
@@ -242,8 +290,8 @@ while True:
     ],
   },
   {
-    id: "2-2",
-    unit: 2,
+    id: "8-2",
+    unit: 8,
     title: "센서 파일명에서 날짜 분리",
     type: "function",
     level: 2,
@@ -267,8 +315,8 @@ while True:
     ],
   },
   {
-    id: "2-3",
-    unit: 2,
+    id: "8-3",
+    unit: 8,
     title: "검사 ID 만들기",
     type: "function",
     level: 1,
@@ -290,8 +338,8 @@ while True:
     ],
   },
   {
-    id: "2-4",
-    unit: 2,
+    id: "8-4",
+    unit: 8,
     title: "검사 결과 코드 길이 검증",
     type: "function",
     level: 2,
@@ -313,14 +361,14 @@ while True:
     ],
   },
   {
-    id: "2-5",
-    unit: 2,
+    id: "8-5",
+    unit: 8,
     title: "설비 로그 정리 리포트",
     type: "function",
     level: 3,
     challenge: true,
     uses: [["split(\",\")", "쉼표로 칸 나누기"], ["strip()", "앞뒤 공백 지우기"], ["upper()", "대소문자 통일해서 비교"], ["len()", "칸 수가 4개인지 확인"], ["슬라이싱 + 연결", "A20240901 → 2024-09-01"], ["continue", "잘못된 줄은 건너뛰기"]],
-    origin: "split() 응용 (단원 2 종합)",
+    origin: "split() 응용 (단원 8 종합)",
     desc: `<p>설비 로그는 <code>'상태,종류,일시,값'</code> 형식입니다. 예: <code>'ERROR,Temp,A20240901,High'</code></p>
 <p>상태가 <b>ERROR</b>인 로그만 골라 <code>'2024-09-01 Temp High'</code> 형식의 문자열 리스트로 반환하세요. 순서는 원래 순서를 따릅니다.</p>
 <ul><li>현장 로그라 지저분합니다. 각 칸 앞뒤에 공백이 있을 수 있고, 상태는 <code>error</code>, <code>Error</code>처럼 대소문자가 섞여 있을 수 있습니다.</li>
@@ -356,10 +404,10 @@ while True:
     ],
   },
 
-  // ── 단원 3 ─────────────────────────────────────────────
+  // ── 단원 9 ─────────────────────────────────────────────
   {
-    id: "3-1",
-    unit: 3,
+    id: "9-1",
+    unit: 9,
     title: "포장 단위 찾기",
     type: "function",
     level: 2,
@@ -387,8 +435,8 @@ while True:
     ],
   },
   {
-    id: "3-2",
-    unit: 3,
+    id: "9-2",
+    unit: 9,
     title: "연속 불량 최대 길이",
     type: "function",
     level: 2,
@@ -415,8 +463,8 @@ while True:
     ],
   },
   {
-    id: "3-3",
-    unit: 3,
+    id: "9-3",
+    unit: 9,
     title: "관리 한계 이탈 위치 찾기",
     type: "function",
     level: 2,
@@ -439,8 +487,8 @@ while True:
   },
 
   {
-    id: "3-4",
-    unit: 3,
+    id: "9-4",
+    unit: 9,
     title: "불량 유형별 건수 집계",
     type: "function",
     level: 2,
@@ -468,8 +516,8 @@ while True:
     ],
   },
   {
-    id: "3-5",
-    unit: 3,
+    id: "9-5",
+    unit: 9,
     title: "이동평균으로 추세 보기",
     type: "function",
     level: 3,
@@ -500,10 +548,10 @@ while True:
     ],
   },
 
-  // ── 단원 4 ─────────────────────────────────────────────
+  // ── 단원 10 ─────────────────────────────────────────────
   {
-    id: "4-1",
-    unit: 4,
+    id: "10-1",
+    unit: 10,
     title: "5일간 불량률 분석",
     type: "steps",
     level: 2,
@@ -565,8 +613,8 @@ print(f"4. 최종 불량률 (%): {final_defect_rate:.3f}%")
     ],
   },
   {
-    id: "4-2",
-    unit: 4,
+    id: "10-2",
+    unit: 10,
     title: "온도 센서 데이터 정제",
     type: "steps",
     level: 2,
@@ -614,8 +662,8 @@ print(f"3. 변경 후 배열: {sensor_data}")
     ],
   },
   {
-    id: "4-3",
-    unit: 4,
+    id: "10-3",
+    unit: 10,
     title: "공정능력지수 Cp, Cpk 계산",
     type: "steps",
     level: 3,
@@ -658,8 +706,8 @@ print(f"mu={mu}, sigma={sigma}, Cp={cp:.2f}, Cpk={cpk:.2f}")
     ],
   },
   {
-    id: "4-4",
-    unit: 4,
+    id: "10-4",
+    unit: 10,
     title: "라인별 · 일별 생산 실적 집계",
     type: "steps",
     level: 2,
@@ -725,8 +773,8 @@ print("4. 라인별 일평균:", line_avg)
     ],
   },
   {
-    id: "4-5",
-    unit: 4,
+    id: "10-5",
+    unit: 10,
     title: "Z-점수로 이상치 찾기",
     type: "steps",
     level: 3,
@@ -774,4 +822,288 @@ print("3. 이상치 개수:", n_outliers)
       { label: "3단계 이상치 개수", expr: "int(n_outliers) == 2", hint: "len(outlier_idx)" },
     ],
   },
+  // ── 단원 11 ─────────────────────────────────────────────
+  {
+    id: "11-1",
+    unit: 11,
+    title: "검사 메모 파일 쓰고 다시 읽기",
+    type: "steps",
+    level: 1,
+    uses: [["with open(파일, \"w\", encoding=\"utf-8\") as f", "쓰기 모드로 파일 열기"], ["f.write(문자열 + \"\\n\")", "한 줄 쓰기 (줄바꿈 직접)"], ["f.readlines()", "모든 줄을 리스트로 읽기"], ["strip()", "줄 끝 \\n 지우기"]],
+    origin: "파일 입출력 기본 (w / r)",
+    desc: `<p>로트 검사 결과 <code>records</code>를 <code>memo.txt</code>에 한 줄씩 저장한 뒤, 다시 읽어서 확인하세요.</p>
+<ol><li><code>memo.txt</code>: records의 각 항목을 한 줄에 하나씩 저장 (마지막 줄도 줄바꿈으로 끝남)</li>
+<li><code>lines</code>: 파일을 <code>readlines()</code>로 다시 읽은 리스트</li>
+<li><code>line_count</code>: 줄 수</li>
+<li><code>first</code>: 첫 줄에서 줄바꿈을 뺀 문자열</li></ol>`,
+    starter: `records = ["LOT-001 OK", "LOT-002 NG", "LOT-003 OK"]
+
+# 1. memo.txt 에 한 줄씩 쓰기
+
+
+# 2. 다시 읽기
+lines = []
+
+# 3. 줄 수
+line_count = 0
+
+# 4. 첫 줄 (줄바꿈 제거)
+first = ""
+print(lines, line_count, first)
+`,
+    solution: `records = ["LOT-001 OK", "LOT-002 NG", "LOT-003 OK"]
+
+with open("memo.txt", "w", encoding="utf-8") as f:
+    for r in records:
+        f.write(r + "\\n")
+
+with open("memo.txt", "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+line_count = len(lines)
+first = lines[0].strip()
+print(lines, line_count, first)
+`,
+    hints: ["for r in records: 안에서 f.write(r + \"\\n\")", "읽을 때는 모드를 \"r\"로 바꿔 한 번 더 open 합니다.", "lines[0].strip()"],
+    checks: [
+      { label: "1단계 memo.txt 내용", expr: "open('memo.txt', encoding='utf-8').read() == 'LOT-001 OK\\nLOT-002 NG\\nLOT-003 OK\\n'", hint: "각 줄 끝에 \\n 을 붙였는지, 모드가 \"w\"인지 확인하세요." },
+      { label: "2단계 readlines 결과", expr: "lines == ['LOT-001 OK\\n', 'LOT-002 NG\\n', 'LOT-003 OK\\n']", hint: "f.readlines() 는 줄바꿈을 포함한 리스트를 돌려줍니다." },
+      { label: "3단계 줄 수", expr: "line_count == 3", hint: "len(lines)" },
+      { label: "4단계 첫 줄", expr: "first == 'LOT-001 OK'", hint: "lines[0].strip()" },
+    ],
+  },
+  {
+    id: "11-2",
+    unit: 11,
+    title: "설비 설정값 JSON 저장하고 불러오기",
+    type: "steps",
+    level: 2,
+    uses: [["import json", "JSON 모듈"], ["json.dump(데이터, f, ensure_ascii=False, indent=2)", "딕셔너리를 파일로 (한글 그대로)"], ["json.load(f)", "파일을 딕셔너리로"], ["딕셔너리[키][키]", "안쪽 값 꺼내기"]],
+    origin: "JSON 파일 다루기",
+    desc: `<p>설비 설정값 딕셔너리 <code>config</code>를 <code>config.json</code>으로 저장하고, 다시 불러와 상한 온도를 꺼내세요.</p>
+<ol><li><code>config.json</code>: <code>json.dump</code>로 저장. 한글이 <code>\\uC124...</code>처럼 깨지지 않게 <code>ensure_ascii=False</code>, 보기 좋게 <code>indent=2</code></li>
+<li><code>loaded</code>: <code>json.load</code>로 다시 읽은 딕셔너리</li>
+<li><code>temp_max</code>: loaded 안의 온도 상한값</li></ol>`,
+    starter: `import json
+
+config = {
+    "설비": "도금조-2",
+    "limits": {"temp_min": 45, "temp_max": 55},
+    "sensors": ["temp", "ph"],
+}
+
+# 1. config.json 저장
+
+
+# 2. 다시 불러오기
+loaded = None
+
+# 3. 온도 상한
+temp_max = None
+print(loaded, temp_max)
+`,
+    solution: `import json
+
+config = {
+    "설비": "도금조-2",
+    "limits": {"temp_min": 45, "temp_max": 55},
+    "sensors": ["temp", "ph"],
+}
+
+with open("config.json", "w", encoding="utf-8") as f:
+    json.dump(config, f, ensure_ascii=False, indent=2)
+
+with open("config.json", "r", encoding="utf-8") as f:
+    loaded = json.load(f)
+
+temp_max = loaded["limits"]["temp_max"]
+print(loaded, temp_max)
+`,
+    hints: ["with open(\"config.json\", \"w\", encoding=\"utf-8\") as f: json.dump(config, f, ensure_ascii=False, indent=2)", "json.load(f) 는 파일 객체를 받습니다. json.loads 와 헷갈리지 마세요.", "loaded[\"limits\"][\"temp_max\"]"],
+    checks: [
+      { label: "1단계 config.json 저장 (한글 그대로)", expr: "'도금조-2' in open('config.json', encoding='utf-8').read() and '\\n  ' in open('config.json', encoding='utf-8').read()", hint: "ensure_ascii=False 와 indent=2 를 넣었는지 확인하세요." },
+      { label: "2단계 불러온 값이 원본과 같음", expr: "loaded == config", hint: "json.load(f)" },
+      { label: "3단계 온도 상한", expr: "temp_max == 55", hint: "loaded[\"limits\"][\"temp_max\"]" },
+    ],
+  },
+  {
+    id: "11-3",
+    unit: 11,
+    title: "CSV 측정값 평균 구하기",
+    type: "function",
+    level: 2,
+    uses: [["open(filename, encoding=\"utf-8\")", "파일 열기"], ["readlines() 또는 csv.reader", "줄 단위로 읽기"], ["[1:]", "첫 줄(헤더) 건너뛰기"], ["split(\",\")", "쉼표로 칸 나누기"], ["float()", "문자열 → 실수"], ["round(값, 2)", "반올림"]],
+    origin: "CSV 파일 읽기 (기본)",
+    files: { "measure.csv": "lot,value\nL01,10.02\nL02,9.98\nL03,10.05\nL04,9.97\n" },
+    desc: `<p>측정 장비가 남긴 CSV 파일 이름 <code>filename</code>이 주어집니다. 첫 줄은 헤더 <code>lot,value</code>입니다. <code>value</code>의 평균을 소수 둘째 자리로 반올림해 반환하세요.</p>
+<p>아래 <b>제공 파일</b>과 같은 형식이며, 채점할 때는 행 수와 값이 다른 파일도 들어옵니다.</p>`,
+    starter: `def solution(filename):
+    answer = 0
+    return answer
+`,
+    solution: `def solution(filename):
+    values = []
+    with open(filename, encoding="utf-8") as f:
+        for line in f.readlines()[1:]:
+            line = line.strip()
+            if line:
+                values.append(float(line.split(",")[1]))
+    return round(sum(values) / len(values), 2)
+`,
+    hints: ["readlines()[1:] 로 헤더를 건너뜁니다.", "line.strip().split(\",\")[1] 이 값입니다. float()로 바꾸세요.", "sum(values) / len(values)"],
+    tests: [
+      { args: ["measure.csv"], expected: 10.01 },
+      { args: ["measure.csv"], files: { "measure.csv": "lot,value\nA1,50\nA2,51\nA3,52.5\n" }, expected: 51.17, hidden: true },
+      { args: ["measure.csv"], files: { "measure.csv": "lot,value\nX,3.333\n" }, expected: 3.33, hidden: true },
+    ],
+  },
+  {
+    id: "11-4",
+    unit: 11,
+    title: "DictReader로 불합격 로트 찾기",
+    type: "function",
+    level: 2,
+    uses: [["import csv", "CSV 모듈"], ["csv.DictReader(f)", "한 줄을 {열 이름: 값} 딕셔너리로"], ["row[\"result\"]", "열 이름으로 값 꺼내기"], ["append()", "결과 모으기"]],
+    origin: "csv.DictReader",
+    files: { "inspections.csv": "lot,inspector,result\nL01,김품질,OK\nL02,이검사,NG\nL03,김품질,OK\nL04,박공정,NG\n" },
+    desc: `<p>검사 기록 CSV 파일 이름 <code>filename</code>이 주어집니다. 열은 <code>lot,inspector,result</code>입니다. <code>result</code>가 <code>NG</code>인 로트 번호를 파일 순서대로 리스트로 반환하세요.</p>
+<p><code>csv.DictReader</code>를 쓰면 열 이름으로 값을 꺼낼 수 있어 열 순서가 바뀌어도 안전합니다.</p>`,
+    starter: `import csv
+
+def solution(filename):
+    answer = []
+    return answer
+`,
+    solution: `import csv
+
+def solution(filename):
+    answer = []
+    with open(filename, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row["result"] == "NG":
+                answer.append(row["lot"])
+    return answer
+`,
+    hints: ["with open(filename, encoding=\"utf-8\") as f: for row in csv.DictReader(f):", "row 는 {\"lot\": \"L02\", \"inspector\": \"이검사\", \"result\": \"NG\"} 같은 딕셔너리입니다."],
+    tests: [
+      { args: ["inspections.csv"], expected: ["L02", "L04"] },
+      { args: ["inspections.csv"], files: { "inspections.csv": "result,lot,inspector\nOK,B1,김\nOK,B2,이\n" }, expected: [], hidden: true },
+      { args: ["inspections.csv"], files: { "inspections.csv": "lot,inspector,result\nC9,최,NG\n" }, expected: ["C9"], hidden: true },
+    ],
+  },
+  {
+    id: "11-5",
+    unit: 11,
+    title: "규격 JSON으로 CSV 측정값 판정하기",
+    type: "function",
+    level: 3,
+    challenge: true,
+    uses: [["json.load()", "항목별 규격 읽기"], ["csv.DictReader()", "측정값 한 줄씩 읽기"], ["float()", "문자열 값을 숫자로"], ["딕셔너리 in", "규격에 있는 항목인지 확인"], ["f-string", "결과 문자열 만들기"]],
+    origin: "CSV + JSON 종합",
+    files: {
+      "spec.json": '{\n  "temp": {"min": 20, "max": 25},\n  "press": {"min": 1.0, "max": 1.5}\n}\n',
+      "readings.csv": "time,item,value\n09:00,temp,22.5\n09:00,press,1.62\n10:00,temp,19.8\n10:00,humid,40\n11:00,press,1.5\n",
+    },
+    desc: `<p>항목별 규격이 담긴 JSON 파일 <code>spec_name</code>과 측정 기록 CSV 파일 <code>csv_name</code>이 주어집니다.</p>
+<ul><li>JSON 예: <code>{"temp": {"min": 20, "max": 25}, ...}</code></li>
+<li>CSV 열: <code>time,item,value</code></li></ul>
+<p>규격을 벗어난(<code>value &lt; min</code> 또는 <code>value &gt; max</code>) 측정을 <code>'시간 항목 값'</code> 형식 문자열로, 파일 순서대로 리스트에 담아 반환하세요. 경계값은 합격이고, 값은 CSV에 적힌 그대로 씁니다. <b>규격에 없는 항목</b>은 판정하지 않고 건너뜁니다.</p>
+<p>예: 제공 파일이면 <code>['09:00 press 1.62', '10:00 temp 19.8']</code></p>`,
+    starter: `import csv
+import json
+
+def solution(spec_name, csv_name):
+    answer = []
+    return answer
+`,
+    solution: `import csv
+import json
+
+def solution(spec_name, csv_name):
+    with open(spec_name, encoding="utf-8") as f:
+        spec = json.load(f)
+    answer = []
+    with open(csv_name, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            item = row["item"]
+            if item not in spec:
+                continue
+            value = float(row["value"])
+            if value < spec[item]["min"] or value > spec[item]["max"]:
+                answer.append(f"{row['time']} {item} {row['value']}")
+    return answer
+`,
+    hints: ["먼저 json.load 로 spec 딕셔너리를 만들고, 그다음 CSV를 DictReader 로 읽습니다.", "if row[\"item\"] not in spec: continue", "비교할 때만 float(row[\"value\"]) 를 쓰고, 결과 문자열에는 row[\"value\"] 원래 글자를 넣습니다."],
+    tests: [
+      { args: ["spec.json", "readings.csv"], expected: ["09:00 press 1.62", "10:00 temp 19.8"] },
+      { args: ["spec.json", "readings.csv"], files: { "readings.csv": "time,item,value\n08:00,temp,20\n08:00,temp,25\n" }, expected: [], hidden: true },
+      { args: ["spec.json", "readings.csv"], files: { "spec.json": '{"ph": {"min": 6.5, "max": 7.5}}', "readings.csv": "time,item,value\n13:00,ph,7.51\n13:00,temp,99\n14:00,ph,6.49\n" }, expected: ["13:00 ph 7.51", "14:00 ph 6.49"], hidden: true },
+    ],
+  },
 ];
+
+// ── 개념 퀴즈: 코드를 짜지 않고 OX·객관식·출력 예측으로 빠르게 복습 ──
+// kind: "ox"(answer true/false) | "choice"(options, answer 인덱스) | "short"(answer 문자열 또는 허용 답 배열)
+const QUIZZES = [
+  {
+    id: "7-Q", unit: 7, title: "제어문 개념 퀴즈", type: "quiz", level: 1, origin: "OX · 객관식 · 출력 예측",
+    questions: [
+      { kind: "ox", q: "input()으로 10을 입력받으면 결과는 정수(int) 10이다.", answer: false, explain: "input()은 항상 문자열 '10'을 돌려줍니다. 계산하려면 int(input())처럼 바꿔야 합니다." },
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "print(17 % 5)", answer: "2", explain: "%는 나머지입니다. 17 = 5 × 3 + 2" },
+      { kind: "choice", q: "range(1, 5)가 만드는 숫자는?", options: ["1, 2, 3, 4, 5", "1, 2, 3, 4", "0, 1, 2, 3, 4", "2, 3, 4, 5"], answer: 1, explain: "끝 숫자 5는 포함되지 않습니다." },
+      { kind: "short", q: "while True: 반복을 그 자리에서 끝내는 키워드는?", answer: "break", explain: "break를 만나면 가장 가까운 반복문을 빠져나옵니다." },
+      { kind: "choice", q: "출력 결과는?", code: "x = 10.5\nif x < 9.5:\n    print(\"LOW\")\nelif x > 10.5:\n    print(\"HIGH\")\nelse:\n    print(\"OK\")", options: ["LOW", "HIGH", "OK", "아무것도 출력되지 않는다"], answer: 2, explain: "10.5 > 10.5는 거짓이라 else로 갑니다. 경계값이 규격 안인지 항상 확인하세요." },
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "lot = 7\nprint(f\"LOT-{lot:03d}\")", answer: "LOT-007", explain: ":03d는 3자리로 맞추고 빈자리를 0으로 채웁니다." },
+    ],
+  },
+  {
+    id: "8-Q", unit: 8, title: "문자열 활용 개념 퀴즈", type: "quiz", level: 1, origin: "OX · 객관식 · 출력 예측",
+    questions: [
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "code = \"EQP-A2024-001\"\nprint(code[-3:])", answer: "001", explain: "[-3:]는 뒤에서 3번째부터 끝까지입니다." },
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "s = \"QA-2024\"\nprint(s[3:])", answer: "2024", explain: "인덱스는 0부터 셉니다. Q(0) A(1) -(2) 2(3)…" },
+      { kind: "ox", q: "s = \"ok\" 다음에 s.upper()를 실행하면 s도 \"OK\"로 바뀐다.", answer: false, explain: "문자열은 바뀌지 않는(immutable) 값입니다. upper()는 새 문자열을 돌려주므로 s = s.upper()처럼 다시 담아야 합니다." },
+      { kind: "choice", q: "\"ERROR,Temp,A1,High\".split(\",\")의 길이는?", options: ["1", "3", "4", "5"], answer: 2, explain: "쉼표 3개로 나뉘어 4칸이 됩니다." },
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "print(len(\"LOT 01\"))", answer: "6", explain: "공백도 한 글자로 셉니다." },
+      { kind: "choice", q: "문자열 앞뒤의 공백과 줄바꿈을 지우는 메서드는?", options: ["strip()", "split()", "replace()", "upper()"], answer: 0, explain: "파일에서 읽은 줄의 \\n을 지울 때도 strip()을 씁니다." },
+    ],
+  },
+  {
+    id: "9-Q", unit: 9, title: "함수 · 자료구조 개념 퀴즈", type: "quiz", level: 1, origin: "OX · 객관식 · 출력 예측",
+    questions: [
+      { kind: "ox", q: "함수 안에서 print()로 출력한 값도 함수의 반환값이 된다.", answer: false, explain: "화면 출력과 반환은 다릅니다. 값을 돌려주려면 return을 써야 합니다." },
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "def double(x):\n    x * 2\n\nprint(double(3))", answer: "None", explain: "return이 없으면 함수는 None을 돌려줍니다." },
+      { kind: "choice", q: "출력 결과는?", code: "for i, v in enumerate([\"OK\", \"NG\"]):\n    print(i, v)", options: ["0 OK / 1 NG", "1 OK / 2 NG", "OK 0 / NG 1", "오류가 난다"], answer: 0, explain: "enumerate는 0부터 시작하는 (인덱스, 값) 쌍을 줍니다." },
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "d = {\"찍힘\": 2}\nprint(d.get(\"기포\", 0))", answer: "0", explain: "get(키, 기본값)은 키가 없으면 기본값을 돌려줍니다. d[\"기포\"]는 KeyError가 납니다." },
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "print([x for x in [3, 8, 5, 10] if x > 4])", answer: "[8, 5, 10]", explain: "조건을 만족하는 값만 원래 순서대로 남습니다." },
+      { kind: "choice", q: "max([3, 11, 5])의 결과는?", options: ["3", "5", "11", "19"], answer: 2, explain: "가장 큰 값을 돌려줍니다. 위치가 필요하면 리스트.index()나 enumerate를 함께 씁니다." },
+    ],
+  },
+  {
+    id: "10-Q", unit: 10, title: "NumPy 개념 퀴즈", type: "quiz", level: 1, origin: "OX · 객관식 · 출력 예측",
+    questions: [
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "import numpy as np\na = np.array([1, 2, 3])\nprint(a * 2)", answer: "[2 4 6]", explain: "배열은 각 원소에 바로 연산됩니다. NumPy 배열은 쉼표 없이 출력됩니다." },
+      { kind: "ox", q: "표본 데이터의 표준편차는 arr.std(ddof=1)로 구한다.", answer: true, explain: "기본값 ddof=0은 모표준편차입니다. Cp, Cpk 계산에서 자주 틀리는 부분입니다." },
+      { kind: "choice", q: "2차원 배열 data에서 data.sum(axis=1)이 계산하는 것은?", options: ["열마다 합계", "행마다 합계", "전체 합계", "행과 열을 바꾼 배열"], answer: 1, explain: "axis=1은 옆으로(행 안에서) 더합니다. 행이 라인이면 라인별 합계입니다." },
+      { kind: "short", q: "출력 결과를 쓰세요.", code: "import numpy as np\na = np.array([24, 26, 25])\nprint(a[a > 24.5])", answer: "[26 25]", explain: "불리언 인덱싱은 조건이 True인 값만 남깁니다." },
+      { kind: "ox", q: "[1, 2] + [3, 4]와 np.array([1, 2]) + np.array([3, 4])의 결과는 같다.", answer: false, explain: "리스트 +는 이어 붙이기([1, 2, 3, 4]), 배열 +는 같은 위치끼리 더하기([4 6])입니다." },
+      { kind: "choice", q: "np.argmax([3, 9, 4])의 결과는?", options: ["9", "1", "2", "0"], answer: 1, explain: "argmax는 가장 큰 값의 위치(인덱스)를 돌려줍니다." },
+    ],
+  },
+  {
+    id: "11-Q", unit: 11, title: "파일 입출력 개념 퀴즈", type: "quiz", level: 1, origin: "OX · 객관식 · 빈칸",
+    questions: [
+      { kind: "choice", q: "기존 내용을 지우지 않고 뒤에 이어 쓰는 모드는?", options: ["\"r\"", "\"w\"", "\"a\"", "\"b\""], answer: 2, explain: "a는 append입니다. w는 기존 내용을 지우고 새로 씁니다." },
+      { kind: "ox", q: "with open(...) as f: 블록이 끝나면 f.close()를 쓰지 않아도 파일이 닫힌다.", answer: true, explain: "with가 블록이 끝날 때, 중간에 오류가 나도 파일을 닫아 줍니다." },
+      { kind: "choice", q: "f.readlines()가 돌려주는 것은?", options: ["파일 전체를 담은 문자열 하나", "각 줄을 담은 리스트", "첫 줄 하나", "열 이름을 키로 하는 딕셔너리"], answer: 1, explain: "각 줄 끝에 \\n이 붙어 있으니 strip()으로 지워서 씁니다." },
+      { kind: "ox", q: "csv.DictReader로 읽은 row[\"value\"]가 90이면, 그 값은 숫자 90이다.", answer: false, explain: "CSV에서 읽은 값은 모두 문자열 '90'입니다. 계산하려면 int()나 float()로 바꿔야 합니다." },
+      { kind: "choice", q: "json.dump(data, f, ensure_ascii=False)에서 ensure_ascii=False의 역할은?", options: ["들여쓰기를 넣는다", "한글을 \\uXXXX로 바꾸지 않고 그대로 저장한다", "저장 후 파일을 닫는다", "키를 정렬한다"], answer: 1, explain: "기본값(True)이면 한글이 \\uB3C4 같은 코드로 저장됩니다. 들여쓰기는 indent입니다." },
+      { kind: "short", q: "CSV 파일을 쓸 때 줄 사이에 빈 줄이 생기지 않도록 open()에 넣는 인자를 쓰세요. (예: encoding=\"utf-8\" 처럼)", answer: ["newline=\"\"", "newline=''"], explain: "open(\"out.csv\", \"w\", newline=\"\", encoding=\"utf-8\")" },
+      { kind: "choice", q: "JSON 파일을 읽어 파이썬 딕셔너리로 만드는 함수는?", options: ["json.dump(f)", "json.load(f)", "json.read(f)", "f.json()"], answer: 1, explain: "dump는 파이썬 → 파일, load는 파일 → 파이썬입니다. 문자열을 다룰 때는 dumps/loads입니다." },
+    ],
+  },
+];
+PROBLEMS.unshift(...DAY1_PROBLEMS);
+PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES);
+// 단원 순서, 단원 안에서는 개념 퀴즈 → 기본 → 도전 (sort는 안정 정렬이라 원래 순서 유지)
+const order = (p) => (p.type === "quiz" ? 0 : p.challenge ? 2 : 1);
+PROBLEMS.sort((a, b) => a.unit - b.unit || order(a) - order(b));

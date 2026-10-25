@@ -21,7 +21,8 @@ self.onmessage = async (event) => {
     const py = await ready;
     postMessage({ type: "started", id });
     // numpy 등은 코드나 검사식에서 필요할 때만 내려받는다 (첫 로딩 약 수 초)
-    await py.loadPackagesFromImports(code + "\n" + (problem.type === "steps" ? "import numpy" : ""));
+    const checksUseNp = (problem.checks || []).some((c) => /\bnp\./.test(c.expr));
+    await py.loadPackagesFromImports(code + "\n" + (checksUseNp ? "import numpy" : ""));
     const fn = py.globals.get(kind === "grade" ? "grade_json" : "run_json");
     const json = kind === "grade" ? fn(JSON.stringify(problem), code) : fn(JSON.stringify(problem), code, stdin || "");
     fn.destroy();

@@ -66,8 +66,9 @@ export function preload() {
 function send(kind, problem, code, stdin) {
   if (!worker) boot().catch(() => {});
   const id = ++seq;
-  // 단계형(numpy)은 첫 실행 때 패키지를 내려받으므로 여유 시간을 더 준다
-  const extra = problem.type === "steps" || /\bnumpy\b/.test(code) ? 15000 : 0;
+  // numpy를 쓰는 문제는 첫 실행 때 패키지를 내려받으므로 여유 시간을 더 준다
+  const usesNp = /\bnumpy\b/.test(code) || (problem.checks || []).some((c) => /\bnp\./.test(c.expr));
+  const extra = usesNp ? 15000 : 0;
   return readyPromise.then(
     () =>
       new Promise((resolve, reject) => {
@@ -77,6 +78,6 @@ function send(kind, problem, code, stdin) {
   );
 }
 
-const spec = (p) => ({ type: p.type, tests: p.tests, checks: p.checks, tolerance: p.tolerance });
+const spec = (p) => ({ type: p.type, tests: p.tests, checks: p.checks, tolerance: p.tolerance, files: p.files });
 export const runCode = (problem, code, stdin) => send("run", spec(problem), code, stdin);
 export const gradeCode = (problem, code) => send("grade", spec(problem), code);
