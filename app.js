@@ -458,9 +458,9 @@ function viewHome() {
       <ul class="plist panel">${rows}</ul></section>`;
   }).join("");
   $app.innerHTML = `${topbar()}<main class="page">
-    <div class="hero"><div><div class="eyebrow">복습 문제</div><h1>오늘도 한 문제씩, 현장 데이터로</h1>
-    <p>문제를 고르고 브라우저에서 바로 코드를 실행하고 제출하세요. 설치할 것은 없습니다.</p></div>
-    <div class="meter"><div class="meter-label"><span>해결한 문제</span><b>${solved} / ${PROBLEMS.length}</b></div>
+    <div class="hero"><div><div class="eyebrow">Python Track</div><h1>${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?</h1>
+    <p>한 문제씩 쌓이면 실력이 됩니다. 현장 데이터로 만든 문제를 풀고 바로 채점받으세요.</p></div>
+    <div class="meter"><div class="meter-label"><span>나의 빌드업</span><b>${solved} / ${PROBLEMS.length}</b></div>
     <div class="meter-bar"><span style="width:${pct}%"></span></div></div></div>
     ${todayHtml()}
     ${units}
