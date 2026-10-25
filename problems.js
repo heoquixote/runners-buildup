@@ -186,37 +186,10 @@ print()
   {
     id: "1-5",
     unit: 1,
-    title: "규격 판정 OK / LOW / HIGH",
-    type: "io",
-    level: 1,
-    uses: [["float()", "소수점이 있는 측정값으로 변환"], ["if / elif / else", "세 갈래 판정"], ["< , >", "규격 하한·상한과 비교"]],
-    origin: "신규",
-    desc: `<p>규격은 <b>9.5 이상 10.5 이하</b>입니다. 측정값을 입력받아 규격보다 작으면 <code>LOW</code>, 크면 <code>HIGH</code>, 규격 안이면 <code>OK</code>를 출력하세요.</p>`,
-    starter: `x = float(input("측정값: "))
-`,
-    solution: `x = float(input("측정값: "))
-if x < 9.5:
-    print("LOW")
-elif x > 10.5:
-    print("HIGH")
-else:
-    print("OK")
-`,
-    hints: ["경계값 9.5와 10.5는 규격 안(OK)입니다.", "if / elif / else 세 갈래로 나누세요."],
-    tests: [
-      { stdin: "10.2", expected: "OK" },
-      { stdin: "9.4", expected: "LOW" },
-      { stdin: "9.5", expected: "OK", hidden: true },
-      { stdin: "10.5", expected: "OK", hidden: true },
-      { stdin: "10.51", expected: "HIGH", hidden: true },
-    ],
-  },
-  {
-    id: "1-6",
-    unit: 1,
     title: "규격 안에 들어올 때까지 재측정",
     type: "io",
-    level: 2,
+    level: 3,
+    challenge: true,
     uses: [["while True", "조건을 만족할 때까지 계속 반복"], ["break", "반복문 빠져나오기"], ["count += 1", "측정 횟수 세기"], ["9.5 <= x <= 10.5", "범위 비교를 한 번에"], ["f-string", "결과 문장 만들기"]],
     origin: "비밀번호 맞추기",
     desc: `<p>규격(9.5 이상 10.5 이하) 안의 값이 나올 때까지 측정값을 계속 입력받으세요.</p>
@@ -342,28 +315,44 @@ while True:
   {
     id: "2-5",
     unit: 2,
-    title: "설비 로그에서 ERROR 건수 세기",
+    title: "설비 로그 정리 리포트",
     type: "function",
-    level: 2,
-    uses: [["for 반복", "로그 한 줄씩 보기"], ["split(\",\")", "쉼표로 나눠 리스트 만들기"], ["[0]", "첫 번째 칸(로그 등급)"], ["count += 1", "개수 세기"]],
-    origin: "split()",
-    desc: `<p>설비 로그는 <code>'상태,종류,일시,값'</code> 형식입니다. 상태가 <code>ERROR</code>인 로그 수를 반환하세요.</p>`,
+    level: 3,
+    challenge: true,
+    uses: [["split(\",\")", "쉼표로 칸 나누기"], ["strip()", "앞뒤 공백 지우기"], ["upper()", "대소문자 통일해서 비교"], ["len()", "칸 수가 4개인지 확인"], ["슬라이싱 + 연결", "A20240901 → 2024-09-01"], ["continue", "잘못된 줄은 건너뛰기"]],
+    origin: "split() 응용 (단원 2 종합)",
+    desc: `<p>설비 로그는 <code>'상태,종류,일시,값'</code> 형식입니다. 예: <code>'ERROR,Temp,A20240901,High'</code></p>
+<p>상태가 <b>ERROR</b>인 로그만 골라 <code>'2024-09-01 Temp High'</code> 형식의 문자열 리스트로 반환하세요. 순서는 원래 순서를 따릅니다.</p>
+<ul><li>현장 로그라 지저분합니다. 각 칸 앞뒤에 공백이 있을 수 있고, 상태는 <code>error</code>, <code>Error</code>처럼 대소문자가 섞여 있을 수 있습니다.</li>
+<li>쉼표로 나눈 칸이 4개가 아닌 줄은 깨진 로그이므로 건너뜁니다.</li>
+<li>일시 칸은 맨 앞 1글자(설비 코드) 뒤에 <code>YYYYMMDD</code>가 붙어 있습니다.</li></ul>`,
     starter: `def solution(logs):
-    count = 0
-    return count
+    answer = []
+    return answer
 `,
     solution: `def solution(logs):
-    count = 0
+    answer = []
     for log in logs:
-        if log.split(",")[0] == "ERROR":
-            count += 1
-    return count
+        parts = log.split(",")
+        if len(parts) != 4:
+            continue
+        status = parts[0].strip()
+        kind = parts[1].strip()
+        when = parts[2].strip()
+        value = parts[3].strip()
+        if status.upper() != "ERROR":
+            continue
+        d = when[1:]
+        answer.append(d[:4] + "-" + d[4:6] + "-" + d[6:] + " " + kind + " " + value)
+    return answer
 `,
-    hints: ["log.split(',') 의 0번째 값이 상태입니다.", "'ERROR' in log 로 검사하면 다른 칸에 ERROR가 들어간 로그도 세게 됩니다."],
+    hints: ["먼저 log.split(',') 결과의 길이가 4인지 확인하고, 아니면 continue 로 건너뜁니다.", "각 칸에 .strip() 을 붙여 공백을 지우고, 상태는 .upper() == 'ERROR' 로 비교하세요.", "일시는 when[1:] 로 앞 글자를 뗀 뒤 [:4], [4:6], [6:] 으로 나눠 '-' 로 잇습니다."],
     tests: [
-      { args: [["ERROR,Temp,A20240901,High", "OK,Temp,A20240901,Normal", "ERROR,Press,A20240902,Low"]], expected: 2 },
-      { args: [[]], expected: 0 },
-      { args: [["OK,ERROR_CHECK,A1,Normal"]], expected: 0, hidden: true },
+      { args: [["ERROR,Temp,A20240901,High", "OK,Temp,A20240901,Normal", "ERROR,Press,B20240902,Low"]], expected: ["2024-09-01 Temp High", "2024-09-02 Press Low"] },
+      { args: [[" error , Temp , A20241005 , High ", "Error,Vib,C20241006,Over"]], expected: ["2024-10-05 Temp High", "2024-10-06 Vib Over"] },
+      { args: [["ERROR,Temp,A20240901", "OK,ERROR_CHECK,A20240901,Normal"]], expected: [], hidden: true },
+      { args: [[]], expected: [], hidden: true },
+      { args: [["WARN,Temp,A20240903,High", "ERROR,Humi,D20241231,Low", "ERROR,Temp,A20241231,High,extra"]], expected: ["2024-12-31 Humi Low"], hidden: true },
     ],
   },
 
@@ -484,6 +473,7 @@ while True:
     title: "이동평균으로 추세 보기",
     type: "function",
     level: 3,
+    challenge: true,
     uses: [["슬라이싱 values[i:i+k]", "연속된 k개 꺼내기"], ["sum() / len()", "평균 계산"], ["round(값, 2)", "소수 둘째 자리 반올림"], ["range(len(values) - k + 1)", "구간 시작 위치 반복"]],
     origin: "신규",
     desc: `<p>측정값 리스트 <code>values</code>와 구간 크기 <code>k</code>가 주어집니다. 앞에서부터 연속된 <code>k</code>개씩의 평균(이동평균)을 소수 둘째 자리로 반올림해 리스트로 반환하세요.</p>
@@ -740,6 +730,7 @@ print("4. 라인별 일평균:", line_avg)
     title: "Z-점수로 이상치 찾기",
     type: "steps",
     level: 3,
+    challenge: true,
     uses: [["배열.mean(), 배열.std(ddof=1)", "평균과 표본 표준편차"], ["(x - 평균) / 표준편차", "배열 전체를 한 번에 표준화"], ["np.abs()", "절댓값"], ["np.where(조건)[0]", "조건을 만족하는 인덱스"], ["len()", "개수"]],
     origin: "신규",
     desc: `<p>충전 중량(g) 측정값 10개가 있습니다. Z-점수가 절댓값 2를 넘으면 이상치로 봅니다.</p>

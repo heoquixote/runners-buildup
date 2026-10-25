@@ -442,16 +442,16 @@ function viewHome() {
   const units = UNITS.map((u) => {
     const list = PROBLEMS.filter((p) => p.unit === u.id);
     const done = list.filter((p) => state.progress[p.id]?.solved).length;
-    const rows = list
-      .map(
-        (p) => `<li><a class="prow" href="#/p/${p.id}">
+    const row = (p) => `<li><a class="prow${p.challenge ? " challenge" : ""}" href="#/p/${p.id}">
           <span class="pid">${p.id}</span>
           <span class="ptitle">${esc(p.title)}<span class="porigin">${esc(p.origin)}</span></span>
-          <span class="tags"><span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}</span>
+          <span class="tags">${p.challenge ? '<span class="tag challenge-tag">도전</span>' : ""}<span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}</span>
           ${statusPill(p.id)}
-        </a></li>`
-      )
-      .join("");
+        </a></li>`;
+    const basic = list.filter((p) => !p.challenge);
+    const hard = list.filter((p) => p.challenge);
+    const rows = `<li class="plist-sep">기본 문제</li>${basic.map(row).join("")}`
+      + (hard.length ? `<li class="plist-sep challenge">도전 문제 · 단원을 마무리하는 어려운 문제</li>${hard.map(row).join("")}` : "");
     return `<section class="unit">
       <div class="unit-head"><span class="unit-num">UNIT ${u.id}</span><h2>${esc(u.title)}</h2><span class="muted">${esc(u.summary)}</span>
       <span class="unit-count">${done} / ${list.length}</span></div>
@@ -495,7 +495,7 @@ function problemTab(p) {
   const answer = solved
     ? `<details class="hint"><summary>모범 답안</summary><pre>${esc(p.solution)}</pre></details>`
     : `<div class="locked-answer">모범 답안은 정답을 맞히면 열립니다.</div>`;
-  return `<div class="meta-line"><span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}<span class="muted" style="font-size:13px">원본: ${esc(p.origin)}</span></div>
+  return `<div class="meta-line">${p.challenge ? '<span class="tag challenge-tag">도전 문제</span>' : ""}<span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}<span class="muted" style="font-size:13px">원본: ${esc(p.origin)}</span></div>
     <h1>${p.id}. ${esc(p.title)}</h1>
     <div class="note">${p.desc}</div>
     ${p.uses?.length ? `<div class="uses"><h4>이 문제에서 쓰는 함수 · 문법</h4><dl>${p.uses.map(([k, v]) => `<div><dt><code>${esc(k)}</code></dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>` : ""}

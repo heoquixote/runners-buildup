@@ -543,3 +543,13 @@ kbd {
 .today-pick legend { font: 600 12px/1 var(--font-en); letter-spacing: .1em; color: var(--track); padding: 0 4px; text-transform: uppercase; }
 .today-pick label { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
 .today-pick input { accent-color: #c8ff3d; width: 16px; height: 16px; }
+
+/* ── 기본 / 도전 문제 구분 ── */
+.plist-sep {
+  padding: 10px 16px 6px; font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .02em;
+  background: var(--surface-2);
+}
+.plist .plist-sep + li { border-top: 1px solid var(--line); }
+.plist-sep.challenge { color: var(--orange); }
+.challenge-tag { border-color: rgba(255,154,81,.5) !important; color: var(--orange) !important; font-weight: 700; }
+.prow.challenge .pid { color: var(--orange); }
