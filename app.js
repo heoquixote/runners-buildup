@@ -119,8 +119,8 @@ function topbar({ admin = false } = {}) {
       ? `<span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
       : "";
   return `<header class="topbar"><div class="topbar-inner">
-    <a class="brand" href="${admin ? "#/admin" : "#/"}"><span class="brand-mark">Py</span>
-      <span><span class="brand-name">파이썬 복습장${admin ? " · 어드민" : ""}</span><br><span class="brand-course">${esc(CONFIG.COURSE_NAME)}</span></span></a>
+    <a class="brand" href="${admin ? "#/admin" : "#/"}"><span class="brand-mark">RB</span>
+      <span><span class="brand-name">러너즈빌드업${admin ? " · 어드민" : ""}</span><br><span class="brand-course">${esc(CONFIG.COURSE_NAME)}</span></span></a>
     ${demo}<span class="spacer"></span>${right}
   </div></header>`;
 }
@@ -158,7 +158,7 @@ function viewLogin() {
     ? `<div class="demo-note"><b>데모 모드</b>입니다. 기록은 이 브라우저에만 저장됩니다. 이름 <code>체험학생</code>, 번호 <code>1234</code>로 들어가 보세요.</div>`
     : "";
   $app.innerHTML = `<main class="login-wrap"><form class="login panel" id="login-form" novalidate>
-    <div><div class="eyebrow">${esc(CONFIG.COURSE_NAME)}</div><h1>파이썬 복습장</h1>
+    <div><div class="eyebrow">${esc(CONFIG.COURSE_NAME)}</div><h1>러너즈빌드업</h1><p class="lead" style="margin-top:2px">파이썬 트랙</p>
     <p class="lead">강사님께 받은 이름과 4자리 번호로 들어오세요.</p></div>
     ${demo}
     <div class="field"><label for="login-name">이름</label><input id="login-name" autocomplete="username" required maxlength="40"></div>
