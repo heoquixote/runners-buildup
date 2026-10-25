@@ -46,6 +46,25 @@ class _Feed:
         return value
 
 
+# 메시지별로 더 구체적인 안내 (입문자가 자주 만나는 경우)
+MESSAGE_HINTS = [
+    ("'return' outside function", "return은 def 함수 안에서만 씁니다. 입출력형 문제는 return 대신 print()로 출력하세요."),
+    ("unsupported operand type(s) for +: 'int' and 'str'", "숫자와 문자열을 더하고 있습니다. str(숫자) 또는 f-string을 쓰세요."),
+    ("can only concatenate str (not \"int\") to str", "문자열과 숫자를 더하고 있습니다. str(숫자) 또는 f-string을 쓰세요."),
+    ("'<' not supported between instances of 'str'", "문자열과 숫자를 비교하고 있습니다. input()은 문자열이니 int()나 float()로 바꾸세요."),
+    ("'>' not supported between instances of 'str'", "문자열과 숫자를 비교하고 있습니다. input()은 문자열이니 int()나 float()로 바꾸세요."),
+    ("not all arguments converted during string formatting", "문자열에 % 연산을 하고 있습니다. input()으로 받은 값을 int()로 바꿨는지 확인하세요."),
+    ("expected ':'", "if, for, while, def, else 줄 끝에 콜론(:)이 필요합니다."),
+]
+
+
+def _message_hint(message):
+    for key, hint in MESSAGE_HINTS:
+        if key in (message or ""):
+            return hint
+    return ""
+
+
 def _error_info(exc):
     name = type(exc).__name__
     line = None
@@ -60,7 +79,7 @@ def _error_info(exc):
         "type": name,
         "message": message,
         "line": line,
-        "hint": HINTS.get(name, ""),
+        "hint": _message_hint(message) or HINTS.get(name, ""),
     }
 
 
