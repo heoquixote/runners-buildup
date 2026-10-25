@@ -57,6 +57,9 @@ function errorMessage(err) {
     {
       invalid: "이름 또는 번호가 맞지 않습니다.",
       pin_format: "번호는 숫자 4자리입니다.",
+      name_format: "이름은 1~40자로 입력하세요.",
+      name_taken: "이미 가입된 이름입니다. 본인이면 로그인하고, 동명이인이면 이름 뒤에 숫자를 붙여 주세요 (예: 김민수2).",
+      join_code: "가입 코드가 맞지 않습니다. 강사님이 알려 준 코드를 확인하세요.",
       locked: "5번 틀려서 잠시 잠겼습니다. 5분 뒤에 다시 시도하거나 강사님께 번호 재발급을 요청하세요.",
       session: "로그인이 만료되었습니다. 다시 로그인해 주세요.",
       network: "서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.",
@@ -116,11 +119,11 @@ function topbar({ admin = false } = {}) {
   const right = admin
     ? `<a class="btn ghost small" href="#/">수강생 화면</a><button class="btn small" data-act="admin-logout">어드민 로그아웃</button>`
     : state.session
-      ? `<span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
-      : "";
+      ? `<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
+      : `<a class="btn ghost small" href="#/guide">사용 방법</a>`;
   return `<header class="topbar"><div class="topbar-inner">
     <a class="brand" href="${admin ? "#/admin" : "#/"}"><span class="brand-mark">RB</span>
-      <span><span class="brand-name">러너즈빌드업${admin ? " · 어드민" : ""}</span><br><span class="brand-course">${esc(CONFIG.COURSE_NAME)}</span></span></a>
+      <span><span class="brand-name">RUNNERS BUILD-UP${admin ? " · ADMIN" : ""}</span><br><span class="brand-course">Python Track · ${esc(CONFIG.COURSE_NAME)}</span></span></a>
     ${demo}<span class="spacer"></span>${right}
   </div></header>`;
 }
@@ -143,7 +146,8 @@ async function route() {
   const hash = location.hash || "#/";
   window.scrollTo(0, 0);
   if (hash.startsWith("#/admin")) return routeAdmin(hash);
-  if (!state.session) return viewLogin();
+  if (hash.startsWith("#/guide")) return viewGuide();
+  if (!state.session) return hash.startsWith("#/signup") ? viewSignup() : viewLogin();
   if (!state.progressLoaded) await loadProgress();
   if (!state.session) return;
   const m = hash.match(/^#\/p\/([\w-]+)/);
@@ -157,15 +161,14 @@ function viewLogin() {
   const demo = api.mode === "demo"
     ? `<div class="demo-note"><b>데모 모드</b>입니다. 기록은 이 브라우저에만 저장됩니다. 이름 <code>체험학생</code>, 번호 <code>1234</code>로 들어가 보세요.</div>`
     : "";
-  $app.innerHTML = `<main class="login-wrap"><form class="login panel" id="login-form" novalidate>
-    <div><div class="eyebrow">${esc(CONFIG.COURSE_NAME)}</div><h1>러너즈빌드업</h1><p class="lead" style="margin-top:2px">파이썬 트랙</p>
-    <p class="lead">강사님께 받은 이름과 4자리 번호로 들어오세요.</p></div>
+  $app.innerHTML = `<main class="login-wrap"><form class="login panel lime" id="login-form" novalidate>
+    ${authHead("login")}
     ${demo}
     <div class="field"><label for="login-name">이름</label><input id="login-name" autocomplete="username" required maxlength="40"></div>
     <div class="field"><label for="login-pin">4자리 번호</label><input id="login-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" required></div>
     <p class="form-error" id="login-error"></p>
-    <button class="btn primary" type="submit" id="login-btn">들어가기</button>
-    <div class="login-foot"><span class="muted">번호를 잊었다면 강사님께 재발급을 요청하세요.</span><a href="#/admin">강사 로그인</a></div>
+    <button class="btn primary block" type="submit" id="login-btn">들어가기</button>
+    <div class="login-foot"><span>번호를 잊었다면 강사님께 재발급을 요청하세요.</span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#login-form");
   const pinInput = form.querySelector("#login-pin");
@@ -193,6 +196,180 @@ function viewLogin() {
     }
   });
   form.querySelector("#login-name").focus();
+}
+
+function authHead(active) {
+  return `<div><div class="eyebrow">Python Track · ${esc(CONFIG.COURSE_NAME)}</div><h1>러너즈빌드업</h1>
+    <p class="lead">QA/QC 실무 예제로 파이썬을 복습하고 바로 채점받으세요.</p></div>
+    <nav class="login-switch" aria-label="로그인 또는 회원가입">
+      <a href="#/" ${active === "login" ? 'aria-current="page"' : ""}>로그인</a>
+      <a href="#/signup" ${active === "signup" ? 'aria-current="page"' : ""}>회원가입</a>
+    </nav>`;
+}
+
+// ── 사용 방법 · 코드 작성법 ───────────────────────────────
+const codeBlock = (code) => `<pre class="guide-code"><code>${esc(code)}</code></pre>`;
+function viewGuide() {
+  const back = state.session ? `<a class="btn small" href="#/">문제 목록으로</a>` : `<a class="btn small" href="#/">로그인하러 가기</a>`;
+  $app.innerHTML = `${topbar()}<main class="page guide">
+    <div class="hero"><div><div class="eyebrow">Guide</div><h1>사용 방법과 코드 작성법</h1>
+      <p>문제는 세 가지 유형이 있습니다. 유형마다 답을 내는 방법이 다르니 처음 한 번만 읽어 보세요.</p></div>${back}</div>
+
+    <nav class="guide-toc panel flat" aria-label="목차">
+      <a href="#/guide" data-jump="g-use">사이트 사용법</a>
+      <a href="#/guide" data-jump="g-io">입출력형</a>
+      <a href="#/guide" data-jump="g-fn">함수형</a>
+      <a href="#/guide" data-jump="g-steps">단계 실습형</a>
+      <a href="#/guide" data-jump="g-mistakes">자주 하는 실수</a>
+    </nav>
+
+    <section class="panel lime guide-sec" id="g-use"><div class="eyebrow">01 · Basics</div><h2>사이트 사용법</h2>
+      <div class="guide-grid">
+        <div><h3>실행과 제출의 차이</h3>
+          <ul><li><b>실행</b>: 코드를 돌려 출력만 보여 줍니다. 채점도 기록도 하지 않습니다.</li>
+          <li><b>제출</b>: 공개 예시와 숨은 테스트로 채점하고, 결과가 강사님 화면에 기록됩니다.</li>
+          <li>제출은 몇 번을 해도 괜찮습니다. 처음 정답을 맞힌 시각으로 순위가 정해집니다.</li></ul></div>
+        <div><h3>입력값 넣어 보기</h3>
+          <ul><li>입출력형은 편집기 아래 <b>실행할 때 넣을 입력값</b> 칸에 값을 적고 실행하면 <code>input()</code>이 그 값을 읽습니다.</li>
+          <li><code>input()</code>을 여러 번 쓰면 한 줄에 하나씩 적으세요.</li></ul></div>
+        <div><h3>단축키</h3>
+          <ul><li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> 실행</li><li><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Enter</kbd> 제출</li>
+          <li>Mac은 <kbd>Ctrl</kbd> 대신 <kbd>Cmd</kbd>도 됩니다.</li></ul></div>
+        <div><h3>작성 중인 코드</h3>
+          <ul><li>코드는 이 브라우저에 자동 저장됩니다. 다른 컴퓨터에서는 처음 코드로 보입니다.</li>
+          <li><b>초기화</b>를 두 번 누르면 처음 코드로 돌아갑니다.</li></ul></div>
+      </div>
+    </section>
+
+    <section class="panel guide-sec" id="g-io"><div class="eyebrow">02 · Input / Output</div><h2>입출력형: <code>input()</code>으로 읽고 <code>print()</code>로 출력</h2>
+      <p>채점기가 입력값을 넣어 주고, 내 코드가 <b>화면에 출력한 글자</b>를 정답과 비교합니다.</p>
+      <div class="guide-grid">
+        <div><h3>정답 예시</h3>${codeBlock(`lot = int(input("로트 번호: "))   # 문자열 → 정수
+
+if lot % 2 == 0:
+    print("A라인 배정")
+else:
+    print("B라인 배정")`)}</div>
+        <div><h3>꼭 지킬 것</h3>
+          <ul><li><code>input()</code>은 항상 <b>문자열</b>을 돌려줍니다. 숫자로 계산하려면 <code>int()</code>나 <code>float()</code>로 바꾸세요.</li>
+          <li>출력 문구는 문제의 <b>출력 형식과 글자 하나까지 같아야</b> 합니다. 띄어쓰기, 단위, 마침표를 확인하세요.</li>
+          <li><code>input("안내 문구")</code>의 안내 문구는 채점에 포함되지 않으니 자유롭게 써도 됩니다.</li>
+          <li>한 줄에 값이 여러 개면 <code>input().split()</code>으로 나눕니다.</li></ul>
+          ${codeBlock(`a, b = map(int, input().split())   # "3 5" → 3, 5`)}</div>
+      </div>
+    </section>
+
+    <section class="panel guide-sec" id="g-fn"><div class="eyebrow">03 · Function</div><h2>함수형: <code>solution</code> 함수가 답을 <code>return</code></h2>
+      <p>프로그래머스와 같은 방식입니다. 채점기가 <code>solution(...)</code>을 여러 값으로 호출하고 <b>돌려준 값(return)</b>을 정답과 비교합니다.</p>
+      <div class="guide-grid">
+        <div><h3>정답 예시</h3>${codeBlock(`def solution(codes):
+    # codes 예: ["OK", "NG", "OK"]
+    count = 0
+    for c in codes:
+        if c == "NG":
+            count += 1
+    return count          # print가 아니라 return`)}</div>
+        <div><h3>꼭 지킬 것</h3>
+          <ul><li>함수 이름 <code>solution</code>과 매개변수는 <b>바꾸지 마세요</b>.</li>
+          <li><code>print()</code>는 확인용일 뿐 채점되지 않습니다. 답은 반드시 <code>return</code>하세요.</li>
+          <li><code>input()</code>은 쓰지 않습니다. 값은 매개변수로 들어옵니다.</li>
+          <li>돌려주는 <b>자료형</b>도 맞아야 합니다. 리스트를 원하면 리스트로, 정수를 원하면 정수로 돌려주세요. 실수는 아주 작은 오차까지 허용합니다.</li>
+          <li><b>실행</b>을 누르면 공개 예시 값으로 <code>solution</code>을 호출해 돌려준 값을 보여 줍니다.</li></ul></div>
+      </div>
+    </section>
+
+    <section class="panel guide-sec" id="g-steps"><div class="eyebrow">04 · Steps</div><h2>단계 실습형: 정해진 <b>변수</b>에 값을 담기</h2>
+      <p>NumPy 실습 문제입니다. 코드가 끝난 뒤 채점기가 <b>변수 이름으로 값을 꺼내</b> 단계별로 확인합니다. 출력 모양은 채점하지 않습니다.</p>
+      <div class="guide-grid">
+        <div><h3>정답 예시</h3>${codeBlock(`import numpy as np
+
+defects = np.array([12, 8, 15, 10, 5])
+production = np.array([1000, 1050, 980, 1020, 950])
+
+total_defects = np.sum(defects)            # 1단계
+daily_defect_rate = np.round(
+    defects / production * 100, 2)         # 3단계`)}</div>
+        <div><h3>꼭 지킬 것</h3>
+          <ul><li>문제에 적힌 <b>변수 이름을 그대로</b> 쓰세요. <code>total_defect</code>처럼 한 글자만 달라도 오답입니다.</li>
+          <li>처음 코드의 <code>0</code>, <code>None</code> 자리를 계산식으로 바꾸면 됩니다.</li>
+          <li>단계마다 따로 채점되니, 맞힌 단계와 틀린 단계를 결과에서 확인하세요.</li>
+          <li>NumPy는 처음 실행할 때 불러오느라 10초 정도 걸릴 수 있습니다.</li></ul></div>
+      </div>
+    </section>
+
+    <section class="panel guide-sec" id="g-mistakes"><div class="eyebrow">05 · Troubleshooting</div><h2>자주 하는 실수</h2>
+      <div class="table-scroll"><table class="ex-table guide-table"><thead><tr><th>오류 · 증상</th><th>원인</th><th>고치는 법</th></tr></thead><tbody>
+        <tr><td><code>TypeError</code> ... str and int</td><td>input()으로 받은 문자열을 바로 계산</td><td><code>int(input())</code>로 변환</td></tr>
+        <tr><td><code>ValueError</code> invalid literal</td><td><code>int("10.5")</code>처럼 소수를 정수로 변환</td><td><code>float()</code> 사용</td></tr>
+        <tr><td><code>IndentationError</code></td><td>들여쓰기 칸 수가 맞지 않음</td><td><code>if</code>, <code>for</code>, <code>def</code> 아래는 스페이스 4칸</td></tr>
+        <tr><td><code>EOFError</code></td><td>입력값보다 <code>input()</code>을 더 많이 호출</td><td>실행 입력값 칸에 줄 수를 맞추기</td></tr>
+        <tr><td>출력은 맞는데 오답</td><td>띄어쓰기·단위·문장부호 차이</td><td>결과의 기대값과 내 출력을 한 글자씩 비교</td></tr>
+        <tr><td>함수형인데 결과가 <code>None</code></td><td><code>return</code> 없이 <code>print</code>만 함</td><td>마지막에 <code>return 답</code></td></tr>
+        <tr><td>6초가 지나 중단됨</td><td>반복문이 끝나지 않음</td><td><code>while</code> 조건이 언젠가 거짓이 되는지 확인</td></tr>
+      </tbody></table></div>
+    </section>
+  </main>`;
+  bindTopbar();
+  $app.querySelectorAll("[data-jump]").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById(a.dataset.jump)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    })
+  );
+}
+
+// ── 회원가입 ─────────────────────────────────────────────
+async function viewSignup() {
+  $app.innerHTML = `<main class="login-wrap"><form class="login panel lime" id="signup-form" novalidate>
+    ${authHead("signup")}
+    <div class="field"><label for="su-name">이름</label><input id="su-name" autocomplete="name" required maxlength="40" placeholder="실명으로 입력하세요">
+      <p class="hint-text">강사님이 제출 현황을 이 이름으로 확인합니다.</p></div>
+    <div class="field"><label for="su-pin">4자리 번호 정하기</label><input id="su-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required>
+      <p class="hint-text">로그인할 때 쓰는 번호입니다. 잊지 않을 숫자로 정하세요.</p></div>
+    <div class="field"><label for="su-pin2">번호 확인</label><input id="su-pin2" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required></div>
+    <div class="field" id="su-code-field" hidden><label for="su-code">가입 코드</label><input id="su-code" autocomplete="off" maxlength="30" placeholder="수업 시간에 안내받은 코드">
+      ${api.mode === "demo" ? '<p class="hint-text">데모 모드의 가입 코드는 <code>QAQC8</code>입니다.</p>' : ""}</div>
+    <p class="form-error" id="su-error"></p>
+    <button class="btn primary block" type="submit" id="su-btn">가입하고 시작하기</button>
+    <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요.</span><a href="#/admin">강사 로그인</a></div>
+  </form></main>`;
+  const form = $app.querySelector("#signup-form");
+  const pins = [form.querySelector("#su-pin"), form.querySelector("#su-pin2")];
+  pins.forEach((el) => el.addEventListener("input", () => (el.value = el.value.replace(/\D/g, "").slice(0, 4))));
+  form.querySelector("#su-name").focus();
+  let needCode = true;
+  api.signupInfo().then((res) => {
+    needCode = !!res.join_code_required;
+    form.querySelector("#su-code-field").hidden = !needCode;
+  }).catch(() => (form.querySelector("#su-code-field").hidden = false));
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errEl = form.querySelector("#su-error");
+    const name = form.querySelector("#su-name").value.trim();
+    const [pin, pin2] = pins.map((el) => el.value);
+    const code = form.querySelector("#su-code").value.trim();
+    if (!name) return (errEl.textContent = "이름을 입력하세요.");
+    if (!/^\d{4}$/.test(pin)) return (errEl.textContent = "번호는 숫자 4자리로 정하세요.");
+    if (pin !== pin2) return (errEl.textContent = "번호 확인이 일치하지 않습니다.");
+    if (needCode && !form.querySelector("#su-code-field").hidden && !code) return (errEl.textContent = "가입 코드를 입력하세요.");
+    const btn = form.querySelector("#su-btn");
+    btn.disabled = true;
+    errEl.textContent = "";
+    try {
+      const res = await api.signup(name, pin, code);
+      state.session = { token: res.token, student: res.student };
+      store.set(SESSION_KEY, state.session);
+      state.progressLoaded = false;
+      preload();
+      toast(`${res.student.name} 님, 가입을 환영합니다.`);
+      location.hash = "#/";
+      route();
+    } catch (err) {
+      errEl.textContent = errorMessage(err);
+      btn.disabled = false;
+    }
+  });
 }
 
 // ── 홈 (단원 목록) ────────────────────────────────────────
@@ -229,6 +406,16 @@ function viewHome() {
     <p>문제를 고르고 브라우저에서 바로 코드를 실행하고 제출하세요. 설치할 것은 없습니다.</p></div>
     <div class="meter"><div class="meter-label"><span>해결한 문제</span><b>${solved} / ${PROBLEMS.length}</b></div>
     <div class="meter-bar"><span style="width:${pct}%"></span></div></div></div>
+    <section class="panel lime quick-guide" aria-labelledby="qg-title">
+      <div class="qg-head"><div><div class="eyebrow">How to</div><h2 id="qg-title">사용 방법</h2></div>
+        <a class="btn small" href="#/guide">코드 작성법 자세히 보기</a></div>
+      <ol class="qg-steps">
+        <li><b>문제 고르기</b><span>아래 목록에서 문제를 누르면 왼쪽에 설명, 오른쪽에 코드 편집기가 열립니다.</span></li>
+        <li><b>실행으로 확인</b><span><kbd>실행</kbd>은 내 코드를 돌려 출력만 보여 줍니다. 기록되지 않으니 마음껏 눌러 보세요.</span></li>
+        <li><b>제출로 채점</b><span><kbd>제출</kbd>하면 숨은 테스트까지 채점되고 기록이 남습니다. 처음 맞히면 몇 번째인지 알려 드려요.</span></li>
+        <li><b>막히면 힌트</b><span>설명 아래 힌트를 하나씩 열어 보세요. 유형별 작성법은 <a href="#/guide">사용 방법</a>에 있습니다.</span></li>
+      </ol>
+    </section>
     ${units}
   </main>`;
   bindTopbar();
@@ -377,15 +564,16 @@ function celebrate(p, info) {
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduce || typeof window.confetti !== "function") return;
-  const fire = (ratio, opts) => window.confetti({ origin: { y: 0.65 }, zIndex: 70, particleCount: Math.floor(220 * ratio), ...opts });
+  const colors = ["#c8ff3d", "#a896ff", "#66dbff", "#61db9c", "#ffcf4a", "#f5f7f2"];
+  const fire = (ratio, opts) => window.confetti({ origin: { y: 0.65 }, zIndex: 70, colors, particleCount: Math.floor(220 * ratio), ...opts });
   fire(0.25, { spread: 26, startVelocity: 55 });
   fire(0.2, { spread: 60 });
   fire(0.35, { spread: 100, decay: 0.91, scalar: 0.9 });
   if (rank <= 3) {
     const end = Date.now() + 1400;
     (function frame() {
-      window.confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0 }, zIndex: 70 });
-      window.confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1 }, zIndex: 70 });
+      window.confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0 }, zIndex: 70, colors });
+      window.confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1 }, zIndex: 70, colors });
       if (Date.now() < end) requestAnimationFrame(frame);
     })();
   }
@@ -695,13 +883,18 @@ async function openSubmissionDrawer(student, p) {
 
 async function adminRoster(body) {
   const { students } = await api.roster(state.adminToken);
-  body.innerHTML = `<div class="roster-grid">
-    <section class="panel card-pad"><h3>수강생 등록</h3>
+  body.innerHTML = `<div class="roster-grid"><div style="display:grid;gap:16px;align-content:start">
+    <section class="panel lime card-pad"><h3>회원가입 코드</h3>
+      <p class="muted" style="margin:0;font-size:14px">수강생이 직접 가입할 때 입력하는 코드입니다. 수업 첫날 화면에 띄워 주세요. 비워 두면 누구나 가입할 수 있습니다.</p>
+      <div class="toolbar"><div class="field" style="flex:1;min-width:160px"><input id="join-code" maxlength="30" autocomplete="off" aria-label="회원가입 코드" placeholder="비어 있음 = 누구나 가입"></div>
+        <button class="btn primary" id="join-save">저장</button></div>
+    </section>
+    <section class="panel card-pad"><h3>수강생 직접 등록</h3>
       <p class="muted" style="margin:0;font-size:14px">한 줄에 한 명씩 이름을 붙여넣으세요. 등록하면 4자리 번호가 자동으로 발급됩니다. 번호는 이 화면에서 <b>한 번만</b> 보이니 바로 복사해 두세요.</p>
       <div class="field"><label for="names">이름 목록</label><textarea id="names" placeholder="홍길동&#10;김품질&#10;이검사"></textarea></div>
       <div><button class="btn primary" id="add-btn">등록하고 번호 발급</button></div>
       <div id="new-pins"></div>
-    </section>
+    </section></div>
     <section class="panel card-pad"><div class="toolbar"><h3>등록된 수강생 ${students.length}명</h3></div>
       ${students.length ? `<div class="table-scroll"><table class="pin-list"><thead><tr><th>이름</th><th>등록일</th><th></th></tr></thead><tbody>
       ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}</td><td class="muted">${fmtTime(s.created_at)}</td>
@@ -709,6 +902,21 @@ async function adminRoster(body) {
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
     </section></div>`;
+
+  const joinInput = body.querySelector("#join-code");
+  api.getJoinCode(state.adminToken).then((res) => (joinInput.value = res.join_code || "")).catch(() => {});
+  body.querySelector("#join-save").addEventListener("click", async (e) => {
+    e.target.disabled = true;
+    try {
+      const res = await api.setJoinCode(state.adminToken, joinInput.value);
+      joinInput.value = res.join_code;
+      toast(res.join_code ? `가입 코드를 ${res.join_code}(으)로 저장했습니다.` : "가입 코드를 비웠습니다. 누구나 가입할 수 있습니다.");
+    } catch (err) {
+      toast(errorMessage(err));
+    } finally {
+      e.target.disabled = false;
+    }
+  });
 
   body.querySelector("#add-btn").addEventListener("click", async (e) => {
     const names = body.querySelector("#names").value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);

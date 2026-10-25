@@ -21,17 +21,16 @@ class SupabaseApi {
     this.base = url.replace(/\/$/, "") + "/rest/v1/rpc/";
     this.key = key;
     this.mode = "supabase";
+    // 레거시 anon 키(JWT)는 Authorization 에도 넣고, 새 publishable 키는 apikey 헤더만 쓴다
+    this.headers = { apikey: key, "Content-Type": "application/json" };
+    if (key.startsWith("eyJ")) this.headers.Authorization = `Bearer ${key}`;
   }
   async call(fn, args) {
     let response;
     try {
       response = await fetch(this.base + fn, {
         method: "POST",
-        headers: {
-          apikey: this.key,
-          Authorization: `Bearer ${this.key}`,
-          "Content-Type": "application/json",
-        },
+        headers: this.headers,
         body: JSON.stringify(args),
       });
     } catch {
@@ -41,6 +40,8 @@ class SupabaseApi {
     return unwrap(await response.json());
   }
   login(name, pin) { return this.call("student_login", { p_name: name, p_pin: pin }); }
+  signup(name, pin, joinCode) { return this.call("student_signup", { p_name: name, p_pin: pin, p_join_code: joinCode }); }
+  signupInfo() { return this.call("signup_info", {}); }
   me(token) { return this.call("student_me", { p_token: token }); }
   submit(token, problemId, code, result) {
     return this.call("student_submit", {
@@ -60,6 +61,8 @@ class SupabaseApi {
   resetPin(token, id) { return this.call("admin_reset_pin", { p_token: token, p_student_id: id }); }
   deleteStudent(token, id) { return this.call("admin_delete_student", { p_token: token, p_student_id: id }); }
   matrix(token) { return this.call("admin_matrix", { p_token: token }); }
+  getJoinCode(token) { return this.call("admin_get_join_code", { p_token: token }); }
+  setJoinCode(token, code) { return this.call("admin_set_join_code", { p_token: token, p_code: code }); }
   submissions(token, studentId, problemId) {
     return this.call("admin_submissions", { p_token: token, p_student_id: studentId, p_problem_id: problemId });
   }
@@ -120,6 +123,35 @@ class DemoApi {
     db.sessions[token] = { student_id: student.id };
     this.save(db);
     return { ok: true, token, student: { id: student.id, name: student.name } };
+  }
+  async signupInfo() {
+    return { ok: true, join_code_required: !!this.load().join_code };
+  }
+  async signup(name, pin, joinCode) {
+    const db = this.load();
+    name = name.trim().replace(/\s+/g, " ");
+    if (!name || name.length > 40) throw new ApiError("name_format");
+    if (!/^\d{4}$/.test(pin)) throw new ApiError("pin_format");
+    if (db.join_code && (joinCode || "").trim().toUpperCase() !== db.join_code) throw new ApiError("join_code");
+    if (db.students.some((s) => s.name === name)) throw new ApiError("name_taken");
+    const id = crypto.randomUUID();
+    db.students.push({ id, name, pin, created_at: new Date().toISOString() });
+    const token = crypto.randomUUID();
+    db.sessions[token] = { student_id: id };
+    this.save(db);
+    return { ok: true, token, student: { id, name } };
+  }
+  async getJoinCode(token) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    return { ok: true, join_code: db.join_code || "" };
+  }
+  async setJoinCode(token, code) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    db.join_code = (code || "").trim().toUpperCase().slice(0, 30);
+    this.save(db);
+    return { ok: true, join_code: db.join_code };
   }
   studentOf(db, token) {
     const s = db.sessions[token];
@@ -291,7 +323,7 @@ function seedDemo() {
   add("demo-1", "1-2", true, 35);
   add("demo-3", "1-5", false, 30);
   add("demo-3", "1-5", false, 28);
-  return { students, sessions: {}, submissions };
+  return { students, sessions: {}, submissions, join_code: "QAQC8" };
 }
 
 export function resetDemo() {

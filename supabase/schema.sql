@@ -1,4 +1,4 @@
--- QAQC 파이썬 복습 사이트 · Supabase 스키마
+-- 러너즈빌드업 · Supabase 스키마
 -- Supabase 대시보드 > SQL Editor 에 전체를 붙여넣고 Run 하세요.
 -- 마지막 줄의 어드민 비밀번호는 꼭 바꿔서 실행하세요.
 --
@@ -119,6 +119,43 @@ begin
   return json_build_object('ok', true, 'token', v_token, 'student',
     json_build_object('id', v_student.id, 'name', v_student.name));
 end;
+$$;
+
+-- 회원가입: 수강생이 이름과 4자리 번호를 직접 정한다.
+-- 가입 코드가 설정돼 있으면 코드가 맞아야 가입된다 (외부인 가입 방지).
+create or replace function public.student_signup(p_name text, p_pin text, p_join_code text)
+returns json language plpgsql security definer set search_path = public, extensions as $$
+declare
+  v_name text := regexp_replace(trim(coalesce(p_name, '')), '\s+', ' ', 'g');
+  v_code text;
+  v_id uuid;
+  v_token uuid;
+begin
+  if length(v_name) < 1 or length(v_name) > 40 then
+    return json_build_object('ok', false, 'error', 'name_format');
+  end if;
+  if coalesce(p_pin, '') !~ '^[0-9]{4}$' then
+    return json_build_object('ok', false, 'error', 'pin_format');
+  end if;
+  select value into v_code from app_settings where key = 'join_code';
+  if coalesce(v_code, '') <> '' and upper(trim(coalesce(p_join_code, ''))) <> upper(v_code) then
+    perform pg_sleep(1);
+    return json_build_object('ok', false, 'error', 'join_code');
+  end if;
+  if exists (select 1 from students where name = v_name) then
+    return json_build_object('ok', false, 'error', 'name_taken');
+  end if;
+  insert into students (name, pin_hash) values (v_name, crypt(p_pin, gen_salt('bf', 8)))
+    returning id into v_id;
+  insert into sessions (student_id) values (v_id) returning token into v_token;
+  return json_build_object('ok', true, 'token', v_token, 'student', json_build_object('id', v_id, 'name', v_name));
+end;
+$$;
+
+create or replace function public.signup_info()
+returns json language sql stable security definer set search_path = public as $$
+  select json_build_object('ok', true, 'join_code_required',
+    coalesce((select value from app_settings where key = 'join_code'), '') <> '');
 $$;
 
 create or replace function public.student_me(p_token uuid)
@@ -309,6 +346,27 @@ begin
 end;
 $$;
 
+create or replace function public.admin_get_join_code(p_token uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  return json_build_object('ok', true, 'join_code', coalesce((select value from app_settings where key = 'join_code'), ''));
+end;
+$$;
+
+create or replace function public.admin_set_join_code(p_token uuid, p_code text)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_code text := upper(trim(coalesce(p_code, '')));
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  if length(v_code) > 30 then return json_build_object('ok', false, 'error', 'code_format'); end if;
+  insert into app_settings (key, value) values ('join_code', v_code)
+  on conflict (key) do update set value = excluded.value;
+  return json_build_object('ok', true, 'join_code', v_code);
+end;
+$$;
+
 -- SQL Editor 전용 (브라우저에서 호출 불가)
 create or replace function public.set_admin_password(p_password text)
 returns void language plpgsql security definer set search_path = public, extensions as $$
@@ -322,9 +380,14 @@ $$;
 
 -- ── 실행 권한: 브라우저(anon)는 아래 함수만 ───────────────────
 
+grant usage on schema public to anon;
 revoke execute on all functions in schema public from public, anon, authenticated;
 grant execute on function
   public.student_login(text, text),
+  public.student_signup(text, text, text),
+  public.signup_info(),
+  public.admin_get_join_code(uuid),
+  public.admin_set_join_code(uuid, text),
   public.student_me(uuid),
   public.student_submit(uuid, text, text, boolean, int, int, jsonb),
   public.student_history(uuid, text),
@@ -339,3 +402,8 @@ to anon;
 
 -- ↓ 어드민 비밀번호를 바꿔서 실행하세요 (8자 이상)
 select public.set_admin_password('여기에-어드민-비밀번호');
+
+-- ↓ 회원가입 코드 (수업 첫날 화면에 띄워 주세요). 빈 문자열이면 누구나 가입 가능.
+--   나중에 어드민 > 명단 화면에서도 바꿀 수 있습니다.
+insert into app_settings (key, value) values ('join_code', 'QAQC8')
+on conflict (key) do update set value = excluded.value;
