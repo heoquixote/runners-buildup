@@ -40,6 +40,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html styles.css app.js api.js runner.js worker.js harness.py problems.js config.js .nojekyll _site/
+          cp -r assets _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
