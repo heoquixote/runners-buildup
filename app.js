@@ -146,19 +146,18 @@ function topbar({ admin = false } = {}) {
   return `<header class="topbar"><div class="topbar-inner">
     <div class="brand-block">
       <a class="brand" href="${admin ? "#/admin" : "#/"}"><img class="brand-mark" src="assets/dl-logo.png" alt="Data Learners" width="40" height="35">
-        <span><span class="brand-name">DATA LEARNERS${admin ? " · ADMIN" : ""}</span><br><span class="brand-course">Runners Build-up · Python Track</span></span></a>
-      ${orgBadge(admin)}
+        <span><span class="brand-name">DATA LEARNERS${admin ? " · ADMIN" : ""}</span><br>${brandSub(admin)}</span></a>
     </div>
     ${demo}<span class="spacer"></span>${right}
   </div></header>`;
 }
 
-// 가입 코드별 기관 표시 (QAQC8 코드로 가입한 수강생에게만)
-const ORGS = { QAQC8: { logo: "assets/sparta.png", name: "팀스파르타", course: "QAQC 8기" } };
-function orgBadge(admin) {
+// 가입 코드별 표시: QAQC8 코드로 가입한 수강생은 로고 아래 줄이 기관·기수로 바뀐다
+const ORGS = { QAQC8: { logo: "assets/sparta.png", name: "Team Sparta", course: "QAQC 8기" } };
+function brandSub(admin) {
   const org = admin ? null : ORGS[state.session?.student?.org];
-  if (!org) return "";
-  return `<div class="org-badge"><img src="${org.logo}" alt="${esc(org.name)}" width="18" height="18"><span>${esc(org.name)}</span><b>${esc(org.course)}</b></div>`;
+  if (!org) return `<span class="brand-course">Runners Build-up · Python Track</span>`;
+  return `<span class="brand-course org"><img src="${org.logo}" alt="" width="14" height="14">${esc(org.name)} · ${esc(org.course)}</span>`;
 }
 
 function bindTopbar() {

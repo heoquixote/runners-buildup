@@ -235,7 +235,7 @@ em, i { font-style: normal; }
 .read.panel { clip-path: none; }
 .read { min-width: 0; display: flex; flex-direction: column; max-height: calc(100vh - 120px); position: sticky; top: 70px; }
 @media (max-width: 920px) { .read { position: static; max-height: none; } }
-.tabs { display: flex; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs { display: flex; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .tab {
   border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--muted);
   border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; white-space: nowrap;
@@ -366,7 +366,8 @@ details.hint[open] summary { color: var(--ink); margin-bottom: 6px; }
 .celebrate .btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
 
 /* ── 어드민 ── */
-.admin-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.admin-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.admin-tabs::-webkit-scrollbar, .tabs::-webkit-scrollbar { display: none; }
 .admin-tabs a { padding: 10px 14px; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; font-weight: 500; }
 .admin-tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
@@ -553,3 +554,5 @@ kbd {
 .plist-sep.challenge { color: var(--orange); }
 .challenge-tag { border-color: rgba(255,154,81,.5) !important; color: var(--orange) !important; font-weight: 700; }
 .prow.challenge .pid { color: var(--orange); }
+.brand-course.org { display: inline-flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: .06em; }
+.brand-course.org img { width: 14px; height: 14px; display: block; }
