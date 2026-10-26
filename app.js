@@ -8,6 +8,10 @@ const $app = document.getElementById("app");
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const byId = Object.fromEntries(PROBLEMS.map((p) => [p.id, p]));
+// 화면에 보이는 번호: 유닛 안 순서대로 1-1, 1-2… (퀴즈가 1번). 저장되는 id(1-Q 등)는 그대로 둔다.
+const NO = {};
+for (const u of UNITS) PROBLEMS.filter((p) => p.unit === u.id).forEach((p, i) => { NO[p.id] = `${u.id}-${i + 1}`; });
+const no = (pid) => NO[pid] || pid;
 const TYPE_LABEL = { io: "입출력형", function: "함수형", steps: "단계 실습형", quiz: "개념 퀴즈" };
 
 const store = {
@@ -440,9 +444,9 @@ function todayHtml() {
   const next = byId[ids.find((id) => !state.progress[id]?.solved)];
   return `<section class="today-line panel" aria-label="오늘의 과제">
     <div class="today-meta"><span class="eyebrow">Today</span><b>오늘의 과제 ${done} / ${ids.length}</b></div>
-    <ol class="today-chips">${ids.map((id) => `<li><a href="#/p/${id}" class="${state.progress[id]?.solved ? "done" : ""}" title="${esc(byId[id].title)}">${id}</a></li>`).join("")}</ol>
+    <ol class="today-chips">${ids.map((id) => `<li><a href="#/p/${id}" class="${state.progress[id]?.solved ? "done" : ""}" title="${esc(byId[id].title)}">${no(id)}</a></li>`).join("")}</ol>
     ${next
-      ? `<a class="btn primary today-go" href="#/p/${next.id}"><span class="mono">${next.id}</span> ${esc(next.title)} 풀기 →</a>`
+      ? `<a class="btn primary today-go" href="#/p/${next.id}"><span class="mono">${no(next.id)}</span> ${esc(next.title)} 풀기 →</a>`
       : `<span class="today-clear">오늘 과제를 모두 끝냈어요</span>`}
   </section>`;
 }
@@ -509,7 +513,7 @@ function viewUnit(u) {
         ${next ? `<a class="btn primary" href="#/p/${next.id}">${done ? "이어 풀기" : "시작하기"} →</a>` : ""}</div>
     </header>
     <ol class="plist simple panel">${list.map((p) => `<li><a class="srow" href="#/p/${p.id}">
-      ${statusIcon(p.id)}<span class="pid">${p.id}</span><span class="ptitle">${esc(p.title)}</span>${mark(p)}</a></li>`).join("")}</ol>
+      ${statusIcon(p.id)}<span class="pid">${no(p.id)}</span><span class="ptitle">${esc(p.title)}</span>${mark(p)}</a></li>`).join("")}</ol>
     <details class="hint"><summary>개념 노트</summary><div class="note">${u.note}</div></details>
     <nav class="unit-nav">${prevU ? `<a class="btn small ghost" href="#/u/${prevU.id}">← ${esc(prevU.title)}</a>` : "<span></span>"}${nextU ? `<a class="btn small ghost" href="#/u/${nextU.id}">${esc(nextU.title)} →</a>` : ""}</nav>
   </main>`;
@@ -540,10 +544,10 @@ function viewQuiz(p) {
 
   $app.innerHTML = `${topbar()}<main class="page quiz-page">
     <nav class="crumb"><a href="#/u/${unit.id}">문제 목록</a><span class="sep">/</span><span class="muted">UNIT ${unit.id} ${esc(unit.title)}</span>
-      <span class="nav">${prev ? `<a class="btn small" href="#/p/${prev.id}">← ${prev.id}</a>` : ""}${next ? `<a class="btn small" href="#/p/${next.id}">${next.id} →</a>` : ""}</span></nav>
+      <span class="nav">${prev ? `<a class="btn small" href="#/p/${prev.id}">← ${no(prev.id)}</a>` : ""}${next ? `<a class="btn small" href="#/p/${next.id}">${no(next.id)} →</a>` : ""}</span></nav>
     <header class="quiz-head">
       <div class="meta-line"><span class="tag">개념 퀴즈</span><span class="muted" style="font-size:13px">${esc(p.origin)}</span>${state.progress[p.id]?.solved ? '<span class="status solved">정답</span>' : ""}</div>
-      <h1>${p.id}. ${esc(p.title)}</h1>
+      <h1>${no(p.id)}. ${esc(p.title)}</h1>
       <p class="muted">코드를 짜기 전에 개념을 확인합니다. 모두 맞히면 정답으로 기록되고, 틀린 문항은 해설을 보고 다시 풀 수 있습니다.</p>
       <details class="hint"><summary>개념 노트 보기</summary><div class="note">${unit.note}</div></details>
     </header>
@@ -676,7 +680,7 @@ function problemTab(p) {
     ? `<details class="hint"><summary>모범 답안</summary><pre>${esc(p.solution)}</pre></details>`
     : `<div class="locked-answer">모범 답안은 정답을 맞히면 열립니다.</div>`;
   return `<div class="meta-line">${p.challenge ? '<span class="tag challenge-tag">도전 문제</span>' : ""}<span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}<span class="muted" style="font-size:13px">원본: ${esc(p.origin)}</span></div>
-    <h1>${p.id}. ${esc(p.title)}</h1>
+    <h1>${no(p.id)}. ${esc(p.title)}</h1>
     <div class="note">${p.desc}</div>
     ${p.uses?.length ? `<div class="uses"><h4>이 문제에서 쓰는 함수 · 문법</h4><dl>${p.uses.map(([k, v]) => `<div><dt><code>${esc(k)}</code></dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>` : ""}
     ${p.files ? `<div class="note files-box"><h4>제공 파일</h4><p class="muted" style="font-size:13px">코드를 실행하면 아래 파일이 같은 폴더에 준비됩니다. 비공개 테스트에서는 내용이 다른 파일로 채점합니다.</p>${Object.entries(p.files).map(([name, text]) => `<div class="file-card"><div class="file-name mono">${esc(name)}</div><pre>${esc(text)}</pre></div>`).join("")}</div>` : ""}
@@ -783,7 +787,7 @@ function celebrate(p, info) {
     <h2 id="cel-title">정답입니다!</h2>
     <div class="rank-line"><b>${total}명</b> 중 <b>${rank}번째</b>로 맞혔어요</div>
     <p>${esc(sub)}</p>
-    <div class="btns">${next ? `<a class="btn primary" href="#/p/${next.id}" data-close>다음 문제 ${next.id}</a>` : ""}<button class="btn" data-close>계속 보기</button></div>
+    <div class="btns">${next ? `<a class="btn primary" href="#/p/${next.id}" data-close>다음 문제 ${no(next.id)}</a>` : ""}<button class="btn" data-close>계속 보기</button></div>
   </div>`;
   document.body.appendChild(wrap);
   const close = () => wrap.remove();
@@ -819,7 +823,7 @@ function viewProblem(p) {
 
   $app.innerHTML = `${topbar()}<main class="solve">
     <nav class="crumb"><a href="#/u/${unit.id}">문제 목록</a><span class="sep">/</span><span class="muted">UNIT ${unit.id} ${esc(unit.title)}</span>
-      <span class="nav">${prev ? `<a class="btn small" href="#/p/${prev.id}">← ${prev.id}</a>` : ""}${next ? `<a class="btn small" href="#/p/${next.id}">${next.id} →</a>` : ""}</span></nav>
+      <span class="nav">${prev ? `<a class="btn small" href="#/p/${prev.id}">← ${no(prev.id)}</a>` : ""}${next ? `<a class="btn small" href="#/p/${next.id}">${no(next.id)} →</a>` : ""}</span></nav>
     <div class="solve-grid">
       <section class="read panel">
         <div class="tabs" role="tablist">
@@ -1058,14 +1062,14 @@ async function adminMatrix(body) {
     body.innerHTML = `<div class="panel empty-state"><b>아직 등록된 수강생이 없습니다.</b>명단 · 번호 탭에서 이름을 붙여넣으면 4자리 번호가 발급됩니다.<a class="btn primary" href="#/admin/roster">명단 등록하기</a></div>`;
     return;
   }
-  const head = PROBLEMS.map((p, i) => `<th class="${i && PROBLEMS[i - 1].unit !== p.unit ? "unit-sep" : ""}" title="${esc(p.title)}">${p.id}</th>`).join("");
+  const head = PROBLEMS.map((p, i) => `<th class="${i && PROBLEMS[i - 1].unit !== p.unit ? "unit-sep" : ""}" title="${esc(p.title)}">${no(p.id)}</th>`).join("");
   const rows = students
     .map((s) => {
       const tds = PROBLEMS.map((p, i) => {
         const c = cells[s.id + "|" + p.id];
         const cls = c ? (c.solved ? "solved" : "tried") : "";
         const label = c ? (c.solved ? (c.attempts > 1 ? `✓${c.attempts}` : "✓") : c.attempts) : "·";
-        const title = c ? `${s.name} · ${p.id} · ${c.solved ? "정답" : "미통과"} · 시도 ${c.attempts}회 · 최근 ${fmtTime(c.last_at)}` : `${s.name} · ${p.id} · 미제출`;
+        const title = c ? `${s.name} · ${no(p.id)} · ${c.solved ? "정답" : "미통과"} · 시도 ${c.attempts}회 · 최근 ${fmtTime(c.last_at)}` : `${s.name} · ${no(p.id)} · 미제출`;
         return `<td class="${i && PROBLEMS[i - 1].unit !== p.unit ? "unit-sep" : ""}"><button class="cell ${cls}" title="${esc(title)}" data-s="${s.id}" data-p="${p.id}" ${c ? "" : "disabled"}>${label}</button></td>`;
       }).join("");
       return `<tr><th class="sname" scope="row">${esc(s.name)}</th><td class="ssum">${solvedBy(s.id)}</td>${tds}</tr>`;
@@ -1087,7 +1091,7 @@ async function adminMatrix(body) {
 
   body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/matrix"));
   body.querySelector("#csv").addEventListener("click", () => {
-    const header = ["이름", "해결 수", ...PROBLEMS.map((p) => `${p.id} ${p.title}`)];
+    const header = ["이름", "해결 수", ...PROBLEMS.map((p) => `${no(p.id)} ${p.title}`)];
     const lines = students.map((s) => [
       s.name,
       solvedBy(s.id),
@@ -1108,7 +1112,7 @@ async function openSubmissionDrawer(student, p) {
   const el = document.createElement("aside");
   el.className = "drawer";
   el.setAttribute("aria-label", "제출 상세");
-  el.innerHTML = `<div class="drawer-head"><div><div class="eyebrow">${p.id} · ${esc(p.title)}</div><h3>${esc(student.name)}의 제출</h3></div><span class="spacer"></span><button class="btn small" data-close>닫기</button></div>
+  el.innerHTML = `<div class="drawer-head"><div><div class="eyebrow">${no(p.id)} · ${esc(p.title)}</div><h3>${esc(student.name)}의 제출</h3></div><span class="spacer"></span><button class="btn small" data-close>닫기</button></div>
     <div class="drawer-body"><p class="muted">불러오는 중…</p></div>`;
   document.body.appendChild(el);
   const close = () => { el.remove(); document.removeEventListener("keydown", onKey); };
@@ -1151,7 +1155,7 @@ async function adminRoster(body) {
     </section>
     <section class="panel card-pad"><h3>오늘의 과제${groupName ? ` · ${esc(groupName)}` : ""}</h3>
       ${g ? `<p class="muted" style="margin:0;font-size:14px">이 그룹 수강생의 홈 맨 위에 '오늘 해야 할 과제'로 보입니다. 5문제를 권장하고, 하나도 고르지 않으면 각자 안 푼 문제 5개가 자동으로 보입니다.</p>` : pickGroup}
-      <div class="today-pick">${UNITS.map((u) => `<fieldset><legend>UNIT ${u.id} ${esc(u.title)}</legend>${PROBLEMS.filter((p) => p.unit === u.id).map((p) => `<label><input type="checkbox" value="${p.id}"> <span class="mono">${p.id}</span> ${esc(p.title)}</label>`).join("")}</fieldset>`).join("")}</div>
+      <div class="today-pick">${UNITS.map((u) => `<fieldset><legend>UNIT ${u.id} ${esc(u.title)}</legend>${PROBLEMS.filter((p) => p.unit === u.id).map((p) => `<label><input type="checkbox" value="${p.id}"> <span class="mono">${no(p.id)}</span> ${esc(p.title)}</label>`).join("")}</fieldset>`).join("")}</div>
       <div class="toolbar"><span class="muted" id="today-n" style="font-size:14px"></span><span class="spacer"></span><button class="btn small ghost" id="today-clear">모두 해제</button><button class="btn primary" id="today-save" ${g ? "" : "disabled"}>저장</button></div>
     </section>
     <section class="panel card-pad"><h3>수강생 직접 등록${groupName ? ` · ${esc(groupName)}` : ""}</h3>
@@ -1325,7 +1329,7 @@ async function adminStats(body) {
   body.innerHTML = `<div style="display:grid;gap:12px">
     <p class="muted" style="margin:0">정답률이 낮은 문제부터 보여줍니다. 정답률은 제출 건수가 아니라 <b>수강생 기준</b>(맞힌 학생 수 ÷ 전체 ${students.length}명)입니다. 평균 시도는 맞힌 학생이 정답까지 제출한 횟수입니다.</p>
     <div class="panel table-scroll"><table class="stats-table"><thead><tr><th>문제</th><th>정답률</th><th class="num">시도한 학생</th><th class="num">막힌 학생</th><th class="num">정답까지 평균 시도</th></tr></thead><tbody>
-    ${rows.map((r) => `<tr><td><span class="mono muted">${r.p.id}</span> ${esc(r.p.title)}</td>
+    ${rows.map((r) => `<tr><td><span class="mono muted">${no(r.p.id)}</span> ${esc(r.p.title)}</td>
       <td><div class="rate"><div class="bar"><span class="${r.rate < 0.4 ? "low" : r.rate < 0.7 ? "mid" : ""}" style="width:${Math.round(r.rate * 100)}%"></span></div><b>${Math.round(r.rate * 100)}%</b></div></td>
       <td class="num">${r.tried}명</td><td class="num">${r.stuck}명</td><td class="num">${r.avg == null ? "–" : r.avg.toFixed(1) + "회"}</td></tr>`).join("")}
     </tbody></table></div></div>`;
