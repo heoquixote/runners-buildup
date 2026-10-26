@@ -193,7 +193,8 @@ async function route() {
   const m = hash.match(/^#\/p\/([\w-]+)/);
   if (m && byId[m[1]]) return byId[m[1]].type === "quiz" ? viewQuiz(byId[m[1]]) : viewProblem(byId[m[1]]);
   const u = hash.match(/^#\/u\/(\d+)/);
-  return viewHome(u ? Number(u[1]) : null);
+  const unit = u && UNITS.find((x) => x.id === Number(u[1]));
+  return unit ? viewUnit(unit) : viewHome();
 }
 window.addEventListener("hashchange", route);
 
@@ -413,132 +414,106 @@ async function viewSignup() {
   });
 }
 
-// ── 홈 (단원 목록) ────────────────────────────────────────
-function statusPill(pid) {
+// ── 홈 (유닛 카드) · 유닛 페이지 ─────────────────────────────
+// 상태는 아이콘 하나로: ✓ 정답, • 시도함, ○ 아직
+function statusIcon(pid) {
   const p = state.progress[pid];
-  if (!p) return `<span class="status none">미제출</span>`;
-  if (p.solved) return `<span class="status solved">정답</span>`;
-  return `<span class="status tried">시도 ${p.attempts}회</span>`;
+  if (p?.solved) return `<span class="st st-solved" title="정답">✓</span>`;
+  if (p) return `<span class="st st-tried" title="시도 ${p.attempts}회">•</span>`;
+  return `<span class="st st-none" title="미제출">○</span>`;
+}
+const unitProblems = (u) => PROBLEMS.filter((p) => p.unit === u.id);
+const firstUnsolved = (list) => list.find((p) => !state.progress[p.id]?.solved);
+
+function trackTabs() {
+  return `<div class="track-tabs" role="tablist" aria-label="트랙 선택">${TRACKS.map((t) =>
+    `<button role="tab" aria-selected="${t.id === state.track}" data-track="${t.id}">${esc(t.label)}${t.ready ? "" : '<span class="soon">준비 중</span>'}</button>`).join("")}</div>`;
 }
 
+// 오늘의 과제: 한 줄 요약 + 다음 문제 바로가기
 function todayHtml() {
   const picked = (state.today || []).filter((id) => byId[id]);
   // 강사가 정하지 않았으면 아직 안 푼 문제 5개를 순서대로 추천
   const ids = picked.length ? picked : PROBLEMS.filter((p) => !state.progress[p.id]?.solved).slice(0, 5).map((p) => p.id);
   if (!ids.length) return "";
   const done = ids.filter((id) => state.progress[id]?.solved).length;
-  return `<section class="today" aria-labelledby="today-title">
-    <div class="today-head"><div><div class="eyebrow">Today</div><h2 id="today-title">오늘 해야 할 과제입니다</h2>
-      <p class="muted">${picked.length ? "강사님이 오늘 풀 문제로 골랐습니다." : "아직 풀지 않은 문제를 순서대로 골랐습니다."}</p></div>
-      <div class="today-count"><b>${done}</b> / ${ids.length} 완료</div></div>
-    <ol class="today-list">${ids.map((id, i) => {
-      const p = byId[id];
-      const solved = state.progress[id]?.solved;
-      return `<li><a class="today-card panel${solved ? " done" : ""}" href="#/p/${id}">
-        <span class="today-no">${String(i + 1).padStart(2, "0")}</span>
-        <span class="pid">${id} · ${TYPE_LABEL[p.type]}</span>
-        <span class="today-title">${esc(p.title)}</span>
-        ${statusPill(id)}</a></li>`;
-    }).join("")}</ol>
+  const next = byId[ids.find((id) => !state.progress[id]?.solved)];
+  return `<section class="today-line panel" aria-label="오늘의 과제">
+    <div class="today-meta"><span class="eyebrow">Today</span><b>오늘의 과제 ${done} / ${ids.length}</b></div>
+    <ol class="today-chips">${ids.map((id) => `<li><a href="#/p/${id}" class="${state.progress[id]?.solved ? "done" : ""}" title="${esc(byId[id].title)}">${id}</a></li>`).join("")}</ol>
+    ${next
+      ? `<a class="btn primary today-go" href="#/p/${next.id}"><span class="mono">${next.id}</span> ${esc(next.title)} 풀기 →</a>`
+      : `<span class="today-clear">오늘 과제를 모두 끝냈어요</span>`}
   </section>`;
 }
 
-const unitDone = (u) => {
-  const list = PROBLEMS.filter((p) => p.unit === u.id);
-  return [list.filter((p) => state.progress[p.id]?.solved).length, list.length];
-};
-
-// 왼쪽 내비게이션: 트랙(과목) 선택 + 회차별 유닛 바로가기
-function sideNav() {
-  const tracks = TRACKS.map((t) => `<button class="track-btn" role="tab" aria-selected="${t.id === state.track}" data-track="${t.id}">${esc(t.label)}${t.ready ? "" : '<span class="soon">준비 중</span>'}</button>`).join("");
-  const parts = PARTS.filter((pt) => pt.track === state.track).map((pt) => {
-    const units = UNITS.filter((u) => u.part === pt.id).map((u) => {
-      const [done, total] = unitDone(u);
-      return `<li><a href="#/u/${u.id}" data-unit="${u.id}"${done === total ? ' class="complete"' : ""}>
-        <span class="side-no">${String(u.id).padStart(2, "0")}</span><span class="side-title">${esc(u.title)}</span><span class="side-count">${done}/${total}</span></a></li>`;
-    }).join("");
-    return `<div class="side-part">${esc(pt.label)}</div><ol class="side-units">${units}</ol>`;
-  }).join("");
-  return `<aside class="side-nav" aria-label="트랙과 유닛">
-    <div class="track-switch" role="tablist" aria-label="트랙 선택">${tracks}</div>
-    ${state.track === "python" ? `<a class="side-today" href="#/" data-jump="today">오늘의 과제</a>${parts}` : ""}
-  </aside>`;
+function unitCard(u) {
+  const list = unitProblems(u);
+  const done = list.filter((p) => state.progress[p.id]?.solved).length;
+  const next = firstUnsolved(list);
+  const pct = Math.round((done / list.length) * 100);
+  return `<article class="ucard panel${done === list.length ? " complete" : ""}">
+    <a class="ucard-link" href="#/u/${u.id}"><span class="unit-num">Unit ${String(u.id).padStart(2, "0")}</span><h3>${esc(u.title)}</h3></a>
+    <div class="ucard-bar" aria-hidden="true"><span style="width:${pct}%"></span></div>
+    <div class="ucard-foot"><span class="ucard-count">${done} / ${list.length}</span>
+      ${next ? `<a class="btn small" href="#/p/${next.id}">${done ? "이어 풀기" : "시작"} →</a>` : `<a class="btn small ghost" href="#/u/${u.id}">복습하기</a>`}</div>
+  </article>`;
 }
 
-function unitSection(u) {
-  const list = PROBLEMS.filter((p) => p.unit === u.id);
-  const [done] = unitDone(u);
-  const row = (p) => `<li><a class="prow${p.challenge ? " challenge" : ""}${p.type === "quiz" ? " quiz" : ""}" href="#/p/${p.id}">
-        <span class="pid">${p.id}</span>
-        <span class="ptitle">${esc(p.title)}<span class="porigin">${esc(p.type === "quiz" ? `${p.questions.length}문항 · ${p.origin}` : p.origin)}</span></span>
-        <span class="tags">${p.challenge ? '<span class="tag challenge-tag">도전</span>' : ""}<span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}</span>
-        ${statusPill(p.id)}
-      </a></li>`;
-  const quiz = list.filter((p) => p.type === "quiz");
-  const basic = list.filter((p) => p.type !== "quiz" && !p.challenge);
-  const hard = list.filter((p) => p.challenge);
-  const rows = (quiz.length ? `<li class="plist-sep quiz">개념 퀴즈 · 코드 없이 먼저 확인</li>${quiz.map(row).join("")}` : "")
-    + `<li class="plist-sep">기본 문제</li>${basic.map(row).join("")}`
-    + (hard.length ? `<li class="plist-sep challenge">도전 문제 · 단원을 마무리하는 어려운 문제</li>${hard.map(row).join("")}` : "");
-  return `<section class="unit" id="unit-${u.id}">
-    <div class="unit-head"><span class="unit-num">UNIT ${u.id}</span><h2>${esc(u.title)}</h2><span class="muted">${esc(u.summary)}</span>
-    <span class="unit-count">${done} / ${list.length}</span></div>
-    <ul class="plist panel">${rows}</ul></section>`;
-}
-
-function viewHome(focusUnit = null) {
-  const track = TRACKS.find((t) => t.id === state.track);
-  const solved = PROBLEMS.filter((p) => state.progress[p.id]?.solved).length;
-  const pct = Math.round((solved / PROBLEMS.length) * 100);
-  const body = state.track === "python"
-    ? `${todayHtml()}${PARTS.filter((pt) => pt.track === "python").map((pt) =>
-        `<div class="part-head"><span class="eyebrow">Part</span><h2>${esc(pt.label)}</h2></div>${UNITS.filter((u) => u.part === pt.id).map(unitSection).join("")}`).join("")}`
-    : `<section class="panel soon-panel"><div class="eyebrow">${esc(track.label)} Track</div><h2>${esc(track.label)} 트랙은 준비 중입니다</h2>
-        <p class="muted">문제가 준비되면 이곳에 유닛이 열립니다. 지금은 Python 트랙에서 빌드업을 이어 가세요.</p>
-        <button class="btn primary" data-track="python">Python 트랙으로</button></section>`;
-  $app.innerHTML = `${topbar()}<main class="page home-layout">
-    ${sideNav()}
-    <div class="home-main">
-      <div class="hero"><div><div class="eyebrow">${esc(track.label)} Track</div><h1>${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?</h1>
-      <p>한 문제씩 쌓이면 실력이 됩니다. 현장 데이터로 만든 문제를 풀고 바로 채점받으세요.</p></div>
-      <div class="meter"><div class="meter-label"><span>나의 빌드업</span><b>${solved} / ${PROBLEMS.length}</b></div>
-      <div class="meter-bar"><span style="width:${pct}%"></span></div></div></div>
-      ${body}
-    </div>
-  </main>`;
-  bindTopbar();
-
+function bindTrackTabs() {
   $app.querySelectorAll("[data-track]").forEach((b) => b.addEventListener("click", () => {
     state.track = b.dataset.track;
     store.set("rb-track", state.track);
     viewHome();
   }));
-  const smooth = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-  const jump = (el) => el?.scrollIntoView({ behavior: smooth, block: "start" });
-  $app.querySelectorAll(".side-nav [data-unit]").forEach((a) => a.addEventListener("click", (e) => {
-    e.preventDefault();
-    jump(document.getElementById(`unit-${a.dataset.unit}`));
-  }));
-  $app.querySelector('[data-jump="today"]')?.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.scrollTo({ top: 0, behavior: smooth });
-  });
+}
 
-  // 지금 보고 있는 유닛을 왼쪽 메뉴에 표시
-  const links = new Map([...$app.querySelectorAll(".side-nav [data-unit]")].map((a) => [`unit-${a.dataset.unit}`, a]));
-  if (links.size && "IntersectionObserver" in window) {
-    const io = new IntersectionObserver((entries) => {
-      const hit = entries.filter((en) => en.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (!hit) return;
-      links.forEach((a) => a.removeAttribute("aria-current"));
-      const a = links.get(hit.target.id);
-      a?.setAttribute("aria-current", "true");
-      a?.scrollIntoView({ block: "nearest", inline: "nearest" });
-    }, { rootMargin: "-90px 0px -60% 0px" });
-    $app.querySelectorAll(".unit[id]").forEach((el) => io.observe(el));
-    cleanupView = () => io.disconnect();
-  }
-  if (focusUnit) requestAnimationFrame(() => document.getElementById(`unit-${focusUnit}`)?.scrollIntoView({ block: "start" }));
+function viewHome() {
+  const track = TRACKS.find((t) => t.id === state.track);
+  const solved = PROBLEMS.filter((p) => state.progress[p.id]?.solved).length;
+  const pct = Math.round((solved / PROBLEMS.length) * 100);
+  const body = state.track === "python"
+    ? `${todayHtml()}${PARTS.filter((pt) => pt.track === "python").map((pt) =>
+        `<section class="part"><h2 class="part-title">${esc(pt.label)}</h2>
+          <div class="ucards">${UNITS.filter((u) => u.part === pt.id).map(unitCard).join("")}</div></section>`).join("")}`
+    : `<section class="panel soon-panel"><h2>${esc(track.label)} 트랙은 준비 중입니다</h2>
+        <p class="muted">문제가 준비되면 이곳에 유닛이 열립니다. 지금은 Python 트랙에서 빌드업을 이어 가세요.</p>
+        <button class="btn primary" data-track="python">Python 트랙으로</button></section>`;
+  $app.innerHTML = `${topbar()}<main class="page">
+    <div class="home-head">
+      <div><h1>${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?</h1>
+        <div class="home-progress"><span>나의 빌드업 <b>${solved} / ${PROBLEMS.length}</b></span><span class="meter-bar"><span style="width:${pct}%"></span></span></div></div>
+      ${trackTabs()}
+    </div>
+    ${body}
+  </main>`;
+  bindTopbar();
+  bindTrackTabs();
+  preload();
+}
+
+function viewUnit(u) {
+  const list = unitProblems(u);
+  const done = list.filter((p) => state.progress[p.id]?.solved).length;
+  const next = firstUnsolved(list);
+  const prevU = UNITS.find((x) => x.id === u.id - 1);
+  const nextU = UNITS.find((x) => x.id === u.id + 1);
+  const mark = (p) => p.type === "quiz" ? '<span class="pmark quiz" title="개념 퀴즈">퀴즈</span>' : p.challenge ? '<span class="pmark challenge" title="도전 문제">도전</span>' : "";
+  $app.innerHTML = `${topbar()}<main class="page unit-page">
+    <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">Unit ${u.id}</span></nav>
+    <header class="unit-hero">
+      <span class="unit-num">Unit ${String(u.id).padStart(2, "0")}</span>
+      <h1>${esc(u.title)}</h1>
+      <p class="muted">${esc(u.summary)}</p>
+      <div class="unit-actions"><span class="ucard-count">${done} / ${list.length} 완료</span>
+        ${next ? `<a class="btn primary" href="#/p/${next.id}">${done ? "이어 풀기" : "시작하기"} →</a>` : ""}</div>
+    </header>
+    <ol class="plist simple panel">${list.map((p) => `<li><a class="srow" href="#/p/${p.id}">
+      ${statusIcon(p.id)}<span class="pid">${p.id}</span><span class="ptitle">${esc(p.title)}</span>${mark(p)}</a></li>`).join("")}</ol>
+    <details class="hint"><summary>개념 노트</summary><div class="note">${u.note}</div></details>
+    <nav class="unit-nav">${prevU ? `<a class="btn small ghost" href="#/u/${prevU.id}">← ${esc(prevU.title)}</a>` : "<span></span>"}${nextU ? `<a class="btn small ghost" href="#/u/${nextU.id}">${esc(nextU.title)} →</a>` : ""}</nav>
+  </main>`;
+  bindTopbar();
   preload();
 }
 
