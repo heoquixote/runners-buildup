@@ -1,5 +1,14 @@
 import { CONFIG } from "./config.js";
-import { UNITS, PROBLEMS, TRACKS, PARTS } from "./problems.js";
+import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, TRACKS, SESSIONS } from "./problems.js";
+
+// 화면 구성은 회차 단위: 회차(SESSIONS)마다 고른 5문제만 보여준다.
+// 문제 객체는 복사해서 unit을 회차 번호로 바꾸고, 개념 노트는 원래 유닛(noteUnit)의 것을 쓴다.
+const UNITS = SESSIONS.map((s) => ({ ...s, title: s.title, summary: s.summary }));
+const PROBLEMS = SESSIONS.flatMap((s) => s.ids.map((id) => {
+  const p = ALL_PROBLEMS.find((x) => x.id === id);
+  return { ...p, unit: s.id, noteUnit: p.unit };
+}));
+const noteOf = (p) => ALL_UNITS.find((u) => u.id === p.noteUnit);
 import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
 import { runCode, gradeCode, preload, onRunnerState } from "./runner.js";
 
@@ -438,7 +447,8 @@ function trackTabs() {
 function todayHtml() {
   const picked = (state.today || []).filter((id) => byId[id]);
   // 강사가 정하지 않았으면 아직 안 푼 문제 5개를 순서대로 추천
-  const ids = picked.length ? picked : PROBLEMS.filter((p) => !state.progress[p.id]?.solved).slice(0, 5).map((p) => p.id);
+  // 부족한 만큼 아직 안 푼 문제로 5개를 채운다
+  const ids = [...picked, ...PROBLEMS.filter((p) => !picked.includes(p.id) && !state.progress[p.id]?.solved).map((p) => p.id)].slice(0, Math.max(5, picked.length));
   if (!ids.length) return "";
   const done = ids.filter((id) => state.progress[id]?.solved).length;
   const next = byId[ids.find((id) => !state.progress[id]?.solved)];
@@ -457,7 +467,7 @@ function unitCard(u) {
   const next = firstUnsolved(list);
   const pct = Math.round((done / list.length) * 100);
   return `<article class="ucard panel${done === list.length ? " complete" : ""}">
-    <a class="ucard-link" href="#/u/${u.id}"><span class="unit-num">Unit ${String(u.id).padStart(2, "0")}</span><h3>${esc(u.title)}</h3></a>
+    <a class="ucard-link" href="#/u/${u.id}"><span class="unit-num">${u.id}회차</span><h3>${esc(u.title)}</h3></a>
     <div class="ucard-bar" aria-hidden="true"><span style="width:${pct}%"></span></div>
     <div class="ucard-foot"><span class="ucard-count">${done} / ${list.length}</span>
       ${next ? `<a class="btn small" href="#/p/${next.id}">${done ? "이어 풀기" : "시작"} →</a>` : `<a class="btn small ghost" href="#/u/${u.id}">복습하기</a>`}</div>
@@ -477,9 +487,8 @@ function viewHome() {
   const solved = PROBLEMS.filter((p) => state.progress[p.id]?.solved).length;
   const pct = Math.round((solved / PROBLEMS.length) * 100);
   const body = state.track === "python"
-    ? `${todayHtml()}${PARTS.filter((pt) => pt.track === "python").map((pt) =>
-        `<section class="part"><h2 class="part-title">${esc(pt.label)}</h2>
-          <div class="ucards">${UNITS.filter((u) => u.part === pt.id).map(unitCard).join("")}</div></section>`).join("")}`
+    ? `${todayHtml()}<section class="part"><h2 class="part-title">회차별 문제</h2>
+          <div class="ucards">${UNITS.map(unitCard).join("")}</div></section>`
     : `<section class="panel soon-panel"><h2>${esc(track.label)} 트랙은 준비 중입니다</h2>
         <p class="muted">문제가 준비되면 이곳에 유닛이 열립니다. 지금은 Python 트랙에서 빌드업을 이어 가세요.</p>
         <button class="btn primary" data-track="python">Python 트랙으로</button></section>`;
@@ -504,9 +513,9 @@ function viewUnit(u) {
   const nextU = UNITS.find((x) => x.id === u.id + 1);
   const mark = (p) => p.type === "quiz" ? '<span class="pmark quiz" title="개념 퀴즈">퀴즈</span>' : p.challenge ? '<span class="pmark challenge" title="도전 문제">도전</span>' : "";
   $app.innerHTML = `${topbar()}<main class="page unit-page">
-    <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">Unit ${u.id}</span></nav>
+    <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">${u.id}회차</span></nav>
     <header class="unit-hero">
-      <span class="unit-num">Unit ${String(u.id).padStart(2, "0")}</span>
+      <span class="unit-num">${u.id}회차</span>
       <h1>${esc(u.title)}</h1>
       <p class="muted">${esc(u.summary)}</p>
       <div class="unit-actions"><span class="ucard-count">${done} / ${list.length} 완료</span>
@@ -514,7 +523,7 @@ function viewUnit(u) {
     </header>
     <ol class="plist simple panel">${list.map((p) => `<li><a class="srow" href="#/p/${p.id}">
       ${statusIcon(p.id)}<span class="pid">${no(p.id)}</span><span class="ptitle">${esc(p.title)}</span>${mark(p)}</a></li>`).join("")}</ol>
-    <details class="hint"><summary>개념 노트</summary><div class="note">${u.note}</div></details>
+    ${[...new Set(list.map((p) => p.noteUnit))].map((id) => { const n = ALL_UNITS.find((x) => x.id === id); return `<details class="hint"><summary>개념 노트 · ${esc(n.title)}</summary><div class="note">${n.note}</div></details>`; }).join("")}
     <nav class="unit-nav">${prevU ? `<a class="btn small ghost" href="#/u/${prevU.id}">← ${esc(prevU.title)}</a>` : "<span></span>"}${nextU ? `<a class="btn small ghost" href="#/u/${nextU.id}">${esc(nextU.title)} →</a>` : ""}</nav>
   </main>`;
   bindTopbar();
@@ -543,13 +552,13 @@ function viewQuiz(p) {
   let graded = false;
 
   $app.innerHTML = `${topbar()}<main class="page quiz-page">
-    <nav class="crumb"><a href="#/u/${unit.id}">문제 목록</a><span class="sep">/</span><span class="muted">UNIT ${unit.id} ${esc(unit.title)}</span>
+    <nav class="crumb"><a href="#/u/${unit.id}">문제 목록</a><span class="sep">/</span><span class="muted">${unit.id}회차 ${esc(unit.title)}</span>
       <span class="nav">${prev ? `<a class="btn small" href="#/p/${prev.id}">← ${no(prev.id)}</a>` : ""}${next ? `<a class="btn small" href="#/p/${next.id}">${no(next.id)} →</a>` : ""}</span></nav>
     <header class="quiz-head">
       <div class="meta-line"><span class="tag">개념 퀴즈</span><span class="muted" style="font-size:13px">${esc(p.origin)}</span>${state.progress[p.id]?.solved ? '<span class="status solved">정답</span>' : ""}</div>
       <h1>${no(p.id)}. ${esc(p.title)}</h1>
       <p class="muted">코드를 짜기 전에 개념을 확인합니다. 모두 맞히면 정답으로 기록되고, 틀린 문항은 해설을 보고 다시 풀 수 있습니다.</p>
-      <details class="hint"><summary>개념 노트 보기</summary><div class="note">${unit.note}</div></details>
+      <details class="hint"><summary>개념 노트 보기</summary><div class="note">${noteOf(p).note}</div></details>
     </header>
     <ol class="quiz-list" id="quiz-list"></ol>
     <div class="quiz-actions panel"><span id="quiz-progress" class="muted"></span><span class="spacer"></span>
@@ -822,7 +831,7 @@ function viewProblem(p) {
   const firstStdin = p.type === "io" ? (p.tests.find((t) => !t.hidden)?.stdin ?? "") : "";
 
   $app.innerHTML = `${topbar()}<main class="solve">
-    <nav class="crumb"><a href="#/u/${unit.id}">문제 목록</a><span class="sep">/</span><span class="muted">UNIT ${unit.id} ${esc(unit.title)}</span>
+    <nav class="crumb"><a href="#/u/${unit.id}">문제 목록</a><span class="sep">/</span><span class="muted">${unit.id}회차 ${esc(unit.title)}</span>
       <span class="nav">${prev ? `<a class="btn small" href="#/p/${prev.id}">← ${no(prev.id)}</a>` : ""}${next ? `<a class="btn small" href="#/p/${next.id}">${no(next.id)} →</a>` : ""}</span></nav>
     <div class="solve-grid">
       <section class="read panel">
@@ -856,7 +865,7 @@ function viewProblem(p) {
   const showTab = (name) => {
     $app.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === name)));
     if (name === "problem") readBody.innerHTML = problemTab(p);
-    else if (name === "note") readBody.innerHTML = `<div class="eyebrow">UNIT ${unit.id}</div><h1>${esc(unit.title)}</h1><div class="note">${unit.note}</div>`;
+    else if (name === "note") readBody.innerHTML = `<div class="eyebrow">개념 노트</div><h1>${esc(noteOf(p).title)}</h1><div class="note">${noteOf(p).note}</div>`;
     else historyTab(p, readBody);
   };
   $app.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab)));
@@ -1155,7 +1164,7 @@ async function adminRoster(body) {
     </section>
     <section class="panel card-pad"><h3>오늘의 과제${groupName ? ` · ${esc(groupName)}` : ""}</h3>
       ${g ? `<p class="muted" style="margin:0;font-size:14px">이 그룹 수강생의 홈 맨 위에 '오늘 해야 할 과제'로 보입니다. 5문제를 권장하고, 하나도 고르지 않으면 각자 안 푼 문제 5개가 자동으로 보입니다.</p>` : pickGroup}
-      <div class="today-pick">${UNITS.map((u) => `<fieldset><legend>UNIT ${u.id} ${esc(u.title)}</legend>${PROBLEMS.filter((p) => p.unit === u.id).map((p) => `<label><input type="checkbox" value="${p.id}"> <span class="mono">${no(p.id)}</span> ${esc(p.title)}</label>`).join("")}</fieldset>`).join("")}</div>
+      <div class="today-pick">${UNITS.map((u) => `<fieldset><legend>${u.id}회차 ${esc(u.title)}</legend>${PROBLEMS.filter((p) => p.unit === u.id).map((p) => `<label><input type="checkbox" value="${p.id}"> <span class="mono">${no(p.id)}</span> ${esc(p.title)}</label>`).join("")}</fieldset>`).join("")}</div>
       <div class="toolbar"><span class="muted" id="today-n" style="font-size:14px"></span><span class="spacer"></span><button class="btn small ghost" id="today-clear">모두 해제</button><button class="btn primary" id="today-save" ${g ? "" : "disabled"}>저장</button></div>
     </section>
     <section class="panel card-pad"><h3>수강생 직접 등록${groupName ? ` · ${esc(groupName)}` : ""}</h3>

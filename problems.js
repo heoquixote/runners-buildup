@@ -1107,3 +1107,14 @@ PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES);
 // 단원 순서, 단원 안에서는 개념 퀴즈 → 기본 → 도전 (sort는 안정 정렬이라 원래 순서 유지)
 const order = (p) => (p.type === "quiz" ? 0 : p.challenge ? 2 : 1);
 PROBLEMS.sort((a, b) => a.unit - b.unit || order(a) - order(b));
+
+// ── 회차 구성: 화면에는 회차별 5문제만 보인다 ─────────────────
+// 위의 유닛·문제는 그대로 두고(제출 기록 유지), 여기서 회차마다 보여줄 문제 id를 고른다.
+// 문제를 바꾸려면 ids만 고치면 된다.
+export const SESSIONS = [
+  { id: 1, title: "파이썬 기초 문법", summary: "변수 · 사칙연산 · 문자열 · 리스트 · 딕셔너리", ids: ["1-1", "2-1", "3-2", "6-1", "4-5"] },
+  { id: 2, title: "제어문", summary: "input · if · for · while", ids: ["7-1", "7-2", "7-3", "7-4", "7-5"] },
+  { id: 3, title: "문자열 처리와 함수", summary: "슬라이싱 · split · solution 함수 · 딕셔너리 집계", ids: ["8-1", "8-3", "9-1", "9-4", "8-5"] },
+  { id: 4, title: "NumPy 품질 데이터", summary: "배열 연산 · 통계량 · 불리언 인덱싱 · 이상치", ids: ["10-1", "10-2", "10-3", "10-4", "10-5"] },
+  { id: 5, title: "파일 입출력", summary: "open · with · CSV · JSON", ids: ["11-1", "11-2", "11-3", "11-4", "11-5"] },
+];
