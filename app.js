@@ -1,6 +1,6 @@
 import { CONFIG } from "./config.js";
 import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, SESSIONS } from "./problems.js";
-import { TRACKS, COURSES, LESSONS, PROGRAMS, DOMAIN_LABEL, programOfJoinCode, programById, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath } from "./content/index.js";
+import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath } from "./content/index.js";
 import { conceptName } from "./content/concepts.js";
 import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
 import { render as renderMd } from "./md.js";
@@ -28,15 +28,11 @@ for (const u of UNITS) PROBLEMS.filter((p) => p.unit === u.id).forEach((p, i) =>
 const no = (pid) => NO[pid] || pid;
 const TYPE_LABEL = { io: "입출력형", function: "함수형", steps: "단계 실습형", quiz: "개념 퀴즈" };
 
-// 과정: 가입 코드로 정해지고, 미리보기용으로 바꿔 볼 수 있다 (이 브라우저에만 저장)
+// 과정: 가입 코드로만 정한다. QAQC8 → QAQC 과정(제조 문제), 그 외 → 기본 데이터 과정(일반 문제). 화면에는 따로 표시하지 않는다.
 const domainOf = (p) => p.domain || "mfg";
-function program() {
-  const override = store.get("rb-program");
-  if (override && programById[override]) return programById[override];
-  return programOfJoinCode(state.session?.student?.org);
-}
+const program = () => programOfJoinCode(state.session?.student?.org);
 // 코스의 연습문제: 개념 퀴즈 먼저, 그다음 문제 순서대로. 과정의 소재(domain)에 맞는 문제만,
-// 아직 그 소재의 문제가 없는 코스는 제조 문제를 대신 보여준다 (fallback 표시).
+// 아직 그 소재의 문제가 없는 코스는 제조 문제를 대신 보여준다 (표시 없이).
 function courseProblems(c, prog = program()) {
   if (!c?.unit) return [];
   const all = ALL_PROBLEMS.filter((p) => p.unit === c.unit);
@@ -487,7 +483,7 @@ const unitProblems = (u) => PROBLEMS.filter((p) => p.unit === u.id);
 const firstUnsolved = (list) => list.find((p) => !solved(p.id));
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 const pmark = (p) => p.type === "quiz" ? '<span class="pmark quiz" title="개념 퀴즈">퀴즈</span>' : p.challenge ? '<span class="pmark challenge" title="도전 문제">도전</span>' : "";
-const domainMark = (p) => p.type !== "quiz" && domainOf(p) !== program().domain ? `<span class="pmark domain" title="이 과정용 문제가 준비되면 바뀝니다">${DOMAIN_LABEL[domainOf(p)]}</span>` : "";
+const domainMark = () => ""; // 과정 구분은 화면에 표시하지 않는다
 
 function courseStats(c) {
   const ls = c.lessons, ps = courseProblems(c);
@@ -584,21 +580,6 @@ function trackCard(t) {
   </a>`;
 }
 
-// 과정 표시 + 미리보기용 전환
-function programBar() {
-  const prog = program();
-  const derived = programOfJoinCode(state.session?.student?.org);
-  return `<div class="prog-bar"><span class="eyebrow">Program</span><b>${esc(prog.label)}</b><span class="muted">${esc(prog.blurb)}</span>
-    <label class="prog-switch"><span class="muted">다른 과정 보기</span><select id="prog-select">${PROGRAMS.map((p) => `<option value="${p.id}" ${p.id === prog.id ? "selected" : ""}>${esc(p.label)}${p.id === derived.id ? " (내 과정)" : ""}</option>`).join("")}</select></label></div>`;
-}
-function bindProgramBar(rerender) {
-  $app.querySelector("#prog-select")?.addEventListener("change", (e) => {
-    const derived = programOfJoinCode(state.session?.student?.org);
-    store.set("rb-program", e.target.value === derived.id ? null : e.target.value);
-    rerender();
-  });
-}
-
 function viewHome() {
   const prog = program();
   const totals = TRACKS.map(trackStats).reduce((a, s) => ({ lessons: a.lessons + s.lessons, lessonsDone: a.lessonsDone + s.lessonsDone, problems: a.problems + s.problems, solved: a.solved + s.solved }), { lessons: 0, lessonsDone: 0, problems: 0, solved: 0 });
@@ -607,7 +588,6 @@ function viewHome() {
       <div><h1>${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?</h1>
         <div class="home-progress"><span>레슨 <b>${totals.lessonsDone} / ${totals.lessons}</b></span><span>문제 <b>${totals.solved} / ${totals.problems}</b></span><span class="meter-bar"><span style="width:${pct(totals.lessonsDone + totals.solved, totals.lessons + totals.problems)}%"></span></span></div></div>
     </div>
-    ${programBar()}
     ${continueCard()}
     ${prog.sessions ? todayHtml() : ""}
     <section class="part"><h2 class="part-title">학습 트랙</h2>
@@ -616,7 +596,6 @@ function viewHome() {
       <div class="ucards">${UNITS.map(unitCard).join("")}</div></section>` : ""}
   </main>`;
   bindTopbar();
-  bindProgramBar(viewHome);
   preload();
 }
 
@@ -676,7 +655,6 @@ function viewCourse(c) {
   const nextC = list.slice(i + 1).find(isReady);
   const probs = courseProblems(c);
   const s = courseStats(c);
-  const fallback = probs.some((p) => p.type !== "quiz" && domainOf(p) !== program().domain);
   const firstLesson = c.lessons.find((l) => !lessonDone(l.id)) || c.lessons[0];
   const nextP = firstUnsolved(probs);
   $app.innerHTML = `${topbar()}<main class="page unit-page" ${trackStyle(t)}>
@@ -691,7 +669,7 @@ function viewCourse(c) {
     </header>
     <section class="part"><h2 class="part-title">레슨</h2>
       ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span><span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
-    <section class="part"><h2 class="part-title">연습문제 <span class="muted">${esc(DOMAIN_LABEL[program().domain])}${fallback ? " 준비 중 · 지금은 제조 예제로 풉니다" : ""}</span></h2>
+    <section class="part"><h2 class="part-title">연습문제</h2>
       ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>
     <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="#/c/${prevC.id}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="#/c/${nextC.id}">${esc(nextC.title)} →</a>` : ""}</nav>
   </main>`;

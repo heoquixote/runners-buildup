@@ -698,10 +698,6 @@ kbd {
 /* ── 학습 트랙 · 코스 · 레슨 (2026-11 확장) ── */
 /* --tc: 트랙 색. 카드·페이지 루트에 trackStyle()로 들어온다 */
 .tchip { font: 600 12px/1 var(--font-en); letter-spacing: .06em; color: var(--tc, var(--track)); border: 1px solid color-mix(in srgb, var(--tc, var(--track)) 45%, transparent); border-radius: 999px; padding: 4px 9px; text-transform: uppercase; }
-.prog-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
-.prog-bar b { font-size: 15px; }
-.prog-switch { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
-.prog-switch select { min-height: 32px; padding: 0 8px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 6px; font: inherit; font-size: 13px; }
 
 .continue { display: flex; align-items: center; gap: 18px; padding: 20px 22px; flex-wrap: wrap; }
 .continue-body { flex: 1 1 260px; display: grid; gap: 6px; min-width: 0; }
@@ -730,7 +726,7 @@ kbd {
 .tcard-meter { display: grid; gap: 6px; margin-top: 6px; }
 .tcard-meter .ucard-bar span { background: var(--tc, var(--accent)); }
 @media (max-width: 900px) { .tcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .tcards { grid-template-columns: minmax(0, 1fr); } .prog-switch { margin-left: 0; } }
+@media (max-width: 560px) { .tcards { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .tcard { transition: none; } .tcard:hover { transform: none; } }
 
 .track-page .unit-hero, .unit-page .unit-hero { padding-top: 4px; }

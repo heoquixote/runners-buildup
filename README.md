@@ -4,7 +4,7 @@
 
 수강생은 브라우저에서 코드를 작성하고 바로 채점을 받고, 강사는 어드민 화면에서 제출 현황을 봅니다.
 
-- **과정**: 가입 코드 `QAQC8`로 들어오면 **QAQC 과정**(제조·품질 소재 문제 + 수업 회차 과제), 그 외는 **기본 데이터 과정**(일반 소재 문제). 홈의 "다른 과정 보기"로 미리 볼 수 있습니다.
+- **과정**: 가입 코드 `QAQC8`로 들어오면 **QAQC 과정**(제조·품질 소재 문제 + 수업 회차 과제), 그 외는 모두 **기본 데이터 과정**(일반 소재 문제). 화면에 과정 이름이나 전환 메뉴는 표시하지 않습니다.
 
 - **설치 없음**: 파이썬은 [Pyodide](https://pyodide.org)로 브라우저 안에서 실행됩니다 (numpy 포함).
 - **로그인**: 이름 + 4자리 번호. 5번 틀리면 5분 잠금.
@@ -58,7 +58,7 @@ python3 -m http.server 8000   # http://localhost:8000
 
 ## 문제 추가
 
-`problems.js`에 항목을 추가하고 `node scripts/verify.mjs`로 확인합니다 (python3, numpy 필요). 기본 데이터 과정용 일반 소재 문제는 같은 `unit`에 `domain: "general"`로 넣습니다. 아직 없는 유닛은 제조 문제가 "제조 예제" 표시와 함께 대신 보입니다.
+`problems.js`에 항목을 추가하고 `node scripts/verify.mjs`로 확인합니다 (python3, numpy 필요). 기본 데이터 과정용 일반 소재 문제는 같은 `unit`에 `domain: "general"`로 넣습니다. 아직 없는 유닛은 제조 문제가 대신 보입니다.
 
 - `type: "io"`: `tests: [{ stdin, expected, hidden? }]`. 출력은 줄 단위로 비교하고 줄 끝 공백은 무시합니다. `input()`의 안내 문구는 출력에 섞이지 않습니다.
 - `type: "function"`: `tests: [{ args: [...], expected, hidden? }]`. `solution(*args)`의 반환값을 비교하고, 실수는 `tolerance`(기본 1e-6) 오차를 허용합니다.
