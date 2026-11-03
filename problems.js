@@ -4,6 +4,7 @@
 // 모든 모범답안은 `node scripts/verify.mjs` 로 자동 검증한다.
 // 1회차 교안 유닛(1~6)은 problems-day1.js, 이후 연습 유닛(7~)은 이 파일에 있다.
 import { DAY1_UNITS, DAY1_PROBLEMS, DAY1_QUIZZES } from "./problems-day1.js";
+import { SM_UNITS, SM_PROBLEMS, SM_QUIZZES } from "./problems-stats-ml.js";
 
 // 커리큘럼(트랙 > 코스 > 레슨)은 content/index.js 에 있고, 코스는 unit 번호로 이 파일의 문제와 이어진다.
 // domain: "mfg"(제조·품질 소재, 기본값) | "general"(일반 데이터 소재). QAQC 과정은 mfg, 기본 데이터 과정은 general 문제를 보여준다.
@@ -121,6 +122,7 @@ data = json.load(f)                                # 파일 → 파이썬</pre>
 export const UNITS = [
   ...DAY1_UNITS.map((u) => ({ ...u, track: "python", part: "py-1" })),
   ...MORE_UNITS.map((u) => ({ ...u, track: "python", part: "py-2" })),
+  ...SM_UNITS.map((u) => ({ ...u, track: u.id <= 16 ? "stats" : "ml", part: u.id <= 16 ? "st-1" : "ml-1" })),
 ];
 
 export const PROBLEMS = [
@@ -1096,7 +1098,7 @@ const QUIZZES = [
   },
 ];
 PROBLEMS.unshift(...DAY1_PROBLEMS);
-PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES);
+PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES, ...SM_PROBLEMS, ...SM_QUIZZES);
 // 단원 순서, 단원 안에서는 개념 퀴즈 → 기본 → 도전 (sort는 안정 정렬이라 원래 순서 유지)
 const order = (p) => (p.type === "quiz" ? 0 : p.challenge ? 2 : 1);
 PROBLEMS.sort((a, b) => a.unit - b.unit || order(a) - order(b));

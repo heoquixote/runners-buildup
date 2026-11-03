@@ -66,9 +66,10 @@ export function preload() {
 function send(kind, problem, code, stdin) {
   if (!worker) boot().catch(() => {});
   const id = ++seq;
-  // numpy를 쓰는 문제는 첫 실행 때 패키지를 내려받으므로 여유 시간을 더 준다
+  // 패키지를 쓰는 코드는 첫 실행 때 내려받으므로 여유 시간을 더 준다 (scipy · scikit-learn 은 크다)
   const usesNp = /\bnumpy\b/.test(code) || (problem.checks || []).some((c) => /\bnp\./.test(c.expr));
-  const extra = usesNp ? 15000 : 0;
+  const usesBig = /\b(scipy|sklearn|pandas)\b/.test(code);
+  const extra = usesBig ? 45000 : usesNp ? 15000 : 0;
   return readyPromise.then(
     () =>
       new Promise((resolve, reject) => {
