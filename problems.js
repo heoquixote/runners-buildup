@@ -5,16 +5,9 @@
 // 1회차 교안 유닛(1~6)은 problems-day1.js, 이후 연습 유닛(7~)은 이 파일에 있다.
 import { DAY1_UNITS, DAY1_PROBLEMS, DAY1_QUIZZES } from "./problems-day1.js";
 
-// 트랙: 왼쪽 내비게이션의 과목 선택. SQL은 문제를 추가하면 ready: true 로 연다.
-export const TRACKS = [
-  { id: "python", label: "Python", ready: true },
-  { id: "sql", label: "SQL", ready: false },
-];
-// 트랙 안의 묶음 (회차). 유닛의 part 값으로 연결한다.
-export const PARTS = [
-  { id: "py-1", track: "python", label: "1회차 · 파이썬 기초 문법" },
-  { id: "py-2", track: "python", label: "심화 연습 · 제어문 · 함수 · NumPy · 파일" },
-];
+// 커리큘럼(트랙 > 코스 > 레슨)은 content/index.js 에 있고, 코스는 unit 번호로 이 파일의 문제와 이어진다.
+// domain: "mfg"(제조·품질 소재, 기본값) | "general"(일반 데이터 소재). QAQC 과정은 mfg, 기본 데이터 과정은 general 문제를 보여준다.
+// 일반 소재 문제를 추가할 때는 같은 unit 에 domain: "general" 로 넣는다. 아직 없는 유닛은 제조 문제가 대신 보인다.
 
 const MORE_UNITS = [
   {

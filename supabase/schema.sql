@@ -494,8 +494,80 @@ grant execute on function
 to anon;
 
 -- ↓ 어드민 비밀번호를 바꿔서 실행하세요 (8자 이상)
-select public.set_admin_password('여기에-어드민-비밀번호');
 
 -- ↓ 첫 그룹 (가입 코드 = 그룹 코드). 어드민 > 명단 화면에서 추가·수정할 수 있습니다.
 insert into groups (code, label) values ('QAQC8', 'Team Sparta · QAQC 8기')
 on conflict (code) do nothing;
+
+-- ── 레슨 진도 (2026-11-03) ─────────────────────────────────
+-- 레슨마다 한 줄: 읽기 시작(viewed) → 체크 퀴즈 통과(passed)
+create table if not exists public.lesson_progress (
+  student_id uuid not null references public.students(id) on delete cascade,
+  lesson_id text not null,
+  status text not null default 'viewed' check (status in ('viewed', 'passed')),
+  quiz_score int,
+  updated_at timestamptz not null default now(),
+  primary key (student_id, lesson_id)
+);
+alter table public.lesson_progress enable row level security;
+revoke all on public.lesson_progress from anon, authenticated;
+
+create or replace function public.lesson_progress_set(p_token uuid, p_lesson_id text, p_status text, p_quiz_score int)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_sid uuid := _student_of(p_token);
+begin
+  if v_sid is null then return json_build_object('ok', false, 'error', 'session'); end if;
+  if p_status not in ('viewed', 'passed') or p_lesson_id !~ '^[a-z0-9-]{1,40}$' then
+    return json_build_object('ok', false, 'error', 'not_found');
+  end if;
+  insert into lesson_progress (student_id, lesson_id, status, quiz_score)
+  values (v_sid, p_lesson_id, p_status, p_quiz_score)
+  on conflict (student_id, lesson_id) do update set
+    status = case when lesson_progress.status = 'passed' then 'passed' else excluded.status end,
+    quiz_score = coalesce(excluded.quiz_score, lesson_progress.quiz_score),
+    updated_at = now();
+  return json_build_object('ok', true);
+end;
+$$;
+
+create or replace function public.student_me(p_token uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+declare
+  v_sid uuid := _student_of(p_token);
+begin
+  if v_sid is null then return json_build_object('ok', false, 'error', 'session'); end if;
+  return (
+    select json_build_object(
+      'ok', true,
+      'student', json_build_object('id', s.id, 'name', s.name, 'org', s.join_code, 'org_label', _group_label(s.join_code)),
+      'progress', coalesce((
+        select json_object_agg(problem_id, json_build_object('attempts', attempts, 'solved', solved))
+        from (
+          select problem_id, count(*) as attempts, bool_or(passed) as solved
+          from submissions where student_id = v_sid group by problem_id
+        ) x
+      ), '{}'::json),
+      'lessons', coalesce((
+        select json_object_agg(lesson_id, json_build_object('status', status, 'quiz_score', quiz_score, 'updated_at', updated_at))
+        from lesson_progress where student_id = v_sid
+      ), '{}'::json)
+    )
+    from students s where s.id = v_sid
+  );
+end;
+$$;
+
+create or replace function public.admin_lessons(p_token uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  return json_build_object('ok', true, 'rows', coalesce((
+    select json_agg(json_build_object('student_id', student_id, 'lesson_id', lesson_id, 'status', status, 'updated_at', updated_at))
+    from lesson_progress
+  ), '[]'::json));
+end;
+$$;
+
+-- 마지막: 어드민 비밀번호 (꼭 바꾸세요)
+select public.set_admin_password('여기에-어드민-비밀번호');
