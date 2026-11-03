@@ -56,6 +56,10 @@ class SupabaseApi {
     });
   }
   history(token, problemId) { return this.call("student_history", { p_token: token, p_problem_id: problemId }); }
+  lessonSet(token, lessonId, status, quizScore) {
+    return this.call("lesson_progress_set", { p_token: token, p_lesson_id: lessonId, p_status: status, p_quiz_score: quizScore ?? null });
+  }
+  adminLessons(token) { return this.call("admin_lessons", { p_token: token }); }
   adminLogin(password) { return this.call("admin_login", { p_password: password }); }
   roster(token) { return this.call("admin_roster", { p_token: token }); }
   addStudents(token, names, group) { return this.call("admin_add_students", { p_token: token, p_names: names, p_group: group || null }); }
@@ -218,7 +222,26 @@ class DemoApi {
       p.attempts++;
       p.solved ||= sub.passed;
     }
-    return { ok: true, student: { id: sid, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) }, progress };
+    const lessons = {};
+    for (const l of (db.lessons || []).filter((x) => x.student_id === sid)) lessons[l.lesson_id] = { status: l.status, quiz_score: l.quiz_score, updated_at: l.updated_at };
+    return { ok: true, student: { id: sid, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) }, progress, lessons };
+  }
+  async lessonSet(token, lessonId, status, quizScore) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    db.lessons ||= [];
+    let row = db.lessons.find((x) => x.student_id === sid && x.lesson_id === lessonId);
+    if (!row) db.lessons.push((row = { student_id: sid, lesson_id: lessonId, status: "viewed", quiz_score: null }));
+    if (row.status !== "passed") row.status = status;
+    if (quizScore != null) row.quiz_score = quizScore;
+    row.updated_at = new Date().toISOString();
+    this.save(db);
+    return { ok: true };
+  }
+  async adminLessons(token) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    return { ok: true, rows: db.lessons || [] };
   }
   async submit(token, problemId, code, result) {
     const db = this.load();

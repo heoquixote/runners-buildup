@@ -1,27 +1,60 @@
 import { CONFIG } from "./config.js";
-import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, TRACKS, SESSIONS } from "./problems.js";
+import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, SESSIONS } from "./problems.js";
+import { TRACKS, COURSES, LESSONS, PROGRAMS, DOMAIN_LABEL, programOfJoinCode, programById, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath } from "./content/index.js";
+import { conceptName } from "./content/concepts.js";
+import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
+import { render as renderMd } from "./md.js";
+import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
+import { runCode, gradeCode, preload, onRunnerState } from "./runner.js";
 
-// 화면 구성은 회차 단위: 회차(SESSIONS)마다 고른 5문제만 보여준다.
-// 문제 객체는 복사해서 unit을 회차 번호로 바꾸고, 개념 노트는 원래 유닛(noteUnit)의 것을 쓴다.
-const UNITS = SESSIONS.map((s) => ({ ...s, title: s.title, summary: s.summary }));
+// 두 가지 보기 방식이 있다.
+//  - 커리큘럼: 트랙 > 코스 > 레슨 + 연습문제 (content/index.js). 코스는 unit 번호로 문제와 이어진다.
+//  - 회차 과제: 수업 회차(SESSIONS)마다 고른 5문제. 홈의 "우리 반 과제"와 어드민 화면이 이 순서를 쓴다.
+const UNITS = SESSIONS.map((s) => ({ ...s }));
 const PROBLEMS = SESSIONS.flatMap((s) => s.ids.map((id) => {
   const p = ALL_PROBLEMS.find((x) => x.id === id);
   return { ...p, unit: s.id, noteUnit: p.unit };
 }));
-const noteOf = (p) => ALL_UNITS.find((u) => u.id === p.noteUnit);
-import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
-import { runCode, gradeCode, preload, onRunnerState } from "./runner.js";
+const unitNote = (unitId) => ALL_UNITS.find((u) => u.id === unitId);
 
 // ── 작은 도우미 ───────────────────────────────────────────
 const $app = document.getElementById("app");
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const byId = Object.fromEntries(PROBLEMS.map((p) => [p.id, p]));
-// 화면에 보이는 번호: 유닛 안 순서대로 1-1, 1-2… (퀴즈가 1번). 저장되는 id(1-Q 등)는 그대로 둔다.
+const byId = Object.fromEntries(ALL_PROBLEMS.map((p) => [p.id, p]));
+// 회차 화면에 보이는 번호: 회차 안 순서대로 1-1, 1-2… 저장되는 id(1-Q 등)는 그대로 둔다.
 const NO = {};
 for (const u of UNITS) PROBLEMS.filter((p) => p.unit === u.id).forEach((p, i) => { NO[p.id] = `${u.id}-${i + 1}`; });
 const no = (pid) => NO[pid] || pid;
 const TYPE_LABEL = { io: "입출력형", function: "함수형", steps: "단계 실습형", quiz: "개념 퀴즈" };
+
+// 과정: 가입 코드로 정해지고, 미리보기용으로 바꿔 볼 수 있다 (이 브라우저에만 저장)
+const domainOf = (p) => p.domain || "mfg";
+function program() {
+  const override = store.get("rb-program");
+  if (override && programById[override]) return programById[override];
+  return programOfJoinCode(state.session?.student?.org);
+}
+// 코스의 연습문제: 개념 퀴즈 먼저, 그다음 문제 순서대로. 과정의 소재(domain)에 맞는 문제만,
+// 아직 그 소재의 문제가 없는 코스는 제조 문제를 대신 보여준다 (fallback 표시).
+function courseProblems(c, prog = program()) {
+  if (!c?.unit) return [];
+  const all = ALL_PROBLEMS.filter((p) => p.unit === c.unit);
+  const quiz = all.filter((p) => p.type === "quiz");
+  let rest = all.filter((p) => p.type !== "quiz" && domainOf(p) === prog.domain);
+  if (!rest.length) rest = all.filter((p) => p.type !== "quiz" && domainOf(p) === "mfg");
+  return [...quiz, ...rest];
+}
+const courseOf = (p) => courseOfUnit(p.unit);
+// 이 문제를 보여주는 과정 (문제 소재와 다른 과정에서 열어도 코스 맥락은 유지)
+const problemList = (p) => { const c = courseOf(p); const list = courseProblems(c); return list.includes(p) ? list : courseProblems(c, PROGRAMS.find((x) => x.domain === domainOf(p)) || program()); };
+// 코스 안 번호: Q(개념 퀴즈), 1, 2, …
+const cno = (p) => { const i = problemList(p).filter((x) => x.type !== "quiz").indexOf(p); return p.type === "quiz" ? "Q" : String(i + 1); };
+const isReady = (c) => c.status !== "planned";
+const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
+const solved = (pid) => !!state.progress[pid]?.solved;
+const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)" };
+const trackStyle = (t) => `style="--tc:${TRACK_COLOR[t.color] || "var(--track)"}"`;
 
 const store = {
   get(key) {
@@ -105,11 +138,11 @@ const state = {
   session: store.get(SESSION_KEY), // {token, student:{id,name}}
   adminToken: store.get(ADMIN_KEY),
   progress: {},
+  lessons: {}, // {lessonId: {status, quiz_score, updated_at}}
   progressLoaded: false,
   adminGroup: store.get("rb-admin-group") ?? "", // "" 전체, "-" 그룹 없음, 그 외 그룹 코드
   groups: [],
   today: [],
-  track: TRACKS.some((t) => t.id === store.get("rb-track")) ? store.get("rb-track") : "python",
   runner: "idle",
 };
 let editor = null;
@@ -132,6 +165,7 @@ async function loadProgress() {
   try {
     const res = await api.me(state.session.token);
     state.progress = res.progress || {};
+    state.lessons = res.lessons || {};
     if (res.student) {
       state.session.student = res.student;
       store.set(SESSION_KEY, state.session);
@@ -147,6 +181,7 @@ async function loadProgress() {
 function logout(expired) {
   state.session = null;
   state.progress = {};
+  state.lessons = {};
   state.progressLoaded = false;
   store.set(SESSION_KEY, null);
   if (expired) toast("로그인이 만료되었습니다. 다시 로그인해 주세요.");
@@ -160,7 +195,7 @@ function topbar({ admin = false } = {}) {
   const right = admin
     ? `<a class="btn ghost small" href="#/">수강생 화면</a><button class="btn small" data-act="admin-logout">어드민 로그아웃</button>`
     : state.session
-      ? `<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
+      ? `<a class="btn ghost small" href="#/videos">영상</a><a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
       : `<a class="btn ghost small" href="#/guide">사용 방법</a>`;
   return `<header class="topbar"><div class="topbar-inner">
     <div class="brand-block">
@@ -175,7 +210,7 @@ function topbar({ admin = false } = {}) {
 const GROUP_LOGOS = { QAQC8: "assets/sparta.png" };
 function brandSub(admin) {
   const st = admin ? null : state.session?.student;
-  if (!st?.org_label) return `<span class="brand-course">Runners Build-up · Python Track</span>`;
+  if (!st?.org_label) return `<span class="brand-course">Runners Build-up · Learning Tracks</span>`;
   const logo = GROUP_LOGOS[st.org] ? `<img src="${GROUP_LOGOS[st.org]}" alt="" width="14" height="14">` : "";
   return `<span class="brand-course org">${logo}${esc(st.org_label)}</span>`;
 }
@@ -205,6 +240,13 @@ async function route() {
   if (!state.session) return;
   const m = hash.match(/^#\/p\/([\w-]+)/);
   if (m && byId[m[1]]) return byId[m[1]].type === "quiz" ? viewQuiz(byId[m[1]]) : viewProblem(byId[m[1]]);
+  const l = hash.match(/^#\/l\/([\w-]+)/);
+  if (l && lessonById[l[1]]) return viewLesson(lessonById[l[1]]);
+  const c = hash.match(/^#\/c\/([\w-]+)/);
+  if (c && courseById[c[1]]) return viewCourse(courseById[c[1]]);
+  const t = hash.match(/^#\/t\/([\w-]+)/);
+  if (t && trackById[t[1]]) return viewTrack(trackById[t[1]]);
+  if (hash.startsWith("#/videos")) return viewVideos();
   const u = hash.match(/^#\/u\/(\d+)/);
   const unit = u && UNITS.find((x) => x.id === Number(u[1]));
   return unit ? viewUnit(unit) : viewHome();
@@ -255,7 +297,7 @@ function viewLogin() {
 
 function authHead(active) {
   return `<div><img src="assets/dl-logo.png" alt="Data Learners" width="56" height="49" class="auth-mark"><div class="eyebrow">Data Learners · Python Track</div><h1>러너즈빌드업</h1>
-    <p class="lead">QA/QC 실무 예제로 파이썬을 복습하고 바로 채점받으세요.</p></div>
+    <p class="lead">개념을 읽고, 영상으로 보고, 바로 풀어 보는 데이터 학습 트랙.</p></div>
     <nav class="login-switch" aria-label="로그인 또는 회원가입">
       <a href="#/" ${active === "login" ? 'aria-current="page"' : ""}>로그인</a>
       <a href="#/signup" ${active === "signup" ? 'aria-current="page"' : ""}>회원가입</a>
@@ -265,7 +307,7 @@ function authHead(active) {
 // ── 사용 방법 · 코드 작성법 ───────────────────────────────
 const codeBlock = (code) => `<pre class="guide-code"><code>${esc(code)}</code></pre>`;
 function viewGuide() {
-  const back = state.session ? `<a class="btn small" href="#/">문제 목록으로</a>` : `<a class="btn small" href="#/">로그인하러 가기</a>`;
+  const back = state.session ? `<a class="btn small" href="#/">홈으로</a>` : `<a class="btn small" href="#/">로그인하러 가기</a>`;
   $app.innerHTML = `${topbar()}<main class="page guide">
     <div class="hero"><div><div class="eyebrow">Guide</div><h1>사용 방법과 코드 작성법</h1>
       <p>문제는 세 가지 유형이 있습니다. 유형마다 답을 내는 방법이 다르니 처음 한 번만 읽어 보세요.</p></div>${back}</div>
@@ -427,7 +469,7 @@ async function viewSignup() {
   });
 }
 
-// ── 홈 (유닛 카드) · 유닛 페이지 ─────────────────────────────
+// ── 홈 · 트랙 · 코스 · 레슨 · 영상 ─────────────────────────
 // 상태는 아이콘 하나로: ✓ 정답, • 시도함, ○ 아직
 function statusIcon(pid) {
   const p = state.progress[pid];
@@ -435,26 +477,84 @@ function statusIcon(pid) {
   if (p) return `<span class="st st-tried" title="시도 ${p.attempts}회">•</span>`;
   return `<span class="st st-none" title="미제출">○</span>`;
 }
+function lessonIcon(lid) {
+  const s = state.lessons[lid]?.status;
+  if (s === "passed") return `<span class="st st-solved" title="완료">✓</span>`;
+  if (s === "viewed") return `<span class="st st-tried" title="읽는 중">•</span>`;
+  return `<span class="st st-none" title="아직">○</span>`;
+}
 const unitProblems = (u) => PROBLEMS.filter((p) => p.unit === u.id);
-const firstUnsolved = (list) => list.find((p) => !state.progress[p.id]?.solved);
+const firstUnsolved = (list) => list.find((p) => !solved(p.id));
+const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+const pmark = (p) => p.type === "quiz" ? '<span class="pmark quiz" title="개념 퀴즈">퀴즈</span>' : p.challenge ? '<span class="pmark challenge" title="도전 문제">도전</span>' : "";
+const domainMark = (p) => p.type !== "quiz" && domainOf(p) !== program().domain ? `<span class="pmark domain" title="이 과정용 문제가 준비되면 바뀝니다">${DOMAIN_LABEL[domainOf(p)]}</span>` : "";
 
-function trackTabs() {
-  return `<div class="track-tabs" role="tablist" aria-label="트랙 선택">${TRACKS.map((t) =>
-    `<button role="tab" aria-selected="${t.id === state.track}" data-track="${t.id}">${esc(t.label)}${t.ready ? "" : '<span class="soon">준비 중</span>'}</button>`).join("")}</div>`;
+function courseStats(c) {
+  const ls = c.lessons, ps = courseProblems(c);
+  return { lessons: ls.length, lessonsDone: ls.filter((l) => lessonDone(l.id)).length, problems: ps.length, solved: ps.filter((p) => solved(p.id)).length };
+}
+function trackStats(t) {
+  const sum = { lessons: 0, lessonsDone: 0, problems: 0, solved: 0, courses: 0, ready: 0 };
+  for (const c of coursesOf(t.id)) {
+    sum.courses++;
+    if (!isReady(c)) continue;
+    sum.ready++;
+    const s = courseStats(c);
+    for (const k of ["lessons", "lessonsDone", "problems", "solved"]) sum[k] += s[k];
+  }
+  return sum;
 }
 
-// 오늘의 과제: 한 줄 요약 + 다음 문제 바로가기
+// 이어서 학습: 최근 레슨 기록 → 그 다음 단계. 기록이 없으면 첫 코스의 첫 레슨.
+function nextStep() {
+  const recent = Object.entries(state.lessons).filter(([id]) => lessonById[id]).sort((a, b) => String(b[1].updated_at || "").localeCompare(String(a[1].updated_at || "")))[0];
+  if (recent) {
+    const l = lessonById[recent[0]];
+    const c = courseById[l.course];
+    if (recent[1].status !== "passed") return { kind: "lesson", lesson: l, course: c, label: "읽던 레슨 이어서" };
+    const i = c.lessons.findIndex((x) => x.id === l.id);
+    if (c.lessons[i + 1]) return { kind: "lesson", lesson: lessonById[c.lessons[i + 1].id], course: c, label: "다음 레슨" };
+    const p = firstUnsolved(courseProblems(c));
+    if (p) return { kind: "problem", problem: p, course: c, label: "연습문제 풀기" };
+    const list = coursesOf(c.track).filter(isReady);
+    const nextC = list[list.indexOf(c) + 1];
+    if (nextC?.lessons[0]) return { kind: "lesson", lesson: lessonById[nextC.lessons[0].id], course: nextC, label: "다음 코스 시작" };
+  }
+  for (const t of TRACKS) for (const c of coursesOf(t.id).filter(isReady)) {
+    const l = c.lessons.find((x) => !lessonDone(x.id));
+    if (l) return { kind: "lesson", lesson: lessonById[l.id], course: c, label: Object.keys(state.lessons).length ? "다음 레슨" : "시작하기" };
+    const p = firstUnsolved(courseProblems(c));
+    if (p) return { kind: "problem", problem: p, course: c, label: "연습문제 풀기" };
+  }
+  return null;
+}
+
+function continueCard() {
+  const n = nextStep();
+  if (!n) return `<section class="panel lime continue"><div><span class="eyebrow">All clear</span><h2>열린 코스를 모두 끝냈습니다</h2><p class="muted">새 코스가 열리면 여기에 다음 단계가 나옵니다.</p></div></section>`;
+  const t = trackById[n.course.track];
+  const title = n.kind === "lesson" ? n.lesson.title : n.problem.title;
+  const href = n.kind === "lesson" ? `#/l/${n.lesson.id}` : `#/p/${n.problem.id}`;
+  const sub = n.kind === "lesson" ? `레슨 · 약 ${n.lesson.minutes}분` : `연습문제 ${cno(n.problem)}`;
+  return `<section class="panel lime continue" ${trackStyle(t)}>
+    <div class="continue-body"><span class="eyebrow">${esc(n.label)}</span>
+      <div class="continue-path"><span class="tchip">${esc(t.label)}</span><span class="sep">/</span><a href="#/c/${n.course.id}">${esc(n.course.title)}</a></div>
+      <h2><a href="${href}">${esc(title)}</a></h2><p class="muted">${esc(sub)}</p></div>
+    <a class="btn primary" href="${href}">${n.kind === "lesson" ? "레슨 열기" : "문제 풀기"} →</a>
+  </section>`;
+}
+
+// 오늘의 과제: 한 줄 요약 + 다음 문제 바로가기 (QAQC 과정)
 function todayHtml() {
   const picked = (state.today || []).filter((id) => byId[id]);
-  // 강사가 정하지 않았으면 아직 안 푼 문제 5개를 순서대로 추천
-  // 부족한 만큼 아직 안 푼 문제로 5개를 채운다
-  const ids = [...picked, ...PROBLEMS.filter((p) => !picked.includes(p.id) && !state.progress[p.id]?.solved).map((p) => p.id)].slice(0, Math.max(5, picked.length));
+  // 강사가 정하지 않았으면 아직 안 푼 회차 문제 5개를 순서대로 추천
+  const ids = [...picked, ...PROBLEMS.filter((p) => !picked.includes(p.id) && !solved(p.id)).map((p) => p.id)].slice(0, Math.max(5, picked.length));
   if (!ids.length) return "";
-  const done = ids.filter((id) => state.progress[id]?.solved).length;
-  const next = byId[ids.find((id) => !state.progress[id]?.solved)];
+  const done = ids.filter((id) => solved(id)).length;
+  const next = byId[ids.find((id) => !solved(id))];
   return `<section class="today-line panel" aria-label="오늘의 과제">
     <div class="today-meta"><span class="eyebrow">Today</span><b>오늘의 과제 ${done} / ${ids.length}</b></div>
-    <ol class="today-chips">${ids.map((id) => `<li><a href="#/p/${id}" class="${state.progress[id]?.solved ? "done" : ""}" title="${esc(byId[id].title)}">${no(id)}</a></li>`).join("")}</ol>
+    <ol class="today-chips">${ids.map((id) => `<li><a href="#/p/${id}" class="${solved(id) ? "done" : ""}" title="${esc(byId[id].title)}">${no(id)}</a></li>`).join("")}</ol>
     ${next
       ? `<a class="btn primary today-go" href="#/p/${next.id}"><span class="mono">${no(next.id)}</span> ${esc(next.title)} 풀기 →</a>`
       : `<span class="today-clear">오늘 과제를 모두 끝냈어요</span>`}
@@ -463,55 +563,320 @@ function todayHtml() {
 
 function unitCard(u) {
   const list = unitProblems(u);
-  const done = list.filter((p) => state.progress[p.id]?.solved).length;
+  const done = list.filter((p) => solved(p.id)).length;
   const next = firstUnsolved(list);
-  const pct = Math.round((done / list.length) * 100);
   return `<article class="ucard panel${done === list.length ? " complete" : ""}">
     <a class="ucard-link" href="#/u/${u.id}"><span class="unit-num">${u.id}회차</span><h3>${esc(u.title)}</h3></a>
-    <div class="ucard-bar" aria-hidden="true"><span style="width:${pct}%"></span></div>
+    <div class="ucard-bar" aria-hidden="true"><span style="width:${pct(done, list.length)}%"></span></div>
     <div class="ucard-foot"><span class="ucard-count">${done} / ${list.length}</span>
       ${next ? `<a class="btn small" href="#/p/${next.id}">${done ? "이어 풀기" : "시작"} →</a>` : `<a class="btn small ghost" href="#/u/${u.id}">복습하기</a>`}</div>
   </article>`;
 }
 
-function bindTrackTabs() {
-  $app.querySelectorAll("[data-track]").forEach((b) => b.addEventListener("click", () => {
-    state.track = b.dataset.track;
-    store.set("rb-track", state.track);
-    viewHome();
-  }));
+function trackCard(t) {
+  const s = trackStats(t);
+  const open = t.ready && s.ready > 0;
+  return `<a class="tcard panel${open ? "" : " soon"}" href="#/t/${t.id}" ${trackStyle(t)}>
+    <div class="tcard-head"><span class="tcard-en">${esc(t.en)}</span>${open ? `<span class="tcard-open">${s.ready} / ${s.courses} 코스 열림</span>` : '<span class="soon">준비 중</span>'}</div>
+    <h3>${esc(t.label)}</h3>
+    <p class="muted">${esc(t.blurb)}</p>
+    ${open ? `<div class="tcard-meter"><span class="ucard-bar"><span style="width:${pct(s.lessonsDone + s.solved, s.lessons + s.problems)}%"></span></span><span class="ucard-count">레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span></div>` : `<div class="tcard-meter"><span class="ucard-count">${s.courses}개 코스 예정</span></div>`}
+  </a>`;
+}
+
+// 과정 표시 + 미리보기용 전환
+function programBar() {
+  const prog = program();
+  const derived = programOfJoinCode(state.session?.student?.org);
+  return `<div class="prog-bar"><span class="eyebrow">Program</span><b>${esc(prog.label)}</b><span class="muted">${esc(prog.blurb)}</span>
+    <label class="prog-switch"><span class="muted">다른 과정 보기</span><select id="prog-select">${PROGRAMS.map((p) => `<option value="${p.id}" ${p.id === prog.id ? "selected" : ""}>${esc(p.label)}${p.id === derived.id ? " (내 과정)" : ""}</option>`).join("")}</select></label></div>`;
+}
+function bindProgramBar(rerender) {
+  $app.querySelector("#prog-select")?.addEventListener("change", (e) => {
+    const derived = programOfJoinCode(state.session?.student?.org);
+    store.set("rb-program", e.target.value === derived.id ? null : e.target.value);
+    rerender();
+  });
 }
 
 function viewHome() {
-  const track = TRACKS.find((t) => t.id === state.track);
-  const solved = PROBLEMS.filter((p) => state.progress[p.id]?.solved).length;
-  const pct = Math.round((solved / PROBLEMS.length) * 100);
-  const body = state.track === "python"
-    ? `${todayHtml()}<section class="part"><h2 class="part-title">회차별 문제</h2>
-          <div class="ucards">${UNITS.map(unitCard).join("")}</div></section>`
-    : `<section class="panel soon-panel"><h2>${esc(track.label)} 트랙은 준비 중입니다</h2>
-        <p class="muted">문제가 준비되면 이곳에 유닛이 열립니다. 지금은 Python 트랙에서 빌드업을 이어 가세요.</p>
-        <button class="btn primary" data-track="python">Python 트랙으로</button></section>`;
-  $app.innerHTML = `${topbar()}<main class="page">
+  const prog = program();
+  const totals = TRACKS.map(trackStats).reduce((a, s) => ({ lessons: a.lessons + s.lessons, lessonsDone: a.lessonsDone + s.lessonsDone, problems: a.problems + s.problems, solved: a.solved + s.solved }), { lessons: 0, lessonsDone: 0, problems: 0, solved: 0 });
+  $app.innerHTML = `${topbar()}<main class="page home">
     <div class="home-head">
       <div><h1>${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?</h1>
-        <div class="home-progress"><span>나의 빌드업 <b>${solved} / ${PROBLEMS.length}</b></span><span class="meter-bar"><span style="width:${pct}%"></span></span></div></div>
-      ${trackTabs()}
+        <div class="home-progress"><span>레슨 <b>${totals.lessonsDone} / ${totals.lessons}</b></span><span>문제 <b>${totals.solved} / ${totals.problems}</b></span><span class="meter-bar"><span style="width:${pct(totals.lessonsDone + totals.solved, totals.lessons + totals.problems)}%"></span></span></div></div>
     </div>
-    ${body}
+    ${programBar()}
+    ${continueCard()}
+    ${prog.sessions ? todayHtml() : ""}
+    <section class="part"><h2 class="part-title">학습 트랙</h2>
+      <div class="tcards">${TRACKS.map(trackCard).join("")}</div></section>
+    ${prog.sessions ? `<section class="part"><h2 class="part-title">우리 반 회차 과제 <span class="muted">${esc(state.session.student.org_label || prog.label)}</span></h2>
+      <div class="ucards">${UNITS.map(unitCard).join("")}</div></section>` : ""}
   </main>`;
   bindTopbar();
-  bindTrackTabs();
+  bindProgramBar(viewHome);
   preload();
 }
 
+function courseRow(c, i) {
+  const s = courseStats(c);
+  const ready = isReady(c);
+  const next = ready ? (c.lessons.find((l) => !lessonDone(l.id)) ? `#/l/${c.lessons.find((l) => !lessonDone(l.id)).id}` : `#/c/${c.id}`) : null;
+  const done = ready && s.lessonsDone === s.lessons && s.solved === s.problems && s.lessons + s.problems > 0;
+  return `<li class="crow${ready ? "" : " planned"}${done ? " complete" : ""}">
+    <span class="cno">${String(i + 1).padStart(2, "0")}</span>
+    <div class="crow-main">${ready ? `<a href="#/c/${c.id}"><b>${esc(c.title)}</b></a>` : `<b>${esc(c.title)}</b>`}<span class="muted">${esc(c.summary)}</span>
+      <div class="crow-meta"><span class="lvl">${esc(c.level)}</span>${ready ? `<span>레슨 ${s.lessonsDone}/${s.lessons}</span><span>문제 ${s.solved}/${s.problems}</span>` : '<span class="soon">준비 중</span>'}</div></div>
+    ${ready ? `<a class="btn small${done ? " ghost" : ""}" href="${next}">${done ? "복습" : s.lessonsDone || s.solved ? "이어서" : "시작"} →</a>` : ""}
+  </li>`;
+}
+
+function viewTrack(t) {
+  const list = coursesOf(t.id);
+  const s = trackStats(t);
+  const vids = VIDEOS.filter((v) => v.track === t.id);
+  $app.innerHTML = `${topbar()}<main class="page track-page" ${trackStyle(t)}>
+    <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">${esc(t.label)}</span></nav>
+    <header class="unit-hero"><span class="tcard-en">${esc(t.en)}</span><h1>${esc(t.label)}</h1><p class="muted">${esc(t.blurb)}</p>
+      <div class="unit-actions"><span class="ucard-count">${s.ready} / ${s.courses} 코스 열림 · 레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span></div></header>
+    ${t.ready ? "" : `<div class="panel soon-panel"><h2>이 트랙은 준비 중입니다</h2><p class="muted">아래는 예정된 코스 순서입니다. 레슨과 문제가 준비되는 대로 하나씩 열립니다.</p></div>`}
+    <ol class="clist panel">${list.map(courseRow).join("")}</ol>
+    ${vids.length ? `<section class="part"><h2 class="part-title">이 트랙의 모션 영상 <a class="muted" href="#/videos" style="font-size:13px;font-weight:400">전체 보기</a></h2>
+      <ul class="vlist panel">${vids.map(videoRow).join("")}</ul></section>` : ""}
+  </main>`;
+  bindTopbar();
+}
+
+function videoRow(v) {
+  const ready = v.status === "published" && v.youtube_id;
+  const lessons = LESSONS.filter((l) => l.concepts.some((c) => v.concepts.includes(c)));
+  return `<li class="vrow${ready ? "" : " pending"}"><span class="vno mono">${String(v.ep).padStart(2, "0")}</span>
+    <div class="vrow-main"><b>${esc(v.title)}</b><span class="muted">${esc(v.brief)}</span>
+      <div class="crow-meta"><span>${esc(v.length)}</span><span class="${ready ? "ok" : "soon"}">${VIDEO_STATUS[v.status]}</span>${v.concepts.map((c) => `<span class="concept">${esc(conceptName(c))}</span>`).join("")}</div></div>
+    ${ready ? `<a class="btn small" href="https://www.youtube.com/watch?v=${esc(v.youtube_id)}" target="_blank" rel="noopener">보기</a>` : lessons[0] ? `<a class="btn small ghost" href="#/l/${lessons[0].id}">레슨</a>` : ""}</li>`;
+}
+
+function viewVideos() {
+  $app.innerHTML = `${topbar()}<main class="page track-page">
+    <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">영상</span></nav>
+    <header class="unit-hero"><span class="tcard-en">Data Learners</span><h1>개념 모션 영상</h1>
+      <p class="muted">글로는 어려운 개념만 1~3분 모션그래픽으로 만듭니다. 제작되는 순서대로 레슨 안에 들어갑니다.</p></header>
+    ${TRACKS.map((t) => { const vids = VIDEOS.filter((v) => v.track === t.id); return vids.length ? `<section class="part" ${trackStyle(t)}><h2 class="part-title">${esc(t.label)}</h2><ul class="vlist panel">${vids.map(videoRow).join("")}</ul></section>` : ""; }).join("")}
+  </main>`;
+  bindTopbar();
+}
+
+function viewCourse(c) {
+  const t = trackById[c.track];
+  const list = coursesOf(c.track);
+  const i = list.indexOf(c);
+  const prevC = list.slice(0, i).reverse().find(isReady);
+  const nextC = list.slice(i + 1).find(isReady);
+  const probs = courseProblems(c);
+  const s = courseStats(c);
+  const fallback = probs.some((p) => p.type !== "quiz" && domainOf(p) !== program().domain);
+  const firstLesson = c.lessons.find((l) => !lessonDone(l.id)) || c.lessons[0];
+  const nextP = firstUnsolved(probs);
+  $app.innerHTML = `${topbar()}<main class="page unit-page" ${trackStyle(t)}>
+    <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><span class="muted">${esc(c.title)}</span></nav>
+    <header class="unit-hero">
+      <span class="tchip">${esc(t.label)} · ${esc(c.level)}</span>
+      <h1>${esc(c.title)}</h1>
+      <p class="muted">${esc(c.summary)}</p>
+      <div class="concepts">${(c.concepts || []).map((k) => `<span class="concept">${esc(conceptName(k))}</span>`).join("")}</div>
+      <div class="unit-actions"><span class="ucard-count">레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span>
+        ${firstLesson && s.lessonsDone < s.lessons ? `<a class="btn primary" href="#/l/${firstLesson.id}">${s.lessonsDone ? "레슨 이어서" : "레슨 시작"} →</a>` : nextP ? `<a class="btn primary" href="#/p/${nextP.id}">문제 풀기 →</a>` : ""}</div>
+    </header>
+    <section class="part"><h2 class="part-title">레슨</h2>
+      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span><span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
+    <section class="part"><h2 class="part-title">연습문제 <span class="muted">${esc(DOMAIN_LABEL[program().domain])}${fallback ? " 준비 중 · 지금은 제조 예제로 풉니다" : ""}</span></h2>
+      ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>
+    <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="#/c/${prevC.id}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="#/c/${nextC.id}">${esc(nextC.title)} →</a>` : ""}</nav>
+  </main>`;
+  bindTopbar();
+  preload();
+}
+
+// ── 레슨 뷰어 ────────────────────────────────────────────
+const lessonCache = {};
+async function loadLesson(l) {
+  if (lessonCache[l.id] != null) return lessonCache[l.id];
+  const res = await fetch(lessonPath(l));
+  if (!res.ok) throw new Error(`레슨 파일을 찾을 수 없습니다 (${res.status})`);
+  return (lessonCache[l.id] = await res.text());
+}
+
+function videoBlock(attrs) {
+  const v = videoById[attrs.ref];
+  if (!v) return `<div class="video-block pending"><b>영상 참조 오류</b><span class="muted">${esc(attrs.ref)}</span></div>`;
+  const live = v.status === "published" && v.youtube_id;
+  if (!live) {
+    return `<div class="video-block pending"><div class="video-ico" aria-hidden="true">▶</div><div><span class="eyebrow">Video · ${VIDEO_STATUS[v.status]}</span><b>${esc(v.title)}</b><span class="muted">${esc(v.brief)} (${esc(v.length)}) — 모션그래픽이 올라오면 여기서 바로 재생됩니다.</span></div></div>`;
+  }
+  const q = new URLSearchParams({ rel: "0", modestbranding: "1" });
+  if (attrs.start) q.set("start", attrs.start);
+  if (attrs.end) q.set("end", attrs.end);
+  const span = attrs.start || attrs.end ? ` · ${fmtSec(attrs.start)}–${fmtSec(attrs.end)}` : "";
+  return `<details class="video-block"><summary><span class="video-ico" aria-hidden="true">▶</span><span><span class="eyebrow">Video · 데이터러너즈</span><b>${esc(v.title)}</b><span class="muted">${esc(v.length)}${span}</span></span></summary>
+    <div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${esc(v.youtube_id)}?${q}" title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <a class="muted" style="font-size:13px" href="https://www.youtube.com/watch?v=${esc(v.youtube_id)}" target="_blank" rel="noopener">유튜브에서 전체 영상 보기</a></details>`;
+}
+const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+
+function runCellHtml(code, i) {
+  return `<div class="run-cell" data-cell="${i}">
+    <div class="run-head"><span class="mono">예제 ${i + 1}</span><span class="muted" style="font-size:12px">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
+      <button class="btn ghost small" data-reset="${i}">원래대로</button><button class="btn small" data-run="${i}">▶ 실행</button></div>
+    <textarea data-code="${i}">${esc(code)}</textarea>
+    <pre class="console run-out" data-out="${i}" hidden></pre></div>`;
+}
+
+async function viewLesson(l) {
+  const c = courseById[l.course];
+  const t = trackById[c.track];
+  const idx = c.lessons.findIndex((x) => x.id === l.id);
+  const prev = c.lessons[idx - 1], next = c.lessons[idx + 1];
+  const probs = courseProblems(c);
+  const sid = state.session.student.id;
+  $app.innerHTML = `${topbar()}<main class="page lesson-page" ${trackStyle(t)}>
+    <nav class="crumb"><a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><a href="#/c/${c.id}">${esc(c.title)}</a><span class="sep">/</span><span class="muted">레슨 ${idx + 1}</span>
+      <span class="nav">${prev ? `<a class="btn small" href="#/l/${prev.id}">← 이전</a>` : ""}${next ? `<a class="btn small" href="#/l/${next.id}">다음 →</a>` : ""}</span></nav>
+    <header class="lesson-head"><div class="meta-line"><span class="tag">레슨 ${idx + 1} / ${c.lessons.length}</span><span class="muted" style="font-size:13px">약 ${l.minutes}분</span>${lessonDone(l.id) ? '<span class="status solved">완료</span>' : ""}<span class="engine"></span></div>
+      <h1>${esc(l.title)}</h1>
+      <div class="concepts">${l.concepts.map((k) => `<span class="concept">${esc(conceptName(k))}</span>`).join("")}</div></header>
+    <article class="lesson-body panel" id="lesson-body"><p class="muted">불러오는 중…</p></article>
+    <section class="lesson-quiz panel" id="lesson-quiz"></section>
+    <nav class="unit-nav">${prev ? `<a class="btn small ghost" href="#/l/${prev.id}">← ${esc(prev.title)}</a>` : `<a class="btn small ghost" href="#/c/${c.id}">← 코스로</a>`}${next ? `<a class="btn small ghost" href="#/l/${next.id}">${esc(next.title)} →</a>` : probs[0] ? `<a class="btn small ghost" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 →</a>` : ""}</nav>
+  </main>`;
+  bindTopbar();
+  renderEngine($app.querySelector(".engine"));
+  const body = $app.querySelector("#lesson-body");
+  let md;
+  try { md = await loadLesson(l); } catch (err) { body.innerHTML = `<p class="form-error">${esc(err.message)}</p>`; return; }
+  if (location.hash !== `#/l/${l.id}`) return; // 그사이 다른 화면으로 이동
+  body.innerHTML = renderMd(md, { run: runCellHtml, video: videoBlock });
+
+  // 실행 셀
+  const cells = [];
+  body.querySelectorAll("textarea[data-code]").forEach((ta) => {
+    const i = Number(ta.dataset.code);
+    const starter = ta.value;
+    const cm = window.CodeMirror.fromTextArea(ta, { mode: "python", lineNumbers: false, indentUnit: 4, tabSize: 4, indentWithTabs: false, matchBrackets: true, viewportMargin: Infinity,
+      extraKeys: { Tab: (x) => x.replaceSelection("    ", "end"), "Ctrl-Enter": () => run(i), "Cmd-Enter": () => run(i) } });
+    cells[i] = { cm, starter };
+  });
+  async function run(i) {
+    const btn = body.querySelector(`[data-run="${i}"]`);
+    const out = body.querySelector(`[data-out="${i}"]`);
+    if (btn.disabled) return;
+    btn.disabled = true;
+    out.hidden = false;
+    out.className = "console run-out";
+    out.textContent = state.runner === "ready" ? "실행 중…" : "파이썬을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…";
+    try {
+      const res = await runCode({ type: "io", tests: [] }, cells[i].cm.getValue(), "");
+      if (res.timeout) { out.className += " err"; out.textContent = "실행이 너무 오래 걸려 멈췄습니다. 반복문이 끝나는지 확인하세요."; }
+      else if (res.error) { out.className += " err"; out.textContent = (res.stdout ? res.stdout + "\n" : "") + `${res.error.type}: ${res.error.message}` + (res.error.hint ? `\n${res.error.hint}` : ""); }
+      else out.textContent = res.stdout || "(출력 없음 — print()로 값을 확인해 보세요)";
+    } catch (err) { out.className += " err"; out.textContent = "실행하지 못했습니다: " + err.message; }
+    finally { btn.disabled = false; }
+  }
+  body.querySelectorAll("[data-run]").forEach((b) => b.addEventListener("click", () => run(Number(b.dataset.run))));
+  body.querySelectorAll("[data-reset]").forEach((b) => b.addEventListener("click", () => { const i = Number(b.dataset.reset); cells[i].cm.setValue(cells[i].starter); }));
+  if (cells.length) preload();
+
+  // 읽기 시작 기록
+  if (!state.lessons[l.id]) {
+    state.lessons[l.id] = { status: "viewed", updated_at: new Date().toISOString() };
+    api.lessonSet(state.session.token, l.id, "viewed").catch(() => {});
+  }
+
+  // 체크 퀴즈
+  const quizEl = $app.querySelector("#lesson-quiz");
+  const qs = l.quiz || [];
+  if (!qs.length) { quizEl.remove(); return; }
+  const key = `rb-lq:${sid}:${l.id}`;
+  let answers = {}, graded = false;
+  const finishHtml = () => `<div class="lesson-done"><b>레슨 완료</b><span class="muted">다음 단계로 이어 가세요.</span>
+    <div class="btns">${next ? `<a class="btn primary" href="#/l/${next.id}">다음 레슨: ${esc(next.title)} →</a>` : ""}${probs.length ? `<a class="btn${next ? "" : " primary"}" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 풀기</a>` : ""}<a class="btn ghost" href="#/c/${c.id}">코스로</a></div></div>`;
+  const render = () => {
+    quizEl.innerHTML = `<div class="quiz-head"><div class="meta-line"><span class="tag">체크 퀴즈</span><span class="muted" style="font-size:13px">${qs.length}문항 · 모두 맞히면 레슨 완료</span></div></div>
+      <ol class="quiz-list">${qs.map((q, i) => questionHtml(q, i, answers[i], graded)).join("")}</ol>
+      <div class="quiz-actions"><span id="lq-progress" class="muted"></span><span class="spacer"></span>
+        ${graded ? `<button class="btn" id="lq-reset">다시 풀기</button>` : `<button class="btn primary" id="lq-submit">확인</button>`}</div>
+      ${graded && qs.every((q, i) => quizCorrect(q, answers[i])) ? finishHtml() : ""}`;
+    bindQuestionInputs(quizEl, answers, () => {});
+    quizEl.querySelector("#lq-submit")?.addEventListener("click", submit);
+    quizEl.querySelector("#lq-reset")?.addEventListener("click", () => { answers = {}; graded = false; render(); });
+    if (graded) {
+      const ok = qs.filter((q, i) => quizCorrect(q, answers[i])).length;
+      quizEl.querySelector("#lq-progress").innerHTML = `<span class="verdict ${ok === qs.length ? "pass" : "fail"}">${ok === qs.length ? "통과" : "다시 확인"}</span> <b>${ok} / ${qs.length}</b> 맞힘`;
+    }
+  };
+  async function submit() {
+    graded = true;
+    const ok = qs.filter((q, i) => quizCorrect(q, answers[i])).length;
+    render();
+    if (ok === qs.length) {
+      const was = lessonDone(l.id);
+      state.lessons[l.id] = { status: "passed", quiz_score: ok, updated_at: new Date().toISOString() };
+      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!was) toast("레슨을 완료했습니다."); }
+      catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
+    } else {
+      api.lessonSet(state.session.token, l.id, "viewed", ok).catch(() => {});
+      quizEl.querySelector(".quiz-q.no")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+  if (lessonDone(l.id)) { quizEl.innerHTML = `<div class="quiz-head"><div class="meta-line"><span class="tag">체크 퀴즈</span><span class="status solved">통과</span></div></div>${finishHtml()}<p class="muted" style="font-size:13px;margin:0"><a href="#" id="lq-again">퀴즈 다시 풀기</a></p>`; quizEl.querySelector("#lq-again").addEventListener("click", (e) => { e.preventDefault(); render(); }); }
+  else render();
+}
+
+// 개념 퀴즈 문항 (레슨 체크 퀴즈와 개념 퀴즈 문제가 같이 쓴다)
+function questionHtml(q, i, a, graded) {
+  const ok = graded ? quizCorrect(q, a) : null;
+  let input;
+  if (q.kind === "ox") {
+    input = `<div class="ox" role="radiogroup">${[[true, "O"], [false, "X"]].map(([v, l]) =>
+      `<button type="button" class="ox-btn" role="radio" aria-checked="${a === v}" data-i="${i}" data-v="${v}" ${graded ? "disabled" : ""}>${l}</button>`).join("")}</div>`;
+  } else if (q.kind === "choice") {
+    input = `<div class="choices">${q.options.map((o, k) =>
+      `<label class="choice${graded && k === q.answer ? " right" : ""}${graded && a === k && k !== q.answer ? " wrong" : ""}"><input type="radio" name="q${i}" value="${k}" data-i="${i}" ${a === k ? "checked" : ""} ${graded ? "disabled" : ""}><span class="choice-no">${k + 1}</span><span>${esc(o)}</span></label>`).join("")}</div>`;
+  } else {
+    input = `<input class="short" type="text" data-i="${i}" value="${esc(a ?? "")}" placeholder="답을 입력하세요 (공백 차이는 무시)" autocomplete="off" spellcheck="false" ${graded ? "disabled" : ""}>`;
+  }
+  const answerText = q.kind === "ox" ? (q.answer ? "O" : "X") : q.kind === "choice" ? `${q.answer + 1}. ${q.options[q.answer]}` : (Array.isArray(q.answer) ? q.answer[0] : q.answer);
+  const feedback = graded
+    ? `<div class="quiz-feedback ${ok ? "ok" : "no"}"><b>${ok ? "✓ 정답" : `✗ 정답: ${esc(answerText)}`}</b><span>${esc(q.explain)}</span></div>`
+    : "";
+  return `<li class="quiz-q panel${graded ? (ok ? " ok" : " no") : ""}">
+    <div class="quiz-q-head"><span class="quiz-no">Q${i + 1}</span><span class="tag">${{ ox: "OX", choice: "객관식", short: q.code ? "출력 예측" : "단답" }[q.kind]}</span></div>
+    <p class="quiz-text">${esc(q.q)}</p>
+    ${q.code ? `<pre class="guide-code"><code>${esc(q.code)}</code></pre>` : ""}
+    ${input}${feedback}</li>`;
+}
+function bindQuestionInputs(root, answers, onChange, onEnter) {
+  root.querySelectorAll(".ox-btn").forEach((b) => b.addEventListener("click", () => {
+    answers[b.dataset.i] = b.dataset.v === "true";
+    root.querySelectorAll(`.ox-btn[data-i="${b.dataset.i}"]`).forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+    onChange();
+  }));
+  root.querySelectorAll('input[type="radio"]').forEach((r) => r.addEventListener("change", () => { answers[r.dataset.i] = Number(r.value); onChange(); }));
+  root.querySelectorAll("input.short").forEach((t) => {
+    t.addEventListener("input", () => { answers[t.dataset.i] = t.value; onChange(); });
+    t.addEventListener("keydown", (e) => { if (e.key === "Enter") onEnter?.(); });
+  });
+}
+
+// ── 회차 과제 페이지 (QAQC 과정) ─────────────────────────────
 function viewUnit(u) {
   const list = unitProblems(u);
-  const done = list.filter((p) => state.progress[p.id]?.solved).length;
+  const done = list.filter((p) => solved(p.id)).length;
   const next = firstUnsolved(list);
   const prevU = UNITS.find((x) => x.id === u.id - 1);
   const nextU = UNITS.find((x) => x.id === u.id + 1);
-  const mark = (p) => p.type === "quiz" ? '<span class="pmark quiz" title="개념 퀴즈">퀴즈</span>' : p.challenge ? '<span class="pmark challenge" title="도전 문제">도전</span>' : "";
+  const courses = [...new Set(list.map((p) => p.noteUnit))].map(courseOfUnit).filter(Boolean);
   $app.innerHTML = `${topbar()}<main class="page unit-page">
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">${u.id}회차</span></nav>
     <header class="unit-hero">
@@ -522,8 +887,8 @@ function viewUnit(u) {
         ${next ? `<a class="btn primary" href="#/p/${next.id}">${done ? "이어 풀기" : "시작하기"} →</a>` : ""}</div>
     </header>
     <ol class="plist simple panel">${list.map((p) => `<li><a class="srow" href="#/p/${p.id}">
-      ${statusIcon(p.id)}<span class="pid">${no(p.id)}</span><span class="ptitle">${esc(p.title)}</span>${mark(p)}</a></li>`).join("")}</ol>
-    ${[...new Set(list.map((p) => p.noteUnit))].map((id) => { const n = ALL_UNITS.find((x) => x.id === id); return `<details class="hint"><summary>개념 노트 · ${esc(n.title)}</summary><div class="note">${n.note}</div></details>`; }).join("")}
+      ${statusIcon(p.id)}<span class="pid">${no(p.id)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}</a></li>`).join("")}</ol>
+    ${courses.length ? `<section class="part"><h2 class="part-title">관련 코스 · 레슨</h2><ol class="plist simple panel">${courses.map((c) => `<li><a class="srow" href="#/c/${c.id}"><span class="st st-none">→</span><span class="ptitle">${esc(c.title)}</span><span class="muted" style="font-size:13px">레슨 ${c.lessons.length}개</span></a></li>`).join("")}</ol></section>` : ""}
     <nav class="unit-nav">${prevU ? `<a class="btn small ghost" href="#/u/${prevU.id}">← ${esc(prevU.title)}</a>` : "<span></span>"}${nextU ? `<a class="btn small ghost" href="#/u/${nextU.id}">${esc(nextU.title)} →</a>` : ""}</nav>
   </main>`;
   bindTopbar();
@@ -542,23 +907,48 @@ function quizCorrect(q, a) {
   return ok.some((x) => normAnswer(x) === normAnswer(a));
 }
 
+// 문제 화면 공통: 코스 맥락 (트랙 / 코스 / 이전·다음)
+function problemCrumb(p) {
+  const c = courseOf(p);
+  const list = problemList(p);
+  const idx = list.indexOf(p);
+  const prev = list[idx - 1], next = list[idx + 1];
+  const t = c ? trackById[c.track] : null;
+  const back = c ? `<a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><a href="#/c/${c.id}">${esc(c.title)}</a>` : `<a href="#/">홈</a>`;
+  const navBtn = (q, dir) => q ? `<a class="btn small" href="#/p/${q.id}">${dir < 0 ? `← ${cno(q)}` : `${cno(q)} →`}</a>` : "";
+  return `<nav class="crumb">${back}<span class="sep">/</span><span class="muted">${p.type === "quiz" ? "개념 퀴즈" : `문제 ${cno(p)}`}</span>
+    <span class="nav">${navBtn(prev, -1)}${navBtn(next, 1)}</span></nav>`;
+}
+const nextProblem = (p) => { const list = problemList(p); return list[list.indexOf(p) + 1]; };
+// 개념 노트 탭: 관련 레슨 · 영상 + 유닛 노트
+function noteTabHtml(p) {
+  const u = unitNote(p.unit);
+  const c = courseOf(p);
+  const lessons = c?.lessons || [];
+  const concepts = new Set(lessons.flatMap((l) => l.concepts));
+  const vids = VIDEOS.filter((v) => v.concepts.some((k) => concepts.has(k)));
+  const related = lessons.length || vids.length ? `<div class="related"><h4>함께 보기</h4><ul class="related-list">
+    ${lessons.map((l) => `<li><a href="#/l/${l.id}">${lessonIcon(l.id)} 레슨 · ${esc(l.title)}</a></li>`).join("")}
+    ${vids.map((v) => `<li><a href="#/videos">🎬 영상 · ${esc(v.title)}</a> <span class="muted" style="font-size:12px">${VIDEO_STATUS[v.status]}</span></li>`).join("")}
+  </ul></div>` : "";
+  return `<div class="eyebrow">개념 노트</div><h1>${esc(u?.title || "")}</h1>${related}<div class="note">${u?.note || ""}</div>`;
+}
+
 function viewQuiz(p) {
-  const unit = UNITS.find((u) => u.id === p.unit);
-  const idx = PROBLEMS.indexOf(p);
-  const prev = PROBLEMS[idx - 1];
-  const next = PROBLEMS[idx + 1];
+  const c = courseOf(p);
+  const t = c ? trackById[c.track] : null;
   const sid = state.session.student.id;
   let answers = store.get(quizKey(sid, p.id)) || {};
   let graded = false;
 
-  $app.innerHTML = `${topbar()}<main class="page quiz-page">
-    <nav class="crumb"><a href="#/u/${unit.id}">문제 목록</a><span class="sep">/</span><span class="muted">${unit.id}회차 ${esc(unit.title)}</span>
-      <span class="nav">${prev ? `<a class="btn small" href="#/p/${prev.id}">← ${no(prev.id)}</a>` : ""}${next ? `<a class="btn small" href="#/p/${next.id}">${no(next.id)} →</a>` : ""}</span></nav>
+  $app.innerHTML = `${topbar()}<main class="page quiz-page" ${t ? trackStyle(t) : ""}>
+    ${problemCrumb(p)}
     <header class="quiz-head">
       <div class="meta-line"><span class="tag">개념 퀴즈</span><span class="muted" style="font-size:13px">${esc(p.origin)}</span>${state.progress[p.id]?.solved ? '<span class="status solved">정답</span>' : ""}</div>
-      <h1>${no(p.id)}. ${esc(p.title)}</h1>
+      <h1>${esc(p.title)}</h1>
       <p class="muted">코드를 짜기 전에 개념을 확인합니다. 모두 맞히면 정답으로 기록되고, 틀린 문항은 해설을 보고 다시 풀 수 있습니다.</p>
-      <details class="hint"><summary>개념 노트 보기</summary><div class="note">${noteOf(p).note}</div></details>
+      ${c?.lessons?.length ? `<p class="muted" style="font-size:13px">헷갈리면 레슨을 먼저 읽어 보세요: ${c.lessons.map((l) => `<a href="#/l/${l.id}">${esc(l.title)}</a>`).join(", ")}</p>` : ""}
+      <details class="hint"><summary>개념 노트 보기</summary><div class="note">${unitNote(p.unit)?.note || ""}</div></details>
     </header>
     <ol class="quiz-list" id="quiz-list"></ol>
     <div class="quiz-actions panel"><span id="quiz-progress" class="muted"></span><span class="spacer"></span>
@@ -576,47 +966,9 @@ function viewQuiz(p) {
     progressEl.textContent = `${answered()} / ${p.questions.length} 문항 답함`;
   };
 
-  function questionHtml(q, i) {
-    const a = answers[i];
-    const ok = graded ? quizCorrect(q, a) : null;
-    let input;
-    if (q.kind === "ox") {
-      input = `<div class="ox" role="radiogroup">${[[true, "O"], [false, "X"]].map(([v, l]) =>
-        `<button type="button" class="ox-btn" role="radio" aria-checked="${a === v}" data-i="${i}" data-v="${v}" ${graded ? "disabled" : ""}>${l}</button>`).join("")}</div>`;
-    } else if (q.kind === "choice") {
-      input = `<div class="choices">${q.options.map((o, k) =>
-        `<label class="choice${graded && k === q.answer ? " right" : ""}${graded && a === k && k !== q.answer ? " wrong" : ""}"><input type="radio" name="q${i}" value="${k}" data-i="${i}" ${a === k ? "checked" : ""} ${graded ? "disabled" : ""}><span class="choice-no">${k + 1}</span><span>${esc(o)}</span></label>`).join("")}</div>`;
-    } else {
-      input = `<input class="short" type="text" data-i="${i}" value="${esc(a ?? "")}" placeholder="답을 입력하세요 (공백 차이는 무시)" autocomplete="off" spellcheck="false" ${graded ? "disabled" : ""}>`;
-    }
-    const answerText = q.kind === "ox" ? (q.answer ? "O" : "X") : q.kind === "choice" ? `${q.answer + 1}. ${q.options[q.answer]}` : (Array.isArray(q.answer) ? q.answer[0] : q.answer);
-    const feedback = graded
-      ? `<div class="quiz-feedback ${ok ? "ok" : "no"}"><b>${ok ? "✓ 정답" : `✗ 정답: ${esc(answerText)}`}</b><span>${esc(q.explain)}</span></div>`
-      : "";
-    return `<li class="quiz-q panel${graded ? (ok ? " ok" : " no") : ""}">
-      <div class="quiz-q-head"><span class="quiz-no">Q${i + 1}</span><span class="tag">${{ ox: "OX", choice: "객관식", short: q.code ? "출력 예측" : "단답" }[q.kind]}</span></div>
-      <p class="quiz-text">${esc(q.q)}</p>
-      ${q.code ? `<pre class="guide-code"><code>${esc(q.code)}</code></pre>` : ""}
-      ${input}${feedback}</li>`;
-  }
-
   function render() {
-    listEl.innerHTML = p.questions.map(questionHtml).join("");
-    listEl.querySelectorAll(".ox-btn").forEach((b) => b.addEventListener("click", () => {
-      answers[b.dataset.i] = b.dataset.v === "true";
-      save();
-      listEl.querySelectorAll(`.ox-btn[data-i="${b.dataset.i}"]`).forEach((x) => x.setAttribute("aria-checked", String(x === b)));
-      updateProgress();
-    }));
-    listEl.querySelectorAll('input[type="radio"]').forEach((r) => r.addEventListener("change", () => {
-      answers[r.dataset.i] = Number(r.value);
-      save();
-      updateProgress();
-    }));
-    listEl.querySelectorAll("input.short").forEach((t) => {
-      t.addEventListener("input", () => { answers[t.dataset.i] = t.value; save(); updateProgress(); });
-      t.addEventListener("keydown", (e) => { if (e.key === "Enter") submitBtn.click(); });
-    });
+    listEl.innerHTML = p.questions.map((q, i) => questionHtml(q, i, answers[i], graded)).join("");
+    bindQuestionInputs(listEl, answers, () => { save(); updateProgress(); }, () => submitBtn.click());
     updateProgress();
   }
 
@@ -688,8 +1040,8 @@ function problemTab(p) {
   const answer = solved
     ? `<details class="hint"><summary>모범 답안</summary><pre>${esc(p.solution)}</pre></details>`
     : `<div class="locked-answer">모범 답안은 정답을 맞히면 열립니다.</div>`;
-  return `<div class="meta-line">${p.challenge ? '<span class="tag challenge-tag">도전 문제</span>' : ""}<span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}<span class="muted" style="font-size:13px">원본: ${esc(p.origin)}</span></div>
-    <h1>${no(p.id)}. ${esc(p.title)}</h1>
+  return `<div class="meta-line">${p.challenge ? '<span class="tag challenge-tag">도전 문제</span>' : ""}<span class="tag">${TYPE_LABEL[p.type]}</span>${levelDots(p.level)}<span class="muted" style="font-size:13px">원본: ${esc(p.origin)}</span>${domainMark(p)}</div>
+    <h1>${cno(p)}. ${esc(p.title)}</h1>
     <div class="note">${p.desc}</div>
     ${p.uses?.length ? `<div class="uses"><h4>이 문제에서 쓰는 함수 · 문법</h4><dl>${p.uses.map(([k, v]) => `<div><dt><code>${esc(k)}</code></dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>` : ""}
     ${p.files ? `<div class="note files-box"><h4>제공 파일</h4><p class="muted" style="font-size:13px">코드를 실행하면 아래 파일이 같은 폴더에 준비됩니다. 비공개 테스트에서는 내용이 다른 파일로 채점합니다.</p>${Object.entries(p.files).map(([name, text]) => `<div class="file-card"><div class="file-name mono">${esc(name)}</div><pre>${esc(text)}</pre></div>`).join("")}</div>` : ""}
@@ -787,8 +1139,7 @@ function celebrate(p, info) {
     rank === 1 ? "가장 먼저 풀었습니다. 현장 감각이 좋네요." :
     rank <= 3 ? "상위권으로 통과했습니다." :
     `벌써 ${rank}명이 통과했습니다. 함께 완주해요.`;
-  const idx = PROBLEMS.indexOf(p);
-  const next = PROBLEMS[idx + 1];
+  const next = nextProblem(p);
   const wrap = document.createElement("div");
   wrap.className = "overlay";
   wrap.innerHTML = `<div class="celebrate" role="dialog" aria-modal="true" aria-labelledby="cel-title">
@@ -796,7 +1147,7 @@ function celebrate(p, info) {
     <h2 id="cel-title">정답입니다!</h2>
     <div class="rank-line"><b>${total}명</b> 중 <b>${rank}번째</b>로 맞혔어요</div>
     <p>${esc(sub)}</p>
-    <div class="btns">${next ? `<a class="btn primary" href="#/p/${next.id}" data-close>다음 문제 ${no(next.id)}</a>` : ""}<button class="btn" data-close>계속 보기</button></div>
+    <div class="btns">${next ? `<a class="btn primary" href="#/p/${next.id}" data-close>${next.type === "quiz" ? "개념 퀴즈" : `다음 문제 ${cno(next)}`}</a>` : ""}<button class="btn" data-close>계속 보기</button></div>
   </div>`;
   document.body.appendChild(wrap);
   const close = () => wrap.remove();
@@ -822,17 +1173,14 @@ function celebrate(p, info) {
 }
 
 function viewProblem(p) {
-  const unit = UNITS.find((u) => u.id === p.unit);
-  const idx = PROBLEMS.indexOf(p);
-  const prev = PROBLEMS[idx - 1];
-  const next = PROBLEMS[idx + 1];
+  const c = courseOf(p);
+  const t = c ? trackById[c.track] : null;
   const sid = state.session.student.id;
   const draft = store.get(draftKey(sid, p.id));
   const firstStdin = p.type === "io" ? (p.tests.find((t) => !t.hidden)?.stdin ?? "") : "";
 
-  $app.innerHTML = `${topbar()}<main class="solve">
-    <nav class="crumb"><a href="#/u/${unit.id}">문제 목록</a><span class="sep">/</span><span class="muted">${unit.id}회차 ${esc(unit.title)}</span>
-      <span class="nav">${prev ? `<a class="btn small" href="#/p/${prev.id}">← ${no(prev.id)}</a>` : ""}${next ? `<a class="btn small" href="#/p/${next.id}">${no(next.id)} →</a>` : ""}</span></nav>
+  $app.innerHTML = `${topbar()}<main class="solve" ${t ? trackStyle(t) : ""}>
+    ${problemCrumb(p)}
     <div class="solve-grid">
       <section class="read panel">
         <div class="tabs" role="tablist">
@@ -865,7 +1213,7 @@ function viewProblem(p) {
   const showTab = (name) => {
     $app.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === name)));
     if (name === "problem") readBody.innerHTML = problemTab(p);
-    else if (name === "note") readBody.innerHTML = `<div class="eyebrow">개념 노트</div><h1>${esc(noteOf(p).title)}</h1><div class="note">${noteOf(p).note}</div>`;
+    else if (name === "note") readBody.innerHTML = noteTabHtml(p);
     else historyTab(p, readBody);
   };
   $app.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab)));

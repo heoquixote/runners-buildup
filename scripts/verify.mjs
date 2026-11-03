@@ -3,7 +3,12 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { PROBLEMS } from "../problems.js";
+import fs from "node:fs";
+import { PROBLEMS, UNITS } from "../problems.js";
+import { TRACKS, COURSES, LESSONS, lessonPath } from "../content/index.js";
+import { VIDEOS } from "../content/videos.js";
+import { CONCEPTS } from "../content/concepts.js";
+import { extract } from "../md.js";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const py = `
@@ -21,16 +26,86 @@ print(json.dumps(out, ensure_ascii=False))
 `;
 // 개념 퀴즈는 브라우저에서 채점하므로 형식만 확인한다.
 let failed = 0;
+const badQuestions = (questions) => questions.filter((x) =>
+  !x.q || !x.explain ||
+  (x.kind === "ox" && typeof x.answer !== "boolean") ||
+  (x.kind === "choice" && !(Number.isInteger(x.answer) && x.options?.[x.answer] !== undefined)) ||
+  (x.kind === "short" && !(typeof x.answer === "string" || (Array.isArray(x.answer) && x.answer.length))) ||
+  !["ox", "choice", "short"].includes(x.kind));
 const quizzes = PROBLEMS.filter((p) => p.type === "quiz");
 for (const q of quizzes) {
-  const bad = q.questions.filter((x) =>
-    !x.q || !x.explain ||
-    (x.kind === "ox" && typeof x.answer !== "boolean") ||
-    (x.kind === "choice" && !(Number.isInteger(x.answer) && x.options?.[x.answer] !== undefined)) ||
-    (x.kind === "short" && !(typeof x.answer === "string" || (Array.isArray(x.answer) && x.answer.length))) ||
-    !["ox", "choice", "short"].includes(x.kind));
+  const bad = badQuestions(q.questions);
   if (bad.length) failed++;
   console.log(`${bad.length ? "FAIL" : "PASS"}  ${q.id}  퀴즈 ${q.questions.length}문항${bad.length ? "  형식 오류: " + bad.map((x) => x.q).join(" / ") : ""}`);
+}
+for (const p of PROBLEMS) {
+  if (p.domain && !["mfg", "general"].includes(p.domain)) { failed++; console.log(`FAIL  ${p.id}  domain 값이 이상함: ${p.domain}`); }
+}
+
+// 커리큘럼: 코스 → 유닛, 레슨 파일, 개념 태그, 영상 참조, 실행 셀, 체크 퀴즈
+const trackIds = new Set(TRACKS.map((t) => t.id));
+const videoIds = new Set(VIDEOS.map((v) => v.id));
+const unitIds = new Set(UNITS.map((u) => u.id));
+const checkConcepts = (where, list) => {
+  const bad = (list || []).filter((k) => !CONCEPTS[k]);
+  if (bad.length) { failed++; console.log(`FAIL  ${where}  모르는 개념 태그: ${bad.join(", ")}`); }
+};
+for (const c of COURSES) {
+  if (!trackIds.has(c.track)) { failed++; console.log(`FAIL  ${c.id}  모르는 트랙: ${c.track}`); }
+  if (c.unit && !unitIds.has(c.unit)) { failed++; console.log(`FAIL  ${c.id}  unit ${c.unit} 에 해당하는 문제 유닛이 없음`); }
+  if (c.status !== "planned" && !c.lessons.length) { failed++; console.log(`FAIL  ${c.id}  열린 코스인데 레슨이 없음`); }
+  checkConcepts(c.id, c.concepts);
+}
+const dupUnit = COURSES.filter((c) => c.unit).map((c) => c.unit).filter((u, i, a) => a.indexOf(u) !== i);
+if (dupUnit.length) { failed++; console.log(`FAIL  한 유닛이 여러 코스에 연결됨: ${dupUnit.join(", ")}`); }
+for (const v of VIDEOS) {
+  if (!trackIds.has(v.track)) { failed++; console.log(`FAIL  ${v.id}  모르는 트랙: ${v.track}`); }
+  checkConcepts(v.id, v.concepts);
+  if (v.status === "published" && !v.youtube_id) { failed++; console.log(`FAIL  ${v.id}  공개 상태인데 youtube_id 가 없음`); }
+}
+const lessonIds = LESSONS.map((l) => l.id);
+const dupLesson = lessonIds.filter((id, i) => lessonIds.indexOf(id) !== i);
+if (dupLesson.length) { failed++; console.log("FAIL  중복 레슨 id: " + dupLesson.join(", ")); }
+const runCells = [];
+for (const l of LESSONS) {
+  const file = path.join(root, lessonPath(l));
+  checkConcepts(l.id, l.concepts);
+  const badQ = badQuestions(l.quiz || []);
+  if (badQ.length) { failed++; console.log(`FAIL  ${l.id}  체크 퀴즈 형식 오류: ${badQ.map((x) => x.q).join(" / ")}`); }
+  if (!fs.existsSync(file)) { failed++; console.log(`FAIL  ${l.id}  레슨 파일 없음: ${lessonPath(l)}`); continue; }
+  const { runs, videos } = extract(fs.readFileSync(file, "utf8"));
+  const badV = videos.filter((v) => !videoIds.has(v.ref));
+  if (badV.length) { failed++; console.log(`FAIL  ${l.id}  모르는 영상 참조: ${badV.map((v) => v.ref).join(", ")}`); }
+  runs.forEach((code, i) => runCells.push({ id: `${l.id}#${i + 1}`, code }));
+  console.log(`PASS  ${l.id}  레슨 (실행 셀 ${runs.length}, 영상 ${videos.length}, 퀴즈 ${(l.quiz || []).length}문항)`);
+}
+// 레슨 실행 셀은 그 자체로 돌아가고 무언가 출력해야 한다 (학생이 ▶ 실행을 눌렀을 때 빈 화면이 나오지 않도록)
+if (runCells.length) {
+  const cellPy = `
+import json, sys, io, os, tempfile, contextlib
+cells = json.load(sys.stdin)
+out = []
+for c in cells:
+    buf = io.StringIO()
+    err = None
+    d = tempfile.mkdtemp()
+    cwd = os.getcwd(); os.chdir(d)
+    try:
+        with contextlib.redirect_stdout(buf):
+            exec(compile(c["code"], c["id"], "exec"), {"__name__": "__main__"})
+    except BaseException as e:
+        err = type(e).__name__ + ": " + str(e)
+    finally:
+        os.chdir(cwd)
+    out.append({"id": c["id"], "stdout": buf.getvalue(), "error": err})
+print(json.dumps(out, ensure_ascii=False))
+`;
+  const cellRes = JSON.parse(execFileSync("python3", ["-c", cellPy], { input: JSON.stringify(runCells), encoding: "utf8" }));
+  for (const r of cellRes) {
+    const ok = !r.error && r.stdout.trim();
+    if (!ok) { failed++; console.log(`FAIL  실행 셀 ${r.id}  ${r.error || "출력이 없음"}`); }
+  }
+  console.log(`${cellRes.some((r) => r.error || !r.stdout.trim()) ? "FAIL" : "PASS"}  레슨 실행 셀 ${cellRes.length}개 실행`);
 }
 const ids = PROBLEMS.map((p) => p.id);
 const dup = ids.filter((id, i) => ids.indexOf(id) !== i);
@@ -46,5 +121,5 @@ for (const r of results) {
   console.log(`${ok ? "PASS" : "FAIL"}  ${r.id}  모범답안 ${s.passed_count}/${s.total_count}${r.starter_passed ? "  (시작 코드가 통과함!)" : ""}`);
   if (!s.passed) for (const c of s.cases.filter((c) => !c.passed)) console.log("      ", JSON.stringify(c));
 }
-console.log(failed ? `\n${failed}개 문제 확인 필요` : `\n코딩 ${results.length}개 · 퀴즈 ${quizzes.length}개 모두 정상`);
+console.log(failed ? `\n${failed}개 확인 필요` : `\n코딩 ${results.length}개 · 퀴즈 ${quizzes.length}개 · 레슨 ${LESSONS.length}개 모두 정상`);
 process.exit(failed ? 1 : 0);
