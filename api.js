@@ -88,6 +88,8 @@ function slimCases(cases) {
 }
 
 // ── 데모 모드: 이 브라우저 안에서만 저장 ─────────────────────────
+// 한국 시간 기준 날짜 (YYYY-MM-DD)
+const seoulDay = (iso) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date(iso));
 const DEMO_KEY = "qaqc-demo-db-v1";
 const DEMO_ADMIN_PASSWORD = "demo1234";
 
@@ -217,14 +219,21 @@ class DemoApi {
     const student = db.students.find((s) => s.id === sid);
     if (!student) throw new ApiError("session");
     const progress = {};
+    const activity = {};
+    const bump = (iso) => { if (iso) { const d = seoulDay(iso); activity[d] = (activity[d] || 0) + 1; } };
     for (const sub of db.submissions.filter((x) => x.student_id === sid)) {
-      const p = (progress[sub.problem_id] ||= { attempts: 0, solved: false });
+      const p = (progress[sub.problem_id] ||= { attempts: 0, solved: false, solved_at: null });
       p.attempts++;
       p.solved ||= sub.passed;
+      if (sub.passed && (!p.solved_at || sub.created_at < p.solved_at)) p.solved_at = sub.created_at;
+      bump(sub.created_at);
     }
     const lessons = {};
-    for (const l of (db.lessons || []).filter((x) => x.student_id === sid)) lessons[l.lesson_id] = { status: l.status, quiz_score: l.quiz_score, updated_at: l.updated_at };
-    return { ok: true, student: { id: sid, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) }, progress, lessons };
+    for (const l of (db.lessons || []).filter((x) => x.student_id === sid)) {
+      lessons[l.lesson_id] = { status: l.status, quiz_score: l.quiz_score, updated_at: l.updated_at, passed_at: l.passed_at || null };
+      bump(l.updated_at);
+    }
+    return { ok: true, student: { id: sid, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) }, progress, lessons, activity };
   }
   async lessonSet(token, lessonId, status, quizScore) {
     const db = this.load();
@@ -232,6 +241,7 @@ class DemoApi {
     db.lessons ||= [];
     let row = db.lessons.find((x) => x.student_id === sid && x.lesson_id === lessonId);
     if (!row) db.lessons.push((row = { student_id: sid, lesson_id: lessonId, status: "viewed", quiz_score: null }));
+    if (status === "passed" && !row.passed_at) row.passed_at = new Date().toISOString();
     if (row.status !== "passed") row.status = status;
     if (quizScore != null) row.quiz_score = quizScore;
     row.updated_at = new Date().toISOString();
