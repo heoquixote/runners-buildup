@@ -388,7 +388,7 @@ daily_defect_rate = np.round(
     defects / production * 100, 2)         # 3단계`)}</div>
         <div><h3>꼭 지킬 것</h3>
           <ul><li>문제에 적힌 <b>변수 이름을 그대로</b> 쓰세요. <code>total_defect</code>처럼 한 글자만 달라도 오답입니다.</li>
-          <li>처음 코드의 <code>0</code>, <code>None</code> 자리를 계산식으로 바꾸면 됩니다.</li>
+          <li>처음 코드의 <code>변수 = </code> 오른쪽 빈자리에 계산식을 채우면 됩니다. 비워 둔 채 실행하면 SyntaxError가 납니다.</li>
           <li>단계마다 따로 채점되니, 맞힌 단계와 틀린 단계를 결과에서 확인하세요.</li>
           <li>NumPy는 처음 실행할 때 불러오느라 10초 정도 걸릴 수 있습니다.</li></ul></div>
       </div>

@@ -173,13 +173,13 @@ export const DAY1_PROBLEMS = [
 bad = 20
 
 # 1. 전체 생산 수량
-total = 0
+total = 
 
 # 2. 불량률(%)
-defect_rate = 0
+defect_rate = 
 
 # 3. 양품률(%)
-good_rate = 0
+good_rate = 
 
 print(total, defect_rate, good_rate)
 `,
@@ -214,9 +214,9 @@ print(total, defect_rate, good_rate)
     starter: `qty = 1000
 per_box = 24
 
-full_boxes = 0
-remain = 0
-check = 0
+full_boxes = 
+remain = 
+check = 
 
 print(full_boxes, remain, check)
 `,
@@ -249,9 +249,9 @@ print(full_boxes, remain, check)
 <p>예: 9,045초 → 2시간 30분 45초</p>`,
     starter: `sec = 9045
 
-hours = 0
-minutes = 0
-seconds = 0
+hours = 
+minutes = 
+seconds = 
 
 print(hours, "시간", minutes, "분", seconds, "초")
 `,
@@ -286,9 +286,9 @@ print(hours, "시간", minutes, "분", seconds, "초")
 levels = 2
 r = 150
 
-runs = 0
-area = 0
-area_cm2 = 0
+runs = 
+area = 
+area_cm2 = 
 
 print(runs, area, area_cm2)
 `,
@@ -328,10 +328,10 @@ y1 = 0.95
 y2 = 0.92
 unit_cost = 1200
 
-final_yield = 0
-good = 0
-loss = 0
-boxes = 0
+final_yield = 
+good = 
+loss = 
+boxes = 
 
 print(final_yield, good, loss, boxes)
 `,
@@ -371,11 +371,11 @@ print(final_yield, good, loss, boxes)
 <p><code>country</code>, <code>year</code>, <code>line</code>, <code>serial</code>, <code>check_char</code>를 만드세요. 모두 문자열입니다.</p>`,
     starter: `barcode = 'KR24A0915X'
 
-country = ''
-year = ''
-line = ''
-serial = ''
-check_char = ''
+country = 
+year = 
+line = 
+serial = 
+check_char = 
 
 print(country, year, line, serial, check_char)
 `,
@@ -414,10 +414,10 @@ print(country, year, line, serial, check_char)
     starter: `line = 'L2'
 job = '0457'
 
-label = ''
-bar = ''
-label_len = 0
-tag = ''
+label = 
+bar = 
+label_len = 
+tag = 
 
 print(bar)
 print(tag, label_len)
@@ -458,10 +458,10 @@ print(bar)
 <li><code>last_two</code>: letters의 마지막 두 글자</li></ol>`,
     starter: `raw = 'A1B2C3D4E5'
 
-letters = ''
-digits = ''
-reversed_raw = ''
-last_two = ''
+letters = 
+digits = 
+reversed_raw = 
+last_two = 
 
 print(letters, digits, reversed_raw, last_two)
 `,
@@ -501,9 +501,9 @@ price_text = '35.5'
 
 qty = qty_text
 price = price_text
-amount = 0
-msg = ''
-wrong = None
+amount = 
+msg = 
+wrong = 
 
 print(type(qty_text), type(qty))
 print(msg, wrong)
@@ -547,11 +547,11 @@ print(msg, wrong)
 <p>같은 형식의 다른 기록에도 그대로 동작하도록, 값을 직접 쓰지 말고 <code>record</code>를 잘라서 만드세요.</p>`,
     starter: `record = '20241025|L3|T=23.5C|H=41%'
 
-date = ''
-line = ''
-temp = 0
-humid = 0
-summary = ''
+date = 
+line = 
+temp = 
+humid = 
+summary = 
 
 print(summary)
 `,
@@ -590,10 +590,10 @@ print(summary)
 <li><code>is_pass</code>: 대문자로 바꾼 코드가 <code>'PASS'</code>로 끝나는지</li></ol>`,
     starter: `raw = 'qc-Line3-Pass'
 
-code_up = ''
-code_low = ''
-is_qc = None
-is_pass = None
+code_up = 
+code_low = 
+is_qc = 
+is_pass = 
 
 print(code_up, code_low, is_qc, is_pass)
 `,
@@ -631,11 +631,11 @@ print(code_up, code_low, is_qc, is_pass)
     starter: `tag = 'A동 2층 3라인 7번설비'
 reading = '23.1,23.4,22.9,23.0'
 
-parts = []
-floor = ''
-vals = []
-first_val = 0
-n_vals = 0
+parts = 
+floor = 
+vals = 
+first_val = 
+n_vals = 
 
 print(parts, floor, vals, first_val, n_vals)
 `,
@@ -676,10 +676,10 @@ print(parts, floor, vals, first_val, n_vals)
 ng_codes = ['A01', 'A07', 'B03']
 folders = ['data', 'line3', 'temp.csv']
 
-date = ''
-ng_line = ''
-path = ''
-spaced = ''
+date = 
+ng_line = 
+path = 
+spaced = 
 
 print(date, ng_line, path, spaced)
 `,
@@ -720,10 +720,10 @@ dot_date = '2024.10.25'
 code = 'EQ 07 A'
 raw_status = '  OK\\n'
 
-report2 = ''
-date2 = ''
-code2 = ''
-status = ''
+report2 = 
+date2 = 
+code2 = 
+status = 
 
 print(report2, date2, code2, status)
 `,
@@ -765,12 +765,12 @@ print(report2, date2, code2, status)
 <li><code>valid</code>: clean이 <code>'LINE-'</code>로 시작하고 <code>'|OK'</code>로 끝나면 True</li></ol>`,
     starter: `raw = '  line-3 / temp=23.5 / ok  '
 
-items = []
-line = ''
-temp = 0
-status = ''
-clean = ''
-valid = None
+items = 
+line = 
+temp = 
+status = 
+clean = 
+valid = 
 
 print(clean, valid)
 `,
@@ -812,11 +812,11 @@ print(clean, valid)
     starter: `#        08시   09시   10시   11시   12시   13시
 temps = [22.4, 23.1, 23.8, 24.0, 24.6, 23.9]
 
-first = 0
-last = 0
-morning = []
-n = 0
-noon = 0
+first = 
+last = 
+morning = 
+n = 
+noon = 
 
 print(first, last, morning, n, noon)
 `,
@@ -859,11 +859,11 @@ print(first, last, morning, n, noon)
     ['L3', 995, 15],
 ]
 
-l2_prod = 0
-l3_bad = 0
-last_line = ''
-total_bad = 0
-l1_row = []
+l2_prod = 
+l3_bad = 
+last_line = 
+total_bad = 
+l1_row = 
 
 print(l2_prod, l3_bad, last_line, total_bad, l1_row)
 `,
@@ -911,7 +911,7 @@ print(l2_prod, l3_bad, last_line, total_bad, l1_row)
 
 # 3. 마지막 두 개 삭제
 
-remain = 0
+remain = 
 print(queue, remain)
 `,
     solution: `queue = ['S01', 'S02', 'S03', 'S04', 'S05', 'S06']
@@ -953,10 +953,10 @@ a = ['LOT1', 'LOT2']
 e = ['LOT1', 'LOT2']
 # e에 extend
 
-len_a = 0
-len_e = 0
-counter = []
-merged = []
+len_a = 
+len_e = 
+counter = 
+merged = 
 
 print(a, len_a)
 print(e, len_e)
@@ -1012,14 +1012,14 @@ night = [110, 115]
 
 # 1. 정정
 
-week = []
+week = 
 # 3. 특근 추가
 
 # 4. 맨 앞 삭제
 
-week_total = 0
-report = []
-night_count = 0
+week_total = 
+report = 
+night_count = 
 
 print(week, week_total)
 print(report, night_count)
@@ -1067,8 +1067,8 @@ print(report, night_count)
 <li><code>result</code>: <code>[3, 1, 2].sort()</code>의 결과를 담아 보고, 무엇이 담기는지 확인하기</li></ol>`,
     starter: `weights = [3.2, 1.8, 2.5, 4.1, 2.9]
 
-asc = []
-original = []
+asc = 
+original = 
 
 # 3. weights 내림차순
 
@@ -1109,11 +1109,11 @@ print(asc, original, weights, result)
 <li><code>left</code>: 남은 개수</li></ol>`,
     starter: `wait = ['P1', 'P2', 'P3', 'P4', 'P3', 'P9']
 
-urgent = ''
-first = ''
+urgent = 
+first = 
 # 3. P3 지우기
 
-left = 0
+left = 
 print(urgent, first, wait, left)
 `,
     solution: `wait = ['P1', 'P2', 'P3', 'P4', 'P3', 'P9']
@@ -1219,12 +1219,12 @@ print(title, msg)
 <li><code>outlier</code>: s에서 <code>pop()</code>으로 꺼낸 가장 큰 값. 꺼낸 뒤 s의 길이는 <code>s_len</code></li></ol>`,
     starter: `readings = [12.4, 12.1, 12.9, 12.3, 15.8, 12.2, 12.5]
 
-s = []
-median = 0
-trimmed = []
-top2 = []
-outlier = 0
-s_len = 0
+s = 
+median = 
+trimmed = 
+top2 = 
+outlier = 
+s_len = 
 
 print(s, median, trimmed, top2, outlier, s_len)
 `,
@@ -1265,7 +1265,7 @@ print(s, median, trimmed, top2, outlier, s_len)
 <li><b>D</b> <code>'line'</code> 키 삭제</li></ol>`,
     starter: `eqp = {'id': 'EQ-07', 'line': 'L2', 'temp': 180}
 
-line = ''
+line = 
 # 2. 추가
 
 # 3. 수정
@@ -1305,12 +1305,12 @@ print(line, eqp)
 <li><code>second_name</code>: names의 두 번째 키</li></ol>`,
     starter: `spec = {'temp': 25, 'humid': 45, 'press': 1.0}
 
-names = []
-limits = []
-pairs = []
-has_temp = None
-has_vib = None
-second_name = ''
+names = 
+limits = 
+pairs = 
+has_temp = 
+has_vib = 
+second_name = 
 
 print(names, limits, pairs, has_temp, has_vib, second_name)
 `,
@@ -1352,8 +1352,8 @@ print(names, limits, pairs, has_temp, has_vib, second_name)
 
 # 1~3. 입출고
 
-kinds = 0
-backup = {}
+kinds = 
+backup = 
 # 5. 비우기
 
 print(backup, kinds, stock)
@@ -1395,13 +1395,13 @@ print(backup, kinds, stock)
 line1 = {'A01', 'A03', 'B02'}
 line2 = {'B02', 'C05', 'A03'}
 
-checked = set()
-n_checked = 0
+checked = 
+n_checked = 
 # 3. C09 추가
 
-both = set()
-every = set()
-every_list = []
+both = 
+every = 
+every_list = 
 
 print(checked, n_checked, both, every_list)
 `,
@@ -1446,11 +1446,11 @@ print(checked, n_checked, both, every_list)
     starter: `eqp_line = {'EQ1': 'L1', 'EQ2': 'L1', 'EQ3': 'L2', 'EQ4': 'L2', 'EQ5': 'L3'}
 inspected = ['EQ1', 'EQ3', 'EQ3', 'EQ5', 'EQ8', 'EQ1']
 
-done = set()
-todo = []
-typo = set()
-rate = 0
-summary = {}
+done = 
+todo = 
+typo = 
+rate = 
+summary = 
 
 print(done, todo, typo, rate, summary)
 `,

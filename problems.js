@@ -563,20 +563,20 @@ defects = np.array([12, 8, 15, 10, 5])
 production = np.array([1000, 1050, 980, 1020, 950])
 
 # 1. 총 생산량과 총 불량품 수
-total_production = 0
-total_defects = 0
+total_production = 
+total_defects = 
 print(f"1. 총 생산량: {total_production}개, 총 불량품 수: {total_defects}개")
 
 # 2. 평균 일별 불량품 수
-avg_daily_defects = 0
+avg_daily_defects = 
 print(f"2. 평균 일별 불량품 수: {avg_daily_defects:.2f}개")
 
 # 3. 일별 불량률(%)
-daily_defect_rate = None
+daily_defect_rate = 
 print(f"3. 일별 불량률 (%): {daily_defect_rate}")
 
 # 4. 최종 불량률(%)
-final_defect_rate = 0
+final_defect_rate = 
 print(f"4. 최종 불량률 (%): {final_defect_rate:.3f}%")
 `,
     solution: `import numpy as np
@@ -623,11 +623,11 @@ sensor_data = np.array([24.5, 25.1, 23.9, 26.0, 25.5, 24.8, 26.2, 23.5, 25.0, 24
 TARGET_TEMP = 25.0
 
 # 1. 불리언 배열
-bool_idx = None
+bool_idx = 
 print(f"1. 불리언 배열: {bool_idx}")
 
 # 2. 기준 초과 값
-over_temp_values = None
+over_temp_values = 
 print(f"2. 기준 초과 값: {over_temp_values}")
 
 # 3. 초과 값을 -1로 변경
@@ -673,10 +673,10 @@ print(f"3. 변경 후 배열: {sensor_data}")
 d = np.array([10.02, 9.98, 10.05, 9.97, 10.01, 10.03, 9.99, 10.00, 10.04, 9.96])
 USL, LSL = 10.15, 9.85
 
-mu = 0
-sigma = 0
-cp = 0
-cpk = 0
+mu = 
+sigma = 
+cp = 
+cpk = 
 print(f"mu={mu}, sigma={sigma}, Cp={cp:.2f}, Cpk={cpk:.2f}")
 `,
     solution: `import numpy as np
@@ -722,19 +722,19 @@ data = np.array([
 ])
 
 # 1. 라인별 합계
-line_total = None
+line_total = 
 print("1. 라인별 합계:", line_total)
 
 # 2. 날짜별 합계
-day_total = None
+day_total = 
 print("2. 날짜별 합계:", day_total)
 
 # 3. 합계가 가장 큰 라인의 인덱스
-best_line = None
+best_line = 
 print("3. 최다 생산 라인:", best_line)
 
 # 4. 라인별 일평균 (소수 첫째 자리)
-line_avg = None
+line_avg = 
 print("4. 라인별 일평균:", line_avg)
 `,
     solution: `import numpy as np
@@ -784,15 +784,15 @@ print("4. 라인별 일평균:", line_avg)
 x = np.array([50.2, 49.8, 50.1, 50.0, 53.9, 49.9, 50.3, 46.2, 50.1, 49.7])
 
 # 1. Z-점수
-z = None
+z = 
 print("1. Z-점수:", z)
 
 # 2. |z| > 2 인 인덱스
-outlier_idx = None
+outlier_idx = 
 print("2. 이상치 위치:", outlier_idx)
 
 # 3. 이상치 개수
-n_outliers = 0
+n_outliers = 
 print("3. 이상치 개수:", n_outliers)
 `,
     solution: `import numpy as np
@@ -835,13 +835,13 @@ print("3. 이상치 개수:", n_outliers)
 
 
 # 2. 다시 읽기
-lines = []
+lines = 
 
 # 3. 줄 수
-line_count = 0
+line_count = 
 
 # 4. 첫 줄 (줄바꿈 제거)
-first = ""
+first = 
 print(lines, line_count, first)
 `,
     solution: `records = ["LOT-001 OK", "LOT-002 NG", "LOT-003 OK"]
@@ -889,10 +889,10 @@ config = {
 
 
 # 2. 다시 불러오기
-loaded = None
+loaded = 
 
 # 3. 온도 상한
-temp_max = None
+temp_max = 
 print(loaded, temp_max)
 `,
     solution: `import json
