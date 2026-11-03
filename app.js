@@ -792,8 +792,8 @@ const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${Stri
 
 function runCellHtml(code, i) {
   return `<div class="run-cell" data-cell="${i}">
-    <div class="run-head"><span class="mono">예제 ${i + 1}</span><span class="muted" style="font-size:12px">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
-      <button class="btn ghost small" data-reset="${i}">원래대로</button><button class="btn small" data-run="${i}">▶ 실행</button></div>
+    <div class="run-head"><span class="run-lang">PYTHON</span><span class="run-title">예제 ${i + 1}</span><span class="run-tip muted">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
+      <span class="run-key" title="코드 안에서 Ctrl+Enter 로도 실행됩니다">Ctrl ↵</span><button class="btn ghost small" data-reset="${i}">원래대로</button><button class="btn small run-btn" data-run="${i}">▶ 실행</button></div>
     <textarea data-code="${i}">${esc(code)}</textarea>
     <pre class="console run-out" data-out="${i}" hidden></pre></div>`;
 }
@@ -828,7 +828,7 @@ async function viewLesson(l) {
   body.querySelectorAll("textarea[data-code]").forEach((ta) => {
     const i = Number(ta.dataset.code);
     const starter = ta.value;
-    const cm = window.CodeMirror.fromTextArea(ta, { mode: "python", lineNumbers: false, indentUnit: 4, tabSize: 4, indentWithTabs: false, matchBrackets: true, viewportMargin: Infinity,
+    const cm = window.CodeMirror.fromTextArea(ta, { mode: "python", lineNumbers: true, indentUnit: 4, tabSize: 4, indentWithTabs: false, matchBrackets: true, viewportMargin: Infinity,
       extraKeys: { Tab: (x) => x.replaceSelection("    ", "end"), "Ctrl-Enter": () => run(i), "Cmd-Enter": () => run(i) } });
     cells[i] = { cm, starter };
   });
