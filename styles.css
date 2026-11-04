@@ -888,3 +888,25 @@ kbd {
 @media (max-width: 560px) { .streak-chip { display: none; } }
 .cno small { display: block; font: 600 9px/1 var(--font-en); letter-spacing: .12em; color: var(--muted); margin-bottom: 3px; }
 .cel-plan { color: var(--accent); font-weight: 600; margin: 0; }
+
+/* 레슨: 개념 설명 → 실습 순서 */
+.run-ref { display: inline-flex; align-items: center; gap: 8px; justify-self: start; padding: 7px 12px 7px 8px; border: 1px dashed var(--line-strong); border-radius: 999px; font-size: 13px; color: var(--ink-2); text-decoration: none; background: var(--surface); }
+.run-ref:hover { border-style: solid; border-color: var(--tc, var(--track)); color: var(--ink); }
+.lesson-practice { padding: 22px; display: grid; gap: 16px; }
+.practice-head { display: grid; gap: 4px; }
+.practice-head h2 { font-size: 22px; margin: 0; }
+.practice-head p { margin: 0; font-size: 14px; }
+.lesson-practice .run-cell { scroll-margin-top: 80px; transition: box-shadow .3s; }
+.lesson-practice .run-cell.flash { box-shadow: 0 0 0 2px var(--tc, var(--track)); }
+@media (max-width: 560px) { .lesson-practice { padding: 18px 14px; } }
+
+/* 퀴즈: 코드 작성형 */
+.wq { display: grid; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; background: var(--code-bg); }
+.wq-code { width: 100%; box-sizing: border-box; resize: vertical; border: 0; outline: none; background: var(--code-bg); color: var(--ink); font: 14px/1.6 var(--font-mono); padding: 12px 14px; tab-size: 4; white-space: pre; overflow-x: auto; }
+.wq-code::placeholder { color: var(--muted); opacity: .6; }
+.wq-code:focus { box-shadow: inset 0 0 0 1px var(--tc, var(--accent)); }
+.wq-code:disabled { opacity: .85; }
+.wq-bar { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-top: 1px solid var(--line); background: var(--surface); font-size: 13px; }
+.wq-bar:empty, .wq-bar:not(:has(button)) { display: none; }
+.wq .run-out { max-height: 200px; }
+.quiz-feedback .guide-code { margin: 4px 0 0; }

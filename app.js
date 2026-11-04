@@ -790,9 +790,12 @@ function videoBlock(attrs) {
 }
 const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
-function runCellHtml(code, i) {
-  return `<div class="run-cell" data-cell="${i}">
-    <div class="run-head"><span class="run-lang">PYTHON</span><span class="run-title">예제 ${i + 1}</span><span class="run-tip muted">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
+// 레슨 본문의 실행 셀 자리에는 안내 링크만 남기고, 셀은 개념 설명 아래 '직접 실행해 보기'로 모은다.
+const runRefHtml = (code, i) => `<a class="run-ref" href="#run-${i}" data-ref="${i}"><span class="run-lang">PYTHON</span>예제 ${i + 1} · 아래 실습에서 직접 실행해 보기 ↓</a>`;
+
+function runCellHtml(code, i, topic = "") {
+  return `<div class="run-cell" id="run-${i}" data-cell="${i}">
+    <div class="run-head"><span class="run-lang">PYTHON</span><span class="run-title">예제 ${i + 1}${topic ? ` · ${esc(topic)}` : ""}</span><span class="run-tip muted">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
       <span class="run-key" title="코드 안에서 Ctrl+Enter 로도 실행됩니다">Ctrl ↵</span><button class="btn ghost small" data-reset="${i}">원래대로</button><button class="btn small run-btn" data-run="${i}">▶ 실행</button></div>
     <textarea data-code="${i}">${esc(code)}</textarea>
     <pre class="console run-out" data-out="${i}" hidden></pre></div>`;
@@ -812,6 +815,7 @@ async function viewLesson(l) {
       <h1>${esc(l.title)}</h1>
       <div class="concepts">${l.concepts.map((k) => `<span class="concept">${esc(conceptName(k))}</span>`).join("")}</div></header>
     <article class="lesson-body panel" id="lesson-body"><p class="muted">불러오는 중…</p></article>
+    <section class="lesson-practice panel" id="lesson-practice" hidden></section>
     <section class="lesson-quiz panel" id="lesson-quiz"></section>
     <nav class="unit-nav">${prev ? `<a class="btn small ghost" href="#/l/${prev.id}">← ${esc(prev.title)}</a>` : `<a class="btn small ghost" href="#/c/${c.id}">← 코스로</a>`}${next ? `<a class="btn small ghost" href="#/l/${next.id}">${esc(next.title)} →</a>` : probs[0] ? `<a class="btn small ghost" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 →</a>` : ""}</nav>
   </main>`;
@@ -821,11 +825,23 @@ async function viewLesson(l) {
   let md;
   try { md = await loadLesson(l); } catch (err) { body.innerHTML = `<p class="form-error">${esc(err.message)}</p>`; return; }
   if (location.hash !== `#/l/${l.id}`) return; // 그사이 다른 화면으로 이동
-  body.innerHTML = renderMd(md, { run: runCellHtml, video: videoBlock });
+  const codes = [];
+  body.innerHTML = renderMd(md, { run: (code, i) => { codes[i] = code; return runRefHtml(code, i); }, video: videoBlock });
+  // 각 예제가 어느 소제목 아래 있었는지 찾아 실습 셀 제목으로 쓴다
+  const topicOf = (el) => { for (let n = el.previousElementSibling; n; n = n.previousElementSibling) if (/^H[23]$/.test(n.tagName)) return n.textContent.trim(); return ""; };
+  const practice = $app.querySelector("#lesson-practice");
+  if (codes.length) {
+    const refs = [...body.querySelectorAll(".run-ref")];
+    practice.hidden = false;
+    practice.innerHTML = `<div class="practice-head"><span class="eyebrow">Practice · 직접 실행해 보기</span><h2>개념을 코드로 확인하기</h2>
+      <p class="muted">위에서 읽은 내용을 그대로 실행해 봅니다. 숫자를 바꿔 다시 돌려 보면 개념이 더 잘 잡힙니다.</p></div>
+      ${codes.map((code, i) => runCellHtml(code, i, refs[i] ? topicOf(refs[i]) : "")).join("")}`;
+    refs.forEach((r) => r.addEventListener("click", (e) => { e.preventDefault(); const t = practice.querySelector(`#run-${r.dataset.ref}`); t?.scrollIntoView({ behavior: "smooth", block: "start" }); t?.classList.add("flash"); setTimeout(() => t?.classList.remove("flash"), 1200); }));
+  }
 
   // 실행 셀
   const cells = [];
-  body.querySelectorAll("textarea[data-code]").forEach((ta) => {
+  practice.querySelectorAll("textarea[data-code]").forEach((ta) => {
     const i = Number(ta.dataset.code);
     const starter = ta.value;
     const cm = window.CodeMirror.fromTextArea(ta, { mode: "python", lineNumbers: true, indentUnit: 4, tabSize: 4, indentWithTabs: false, matchBrackets: true, viewportMargin: Infinity,
@@ -833,8 +849,8 @@ async function viewLesson(l) {
     cells[i] = { cm, starter };
   });
   async function run(i) {
-    const btn = body.querySelector(`[data-run="${i}"]`);
-    const out = body.querySelector(`[data-out="${i}"]`);
+    const btn = practice.querySelector(`[data-run="${i}"]`);
+    const out = practice.querySelector(`[data-out="${i}"]`);
     if (btn.disabled) return;
     btn.disabled = true;
     out.hidden = false;
@@ -848,8 +864,8 @@ async function viewLesson(l) {
     } catch (err) { out.className += " err"; out.textContent = "실행하지 못했습니다: " + err.message; }
     finally { btn.disabled = false; }
   }
-  body.querySelectorAll("[data-run]").forEach((b) => b.addEventListener("click", () => run(Number(b.dataset.run))));
-  body.querySelectorAll("[data-reset]").forEach((b) => b.addEventListener("click", () => { const i = Number(b.dataset.reset); cells[i].cm.setValue(cells[i].starter); }));
+  practice.querySelectorAll("[data-run]").forEach((b) => b.addEventListener("click", () => run(Number(b.dataset.run))));
+  practice.querySelectorAll("[data-reset]").forEach((b) => b.addEventListener("click", () => { const i = Number(b.dataset.reset); cells[i].cm.setValue(cells[i].starter); }));
   if (cells.length) preload();
 
   // 읽기 시작 기록
@@ -863,6 +879,7 @@ async function viewLesson(l) {
   const quizEl = $app.querySelector("#lesson-quiz");
   const qs = l.quiz || [];
   if (!qs.length) { quizEl.remove(); return; }
+  if (qs.some((q) => q.kind === "write")) preload();
   const key = `rb-lq:${sid}:${l.id}`;
   let answers = {}, graded = false;
   const finishHtml = () => `<div class="lesson-done"><b>레슨 완료</b><span class="muted">다음 단계로 이어 가세요.</span>
@@ -875,13 +892,15 @@ async function viewLesson(l) {
       ${graded && qs.every((q, i) => quizCorrect(q, answers[i])) ? finishHtml() : ""}`;
     bindQuestionInputs(quizEl, answers, () => {});
     quizEl.querySelector("#lq-submit")?.addEventListener("click", submit);
-    quizEl.querySelector("#lq-reset")?.addEventListener("click", () => { answers = {}; graded = false; render(); });
+    quizEl.querySelector("#lq-reset")?.addEventListener("click", () => { answers = keepWrites(qs, answers); graded = false; render(); });
     if (graded) {
       const ok = qs.filter((q, i) => quizCorrect(q, answers[i])).length;
       quizEl.querySelector("#lq-progress").innerHTML = `<span class="verdict ${ok === qs.length ? "pass" : "fail"}">${ok === qs.length ? "통과" : "다시 확인"}</span> <b>${ok} / ${qs.length}</b> 맞힘`;
     }
   };
   async function submit() {
+    const sb = quizEl.querySelector("#lq-submit");
+    if (qs.some((q) => q.kind === "write")) { sb.disabled = true; sb.textContent = "코드 실행 중…"; await gradeWrites(qs, answers); }
     graded = true;
     const ok = qs.filter((q, i) => quizCorrect(q, answers[i])).length;
     render();
@@ -911,15 +930,22 @@ function questionHtml(q, i, a, graded) {
   } else if (q.kind === "choice") {
     input = `<div class="choices">${q.options.map((o, k) =>
       `<label class="choice${graded && k === q.answer ? " right" : ""}${graded && a === k && k !== q.answer ? " wrong" : ""}"><input type="radio" name="q${i}" value="${k}" data-i="${i}" ${a === k ? "checked" : ""} ${graded ? "disabled" : ""}><span class="choice-no">${k + 1}</span><span>${esc(o)}</span></label>`).join("")}</div>`;
+  } else if (q.kind === "write") {
+    const code = a ?? writeStarter(q);
+    const r = graded ? writeCache.get(code) : null;
+    input = `<div class="wq"><textarea class="wq-code" data-i="${i}" rows="${Math.max(3, code.split("\n").length + 1)}" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="print(...)" ${graded ? "disabled" : ""}>${esc(code)}</textarea>
+      <div class="wq-bar">${graded ? "" : `<button type="button" class="btn small run-btn" data-wrun="${i}">▶ 실행</button><span class="run-key">Ctrl ↵</span>`}<span class="muted">${graded ? "" : "실행해서 출력을 확인한 뒤 채점하세요."}</span></div>
+      <pre class="console run-out${r?.error ? " err" : ""}" data-wout="${i}" ${r ? "" : "hidden"}>${r ? esc(r.error || r.stdout || "(출력 없음)") : ""}</pre></div>`;
   } else {
     input = `<input class="short" type="text" data-i="${i}" value="${esc(a ?? "")}" placeholder="답을 입력하세요 (공백 차이는 무시)" autocomplete="off" spellcheck="false" ${graded ? "disabled" : ""}>`;
   }
-  const answerText = q.kind === "ox" ? (q.answer ? "O" : "X") : q.kind === "choice" ? `${q.answer + 1}. ${q.options[q.answer]}` : (Array.isArray(q.answer) ? q.answer[0] : q.answer);
-  const feedback = graded
-    ? `<div class="quiz-feedback ${ok ? "ok" : "no"}"><b>${ok ? "✓ 정답" : `✗ 정답: ${esc(answerText)}`}</b><span>${esc(q.explain)}</span></div>`
-    : "";
+  const answerText = q.kind === "ox" ? (q.answer ? "O" : "X") : q.kind === "choice" ? `${q.answer + 1}. ${q.options[q.answer]}` : q.kind === "write" ? "" : (Array.isArray(q.answer) ? q.answer[0] : q.answer);
+  const feedback = !graded ? "" : q.kind === "write"
+    ? `<div class="quiz-feedback ${ok ? "ok" : "no"}"><b>${ok ? "✓ 정답" : `✗ ${esc(writeWhy(q, a ?? writeStarter(q)))}`}</b><span>${esc(q.explain)}</span>
+        <span class="muted" style="font-size:13px">예시 답안</span><pre class="guide-code"><code>${esc(q.solution)}</code></pre></div>`
+    : `<div class="quiz-feedback ${ok ? "ok" : "no"}"><b>${ok ? "✓ 정답" : `✗ 정답: ${esc(answerText)}`}</b><span>${esc(q.explain)}</span></div>`;
   return `<li class="quiz-q panel${graded ? (ok ? " ok" : " no") : ""}">
-    <div class="quiz-q-head"><span class="quiz-no">Q${i + 1}</span><span class="tag">${{ ox: "OX", choice: "객관식", short: q.code ? "출력 예측" : "단답" }[q.kind]}</span></div>
+    <div class="quiz-q-head"><span class="quiz-no">Q${i + 1}</span><span class="tag">${{ ox: "OX", choice: "객관식", short: q.code ? "출력 예측" : "단답", write: "코드 작성" }[q.kind]}</span></div>
     <p class="quiz-text">${esc(q.q)}</p>
     ${q.code ? `<pre class="guide-code"><code>${esc(q.code)}</code></pre>` : ""}
     ${input}${feedback}</li>`;
@@ -931,6 +957,25 @@ function bindQuestionInputs(root, answers, onChange, onEnter) {
     onChange();
   }));
   root.querySelectorAll('input[type="radio"]').forEach((r) => r.addEventListener("change", () => { answers[r.dataset.i] = Number(r.value); onChange(); }));
+  root.querySelectorAll("textarea.wq-code").forEach((t) => {
+    const i = t.dataset.i;
+    t.addEventListener("input", () => { answers[i] = t.value; t.rows = Math.max(3, t.value.split("\n").length + 1); onChange(); });
+    t.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") { e.preventDefault(); t.setRangeText("    ", t.selectionStart, t.selectionEnd, "end"); t.dispatchEvent(new Event("input")); }
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); root.querySelector(`[data-wrun="${i}"]`)?.click(); }
+    });
+  });
+  root.querySelectorAll("[data-wrun]").forEach((b) => b.addEventListener("click", async () => {
+    const i = b.dataset.wrun;
+    const code = root.querySelector(`textarea.wq-code[data-i="${i}"]`).value;
+    const out = root.querySelector(`[data-wout="${i}"]`);
+    b.disabled = true; out.hidden = false; out.className = "console run-out";
+    out.textContent = state.runner === "ready" ? "실행 중…" : "파이썬을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…";
+    const r = await runWrite(code);
+    out.className = "console run-out" + (r.error ? " err" : "");
+    out.textContent = r.error || r.stdout || "(출력 없음 — print()로 값을 출력하세요)";
+    b.disabled = false;
+  }));
   root.querySelectorAll("input.short").forEach((t) => {
     t.addEventListener("input", () => { answers[t.dataset.i] = t.value; onChange(); });
     t.addEventListener("keydown", (e) => { if (e.key === "Enter") onEnter?.(); });
@@ -967,7 +1012,36 @@ function viewUnit(u) {
 const quizKey = (sid, pid) => `rb-quiz:${sid}:${pid}`;
 // 단답형은 앞뒤 따옴표와 공백 차이를 무시하고 비교한다
 const normAnswer = (v) => String(v ?? "").trim().replace(/^(['"])(.*)\1$/s, "$2").replace(/\s+/g, "");
+// 코드 작성형: 학생 코드를 실행한 출력이 기대값과 같고, 요구한 문법(must)을 썼으면 정답
+const writeStarter = (q) => (q.given ? q.given + "\n" : "");
+const writeCache = new Map();
+async function runWrite(code) {
+  if (writeCache.has(code)) return writeCache.get(code);
+  let r;
+  try {
+    const res = await runCode({ type: "io", tests: [] }, code, "");
+    r = res.timeout ? { stdout: res.stdout || "", error: "실행이 너무 오래 걸려 멈췄습니다." }
+      : res.error ? { stdout: res.stdout || "", error: `${res.error.type}: ${res.error.message}` }
+      : { stdout: res.stdout || "" };
+  } catch (err) { return { stdout: "", error: "실행하지 못했습니다: " + err.message }; }
+  writeCache.set(code, r);
+  return r;
+}
+// 다시 풀 때 작성한 코드는 남겨 둔다
+const keepWrites = (qs, answers) => Object.fromEntries(qs.map((q, i) => [i, answers[i]]).filter(([i, v]) => qs[i].kind === "write" && v !== undefined));
+const gradeWrites = (qs, answers) => Promise.all(qs.map((q, i) => (q.kind === "write" ? runWrite(answers[i] ?? writeStarter(q)) : null)));
+const writeMissing = (q, code) => (q.must || []).filter((re) => !new RegExp(re).test(code));
+function writeWhy(q, code) {
+  const r = writeCache.get(code);
+  if (!r) return "아직 실행하지 않았습니다.";
+  if (r.error) return "실행 중 오류가 났습니다.";
+  const expects = Array.isArray(q.expect) ? q.expect : [q.expect];
+  if (!expects.some((x) => normAnswer(x) === normAnswer(r.stdout))) return `출력이 다릅니다. 기대한 출력: ${expects[0]}`;
+  if (writeMissing(q, code).length) return "출력은 맞지만 문제에서 요구한 방법을 쓰지 않았습니다.";
+  return "";
+}
 function quizCorrect(q, a) {
+  if (q.kind === "write") { const code = a ?? writeStarter(q); return writeCache.has(code) && writeWhy(q, code) === ""; }
   if (a === undefined || a === null || a === "") return false;
   if (q.kind === "ox") return a === q.answer;
   if (q.kind === "choice") return a === q.answer;
@@ -1002,6 +1076,9 @@ function noteTabHtml(p) {
   return `<div class="eyebrow">개념 노트</div><h1>${esc(u?.title || "")}</h1>${related}<div class="note">${u?.note || ""}</div>`;
 }
 
+// 퀴즈 머리말: 실제 문항 형식으로 표시 (교안 출처는 유지)
+const QKIND = { ox: "OX", choice: "객관식", short: "단답", write: "코드 작성" };
+const quizOrigin = (p) => [...(/교안/.test(p.origin || "") ? ["교안 퀴즈"] : []), ...new Set(p.questions.map((q) => QKIND[q.kind]))].join(" · ");
 function viewQuiz(p) {
   const c = courseOf(p);
   const t = c ? trackById[c.track] : null;
@@ -1012,7 +1089,7 @@ function viewQuiz(p) {
   $app.innerHTML = `${topbar()}<main class="page quiz-page" ${t ? trackStyle(t) : ""}>
     ${problemCrumb(p)}
     <header class="quiz-head">
-      <div class="meta-line"><span class="tag">개념 퀴즈</span><span class="muted" style="font-size:13px">${esc(p.origin)}</span>${state.progress[p.id]?.solved ? '<span class="status solved">정답</span>' : ""}</div>
+      <div class="meta-line"><span class="tag">개념 퀴즈</span><span class="muted" style="font-size:13px">${esc(quizOrigin(p))}</span>${state.progress[p.id]?.solved ? '<span class="status solved">정답</span>' : ""}</div>
       <h1>${esc(p.title)}</h1>
       <p class="muted">코드를 짜기 전에 개념을 확인합니다. 모두 맞히면 정답으로 기록되고, 틀린 문항은 해설을 보고 다시 풀 수 있습니다.</p>
       ${c?.lessons?.length ? `<p class="muted" style="font-size:13px">헷갈리면 레슨을 먼저 읽어 보세요: ${c.lessons.map((l) => `<a href="#/l/${l.id}">${esc(l.title)}</a>`).join(", ")}</p>` : ""}
@@ -1024,6 +1101,7 @@ function viewQuiz(p) {
   </main>`;
   bindTopbar();
   const listEl = $app.querySelector("#quiz-list");
+  if (p.questions.some((q) => q.kind === "write")) preload();
   const progressEl = $app.querySelector("#quiz-progress");
   const submitBtn = $app.querySelector("#quiz-submit");
 
@@ -1048,6 +1126,7 @@ function viewQuiz(p) {
       submitBtn.textContent = `${left}문항이 비었어요. 그래도 채점`;
       return;
     }
+    if (p.questions.some((q) => q.kind === "write")) { submitBtn.disabled = true; submitBtn.textContent = "코드 실행 중…"; await gradeWrites(p.questions, answers); }
     graded = true;
     const cases = p.questions.map((q, i) => ({ hidden: false, input: `Q${i + 1}. ${q.q}`, passed: quizCorrect(q, answers[i]) }));
     const passedCount = cases.filter((c) => c.passed).length;
@@ -1073,7 +1152,7 @@ function viewQuiz(p) {
   });
   $app.querySelector("#quiz-reset").addEventListener("click", () => {
     graded = false;
-    answers = {};
+    answers = keepWrites(p.questions, answers);
     save();
     submitBtn.disabled = false;
     delete submitBtn.dataset.confirm;

@@ -1775,7 +1775,7 @@ export const SM_QUIZZES = [
     "title": "기술통계 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "choice",
@@ -1796,13 +1796,17 @@ export const SM_QUIZZES = [
         "explain": "NumPy 기본은 ddof=0(모표준편차)입니다. 표본이면 ddof=1을 넣습니다. pandas의 .std()는 기본이 ddof=1이라 헷갈리기 쉽습니다."
       },
       {
-        "kind": "short",
-        "q": "출력 결과를 쓰세요.",
-        "code": "import numpy as np\nx = np.array([1, 2, 3, 4, 100])\nprint(np.median(x))",
-        "answer": [
+        "kind": "write",
+        "q": "np.median으로 x의 중앙값을 출력하는 코드를 작성하세요. np.mean과 비교해 보면 이상치의 영향이 보입니다.",
+        "given": "import numpy as np\nx = np.array([1, 2, 3, 4, 100])",
+        "expect": [
           "3.0",
           "3"
         ],
+        "must": [
+          "median"
+        ],
+        "solution": "import numpy as np\nx = np.array([1, 2, 3, 4, 100])\nprint(np.median(x))",
         "explain": "정렬했을 때 가운데 값은 3입니다. 100이 있어도 중앙값은 그대로입니다."
       },
       {
@@ -1831,7 +1835,7 @@ export const SM_QUIZZES = [
     "title": "확률분포 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "choice",
@@ -1864,10 +1868,14 @@ export const SM_QUIZZES = [
         "explain": "표준정규분포의 하위 50% 지점은 평균 0입니다."
       },
       {
-        "kind": "short",
-        "q": "출력 결과를 쓰세요 (소수 둘째 자리).",
-        "code": "from scipy import stats\nprint(round(stats.norm.ppf(0.975), 2))",
-        "answer": "1.96",
+        "kind": "write",
+        "q": "stats.norm.ppf로 표준정규분포의 97.5% 지점을 구해 소수 둘째 자리로 반올림해 출력하는 코드를 작성하세요.",
+        "given": "from scipy import stats",
+        "expect": "1.96",
+        "must": [
+          "ppf"
+        ],
+        "solution": "from scipy import stats\nprint(round(stats.norm.ppf(0.975), 2))",
         "explain": "양측 95% 구간의 경계 z값이 1.96입니다."
       },
       {
@@ -1884,7 +1892,7 @@ export const SM_QUIZZES = [
     "title": "표본분포 · 중심극한정리 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "choice",
@@ -1930,7 +1938,7 @@ export const SM_QUIZZES = [
     "title": "신뢰구간 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "ox",
@@ -1976,7 +1984,7 @@ export const SM_QUIZZES = [
     "title": "가설검정 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "ox",
@@ -2031,7 +2039,7 @@ export const SM_QUIZZES = [
     "title": "ML 워크플로 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "choice",
@@ -2077,7 +2085,7 @@ export const SM_QUIZZES = [
     "title": "선형 · 로지스틱 회귀 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "choice",
@@ -2123,7 +2131,7 @@ export const SM_QUIZZES = [
     "title": "평가지표 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "choice",
@@ -2184,7 +2192,7 @@ export const SM_QUIZZES = [
     "title": "트리와 앙상블 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "OX · 객관식 · 출력 예측",
+    "origin": "OX · 객관식 · 코드 작성",
     "questions": [
       {
         "kind": "ox",
