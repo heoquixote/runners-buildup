@@ -39,7 +39,7 @@ jobs:
       - name: Collect site files
         run: |
           mkdir _site
-          cp index.html styles.css app.js api.js md.js runner.js worker.js harness.py problems.js problems-day1.js problems-stats-ml.js problems-pb-more.js config.js .nojekyll _site/
+          cp index.html styles.css app.js api.js md.js runner.js worker.js harness.py problems.js problems-day1.js problems-stats-ml.js problems-pb-more.js problems-pb-general.js config.js .nojekyll _site/
           cp -r assets content _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

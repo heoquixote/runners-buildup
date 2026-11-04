@@ -25,6 +25,7 @@
 | `problems.js` | 단원, 개념 노트, 문제(`domain: "mfg" | "general"`), 테스트케이스, 모범답안 |
 | `problems-stats-ml.js` | 통계(유닛 12~16) · 머신러닝(유닛 17~20) 문제. scipy · scikit-learn 은 import 할 때 브라우저가 내려받습니다 (첫 실행 10~30초) |
 | `problems-pb-more.js` | 파이썬 기초 추가 코스 문제: 컴프리헨션과 람다(유닛 21) · 예외 처리(유닛 22) |
+| `problems-pb-general.js` | 파이썬 기초 1~11회차의 데이터 과정(일반 소재) 문제, 회차마다 N-6 · N-7 |
 | `harness.py` | 채점기 (입출력형 / 함수형 / 단계 실습형) |
 | `worker.js`, `runner.js` | Pyodide를 Web Worker에서 실행, 6초 넘으면 중단 |
 | `api.js` | Supabase RPC 호출, 설정이 없으면 데모 모드(이 브라우저에만 저장) |
