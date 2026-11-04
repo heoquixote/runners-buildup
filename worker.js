@@ -23,6 +23,11 @@ self.onmessage = async (event) => {
     // numpy 등은 코드나 검사식에서 필요할 때만 내려받는다 (첫 로딩 약 수 초)
     const checksUseNp = (problem.checks || []).some((c) => /\bnp\./.test(c.expr));
     await py.loadPackagesFromImports(code + "\n" + (checksUseNp ? "import numpy" : ""));
+    // seaborn은 Pyodide 기본 패키지에 없을 수 있어 처음 한 번 micropip으로 설치한다
+    if (/^\s*(import|from)\s+seaborn\b/m.test(code)) {
+      try { py.pyimport("seaborn"); }
+      catch { await py.loadPackage("micropip"); await py.pyimport("micropip").install("seaborn"); }
+    }
     const fn = py.globals.get(kind === "grade" ? "grade_json" : "run_json");
     const json = kind === "grade" ? fn(JSON.stringify(problem), code) : fn(JSON.stringify(problem), code, stdin || "");
     fn.destroy();

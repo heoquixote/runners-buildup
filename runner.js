@@ -68,7 +68,7 @@ function send(kind, problem, code, stdin) {
   const id = ++seq;
   // 패키지를 쓰는 코드는 첫 실행 때 내려받으므로 여유 시간을 더 준다 (scipy · scikit-learn 은 크다)
   const usesNp = /\bnumpy\b/.test(code) || (problem.checks || []).some((c) => /\bnp\./.test(c.expr));
-  const usesBig = /\b(scipy|sklearn|pandas)\b/.test(code);
+  const usesBig = /\b(scipy|sklearn|pandas|matplotlib|seaborn)\b/.test(code);
   const extra = usesBig ? 45000 : usesNp ? 15000 : 0;
   return readyPromise.then(
     () =>
