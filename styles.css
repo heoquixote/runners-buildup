@@ -768,7 +768,7 @@ kbd {
 .lesson-body ul, .lesson-body ol { padding-left: 22px; display: grid; gap: 4px; }
 .lesson-body li > p { margin: 0; }
 .lesson-body :not(pre) > code { background: var(--surface-3); color: var(--cyan); padding: 1px 6px; border-radius: 4px; font-size: .9em; }
-.lesson-body pre.md-code, .lesson-body pre:not(.console) { margin: 0; padding: 12px 14px; background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; white-space: pre; line-height: 1.55; font-size: 14px; }
+.lesson-body pre.md-code, .lesson-body > pre:not(.console) { margin: 0; padding: 12px 14px; background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; white-space: pre; line-height: 1.55; font-size: 14px; }
 .lesson-body blockquote { margin: 0; border-left: 3px solid var(--tc, var(--track)); background: color-mix(in srgb, var(--tc, var(--track)) 10%, transparent); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 15px; color: var(--ink-2); }
 .lesson-body blockquote p + p { margin-top: 6px; }
 .lesson-body hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
@@ -779,14 +779,26 @@ kbd {
 @media (max-width: 560px) { .lesson-body { padding: 18px 16px 22px; font-size: 15px; } .lesson-head h1 { font-size: 24px; } }
 
 .run-cell { border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; background: var(--code-bg); display: grid; }
-.run-head { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); background: var(--surface); }
+.run-head { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 12px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); background: var(--surface); }
 .run-head .spacer { flex: 1; }
-.run-cell .CodeMirror { height: auto; min-height: 44px; font-size: 14px; }
+.run-lang { font: 700 11px/1 var(--font-en); letter-spacing: .08em; color: var(--tc, var(--track)); background: color-mix(in srgb, var(--tc, var(--track)) 14%, transparent); border-radius: 4px; padding: 4px 6px; }
+.run-title { color: var(--ink-2); font-weight: 600; }
+.run-tip { font-size: 12px; }
+.run-key { font: 11px/1 var(--font-mono, monospace); color: var(--muted); border: 1px solid var(--line-strong); border-radius: 4px; padding: 3px 5px; }
+.btn.run-btn { background: var(--tc, var(--accent)); border-color: var(--tc, var(--accent)); color: #0d1006; font-weight: 700; gap: 6px; }
+.btn.run-btn:hover { background: var(--tc, var(--accent)); filter: brightness(1.08); transform: translateY(-1px); }
+.btn.run-btn:disabled { filter: none; }
+.run-cell .CodeMirror { height: auto; min-height: 44px; font-size: 14px; line-height: 1.6; background: var(--code-bg); }
 .run-cell .CodeMirror-scroll { min-height: 44px; }
-.run-cell .CodeMirror-lines { padding: 10px 0; }
-.run-cell .CodeMirror pre.CodeMirror-line, .run-cell .CodeMirror pre.CodeMirror-line-like { padding-left: 14px; }
-.run-out { margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: var(--surface); color: var(--ink); font-size: 13px; padding: 10px 14px; white-space: pre-wrap; max-height: 260px; overflow: auto; }
+.run-cell .CodeMirror-lines { padding: 12px 0; }
+.run-cell .CodeMirror pre.CodeMirror-line, .run-cell .CodeMirror pre.CodeMirror-line-like { padding-left: 12px; border: 0; background: transparent; border-radius: 0; }
+.run-cell .CodeMirror-gutters { background: var(--code-bg); border-right: 1px solid var(--line); }
+.run-cell .CodeMirror-linenumber { padding: 0 8px 0 10px; color: color-mix(in srgb, var(--muted) 70%, transparent); font-size: 12px; }
+.run-out { margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: var(--surface); color: var(--ink); font-size: 13px; padding: 10px 14px 12px; white-space: pre-wrap; max-height: 260px; overflow: auto; }
+.run-out::before { content: "실행 결과"; display: block; margin-bottom: 6px; font-weight: 600; font-size: 11px; line-height: 1; letter-spacing: .04em; color: var(--muted); }
 .run-out.err { color: var(--fail); background: var(--fail-soft); }
+.run-out.err::before { content: "오류"; color: var(--fail); }
+@media (max-width: 560px) { .run-tip, .run-key { display: none; } }
 
 .video-block { border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
 .video-block > summary, .video-block.pending { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; list-style: none; }

@@ -23,6 +23,7 @@
 | `content/videos.js`, `content/concepts.js` | 모션 영상 카탈로그(28편, `youtube_id`를 채우고 `status: "published"`로 바꾸면 레슨에 표시), 개념 태그 |
 | `md.js` | 레슨 Markdown 렌더러 (외부 라이브러리 없음) |
 | `problems.js` | 단원, 개념 노트, 문제(`domain: "mfg" | "general"`), 테스트케이스, 모범답안 |
+| `problems-stats-ml.js` | 통계(유닛 12~16) · 머신러닝(유닛 17~20) 문제. scipy · scikit-learn 은 import 할 때 브라우저가 내려받습니다 (첫 실행 10~30초) |
 | `harness.py` | 채점기 (입출력형 / 함수형 / 단계 실습형) |
 | `worker.js`, `runner.js` | Pyodide를 Web Worker에서 실행, 6초 넘으면 중단 |
 | `api.js` | Supabase RPC 호출, 설정이 없으면 데모 모드(이 브라우저에만 저장) |
@@ -59,7 +60,7 @@ python3 -m http.server 8000   # http://localhost:8000
 
 ## 문제 추가
 
-`problems.js`에 항목을 추가하고 `node scripts/verify.mjs`로 확인합니다 (python3, numpy 필요). 기본 데이터 과정용 일반 소재 문제는 같은 `unit`에 `domain: "general"`로 넣습니다. 아직 없는 유닛은 제조 문제가 대신 보입니다.
+`problems.js`에 항목을 추가하고 `node scripts/verify.mjs`로 확인합니다 (python3, numpy · scipy · scikit-learn · pandas 필요). 기본 데이터 과정용 일반 소재 문제는 같은 `unit`에 `domain: "general"`로 넣습니다. 아직 없는 유닛은 제조 문제가 대신 보입니다.
 
 - `type: "io"`: `tests: [{ stdin, expected, hidden? }]`. 출력은 줄 단위로 비교하고 줄 끝 공백은 무시합니다. `input()`의 안내 문구는 출력에 섞이지 않습니다.
 - `type: "function"`: `tests: [{ args: [...], expected, hidden? }]`. `solution(*args)`의 반환값을 비교하고, 실수는 `tolerance`(기본 1e-6) 오차를 허용합니다.
