@@ -31,13 +31,45 @@ const badQuestions = (questions) => questions.filter((x) =>
   (x.kind === "ox" && typeof x.answer !== "boolean") ||
   (x.kind === "choice" && !(Number.isInteger(x.answer) && x.options?.[x.answer] !== undefined)) ||
   (x.kind === "short" && !(typeof x.answer === "string" || (Array.isArray(x.answer) && x.answer.length))) ||
-  !["ox", "choice", "short"].includes(x.kind));
+  (x.kind === "write" && !(x.solution && (typeof x.expect === "string" || (Array.isArray(x.expect) && x.expect.length)))) ||
+  !["ox", "choice", "short", "write"].includes(x.kind));
 const quizzes = PROBLEMS.filter((p) => p.type === "quiz");
 for (const q of quizzes) {
   const bad = badQuestions(q.questions);
   if (bad.length) failed++;
   console.log(`${bad.length ? "FAIL" : "PASS"}  ${q.id}  퀴즈 ${q.questions.length}문항${bad.length ? "  형식 오류: " + bad.map((x) => x.q).join(" / ") : ""}`);
 }
+// 코드 작성형 문항: 예시 답안을 실제로 돌려 기대 출력과 같은지, 요구 문법(must)을 쓰는지, 처음 코드(given)는 통과하지 않는지
+const normAnswer = (v) => String(v ?? "").trim().replace(/^(['"])(.*)\1$/s, "$2").replace(/\s+/g, "");
+const writeQs = [
+  ...quizzes.flatMap((p) => p.questions.map((q, i) => ({ where: `${p.id} Q${i + 1}`, q }))),
+  ...LESSONS.flatMap((l) => (l.quiz || []).map((q, i) => ({ where: `${l.id} Q${i + 1}`, q }))),
+].filter((x) => x.q.kind === "write");
+const pyRun = `
+import json, sys, io, contextlib
+out = []
+for code in json.load(sys.stdin):
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            exec(code, {"__name__": "__main__"})
+        out.append({"stdout": buf.getvalue()})
+    except Exception as e:
+        out.append({"stdout": buf.getvalue(), "error": repr(e)})
+print(json.dumps(out, ensure_ascii=False))
+`;
+const codes = writeQs.flatMap(({ q }) => [q.solution, q.given ? q.given + "\n" : ""]);
+const ran = JSON.parse(execFileSync("python3", ["-c", pyRun], { input: JSON.stringify(codes), encoding: "utf8" }));
+writeQs.forEach(({ where, q }, k) => {
+  const expects = Array.isArray(q.expect) ? q.expect : [q.expect];
+  const match = (r, code) => !r.error && expects.some((x) => normAnswer(x) === normAnswer(r.stdout)) && (q.must || []).every((re) => new RegExp(re).test(code));
+  const good = ran[2 * k], bad = ran[2 * k + 1];
+  const problems = [];
+  if (!match(good, q.solution)) problems.push(`예시 답안 실패 (출력 ${JSON.stringify(good.stdout)}${good.error ? " " + good.error : ""})`);
+  if (match(bad, q.given ? q.given + "\n" : "")) problems.push("처음 코드가 그대로 정답 처리됨");
+  if (problems.length) { failed++; console.log(`FAIL  ${where}  코드 작성: ${problems.join(", ")}`); }
+});
+console.log(`PASS  코드 작성 문항 ${writeQs.length}개 확인`);
 for (const p of PROBLEMS) {
   if (p.domain && !["mfg", "general"].includes(p.domain)) { failed++; console.log(`FAIL  ${p.id}  domain 값이 이상함: ${p.domain}`); }
 }
