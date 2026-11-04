@@ -104,8 +104,20 @@ export const COURSES = [
         { kind: "ox", q: "with open(...) as f: 블록이 끝나면 파일은 자동으로 닫힌다.", answer: true, explain: "with 문은 블록을 벗어날 때 close()를 대신 호출합니다." },
         { kind: "choice", q: "CSV 한 줄 'A,12,OK'를 읽어 값 3개로 나누는 방법은?", options: ["line.split()", "line.split(',')", "line.strip()", "line.join(',')"], answer: 1, explain: "쉼표 기준으로 나누려면 split(',')입니다. 줄 끝 개행은 strip()으로 먼저 지웁니다." },
       ] }] },
-  { id: "pb-11", track: "python-basic", title: "컴프리헨션과 람다", summary: "리스트 컴프리헨션, 조건부 컴프리헨션, lambda, key 함수", status: "planned", level: "기본", concepts: ["py.comprehension", "py.lambda"], lessons: [] },
-  { id: "pb-12", track: "python-basic", title: "예외 처리", summary: "try, except, else, finally, raise", status: "planned", level: "기본", concepts: ["py.exception"], lessons: [] },
+  { id: "pb-11", track: "python-basic", title: "컴프리헨션과 람다", summary: "리스트 컴프리헨션, 조건부 컴프리헨션, lambda, sorted의 key", unit: 21, level: "기본",
+    concepts: ["py.comprehension", "py.lambda"],
+    lessons: [{ id: "pb-11-1", title: "for문 세 줄을 한 줄로, 정렬 기준은 lambda로", minutes: 15, concepts: ["py.comprehension", "py.lambda"],
+      quiz: [
+        { kind: "write", q: "리스트 컴프리헨션으로 temps에서 30 이상인 값만 남긴 리스트를 출력하는 코드를 작성하세요.", given: "temps = [28, 31, 35, 29, 30]", expect: "[31, 35, 30]", must: ["\\[.+\\bfor\\b.+\\bin\\b.+\\bif\\b.+\\]"], solution: "temps = [28, 31, 35, 29, 30]\nprint([t for t in temps if t >= 30])", explain: "[t for t in temps if 조건] 은 조건이 True인 값만 원래 순서대로 모읍니다." },
+        { kind: "choice", q: "pairs = [(\"A\", 3), (\"B\", 1)] 을 두 번째 값 기준으로 정렬하는 코드는?", options: ["sorted(pairs, key=lambda p: p[1])", "sorted(pairs, key=p[1])", "sorted(pairs[1])", "pairs.sort(1)"], answer: 0, explain: "key에는 원소 하나를 받아 기준값을 돌려주는 함수를 넘깁니다." },
+      ] }] },
+  { id: "pb-12", track: "python-basic", title: "예외 처리", summary: "try, except, else, finally, ValueError · ZeroDivisionError · KeyError", unit: 22, level: "기본",
+    concepts: ["py.exception"],
+    lessons: [{ id: "pb-12-1", title: "에러가 나도 멈추지 않는 코드", minutes: 15, concepts: ["py.exception"],
+      quiz: [
+        { kind: "write", q: "try / except로 float('N/A')에서 나는 에러를 잡아 0.0을 출력하는 코드를 작성하세요.", expect: "0.0", must: ["\\btry\\s*:", "\\bexcept\\b"], solution: "try:\n    print(float('N/A'))\nexcept ValueError:\n    print(0.0)", explain: "float('N/A')는 ValueError를 냅니다. except 블록에서 대신할 값을 정합니다." },
+        { kind: "ox", q: "except: 처럼 에러 이름을 비워 두는 것이 가장 안전한 습관이다.", answer: false, explain: "이름 없는 except는 오타(NameError)까지 숨깁니다. 잡을 에러를 이름으로 적으세요." },
+      ] }] },
 
   // ── 파이썬 데이터분석 ────────────────────────────────────
   { id: "da-01", track: "python-da", title: "NumPy 배열과 연산", summary: "배열 연산, 통계량, 불리언 인덱싱, axis, 이상치", unit: 10, level: "기본",

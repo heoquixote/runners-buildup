@@ -5,6 +5,7 @@
 // 1회차 교안 유닛(1~6)은 problems-day1.js, 이후 연습 유닛(7~)은 이 파일에 있다.
 import { DAY1_UNITS, DAY1_PROBLEMS, DAY1_QUIZZES } from "./problems-day1.js";
 import { SM_UNITS, SM_PROBLEMS, SM_QUIZZES } from "./problems-stats-ml.js";
+import { PB_UNITS, PB_PROBLEMS, PB_QUIZZES } from "./problems-pb-more.js";
 
 // 커리큘럼(트랙 > 코스 > 레슨)은 content/index.js 에 있고, 코스는 unit 번호로 이 파일의 문제와 이어진다.
 // domain: "mfg"(제조·품질 소재, 기본값) | "general"(일반 데이터 소재). QAQC 과정은 mfg, 기본 데이터 과정은 general 문제를 보여준다.
@@ -123,6 +124,7 @@ export const UNITS = [
   ...DAY1_UNITS.map((u) => ({ ...u, track: "python", part: "py-1" })),
   ...MORE_UNITS.map((u) => ({ ...u, track: "python", part: "py-2" })),
   ...SM_UNITS.map((u) => ({ ...u, track: u.id <= 16 ? "stats" : "ml", part: u.id <= 16 ? "st-1" : "ml-1" })),
+  ...PB_UNITS.map((u) => ({ ...u, track: "python", part: "py-2" })),
 ];
 
 export const PROBLEMS = [
@@ -1044,7 +1046,6 @@ const QUIZZES = [
     id: "7-Q", unit: 7, title: "제어문 개념 퀴즈", type: "quiz", level: 1, origin: "OX · 객관식 · 코드 작성",
     questions: [
       { kind: "ox", q: "input()으로 10을 입력받으면 결과는 정수(int) 10이다.", answer: false, explain: "input()은 항상 문자열 '10'을 돌려줍니다. 계산하려면 int(input())처럼 바꿔야 합니다." },
-      { kind: "write", q: "17을 5로 나눈 나머지를 출력하는 코드를 작성하세요.", expect: "2", must: ["%"], solution: "print(17 % 5)", explain: "%는 나머지입니다. 17 = 5 × 3 + 2" },
       { kind: "choice", q: "range(1, 5)가 만드는 숫자는?", options: ["1, 2, 3, 4, 5", "1, 2, 3, 4", "0, 1, 2, 3, 4", "2, 3, 4, 5"], answer: 1, explain: "끝 숫자 5는 포함되지 않습니다." },
       { kind: "short", q: "while True: 반복을 그 자리에서 끝내는 키워드는?", answer: "break", explain: "break를 만나면 가장 가까운 반복문을 빠져나옵니다." },
       { kind: "choice", q: "출력 결과는?", code: "x = 10.5\nif x < 9.5:\n    print(\"LOW\")\nelif x > 10.5:\n    print(\"HIGH\")\nelse:\n    print(\"OK\")", options: ["LOW", "HIGH", "OK", "아무것도 출력되지 않는다"], answer: 2, explain: "10.5 > 10.5는 거짓이라 else로 갑니다. 경계값이 규격 안인지 항상 확인하세요." },
@@ -1055,7 +1056,6 @@ const QUIZZES = [
     id: "8-Q", unit: 8, title: "문자열 활용 개념 퀴즈", type: "quiz", level: 1, origin: "OX · 객관식 · 코드 작성",
     questions: [
       { kind: "write", q: "슬라이싱으로 code의 마지막 3글자를 출력하는 코드를 작성하세요.", given: "code = \"EQP-A2024-001\"", expect: "001", must: ["code\\[\\s*-3\\s*:"], solution: "code = \"EQP-A2024-001\"\nprint(code[-3:])", explain: "[-3:]는 뒤에서 3번째부터 끝까지입니다." },
-      { kind: "write", q: "슬라이싱으로 s에서 2024만 잘라 출력하는 코드를 작성하세요.", given: "s = \"QA-2024\"", expect: "2024", must: ["s\\[[^\\]]*:[^\\]]*\\]"], solution: "s = \"QA-2024\"\nprint(s[3:])", explain: "인덱스는 0부터 셉니다. Q(0) A(1) -(2) 2(3)…" },
       { kind: "ox", q: "s = \"ok\" 다음에 s.upper()를 실행하면 s도 \"OK\"로 바뀐다.", answer: false, explain: "문자열은 바뀌지 않는(immutable) 값입니다. upper()는 새 문자열을 돌려주므로 s = s.upper()처럼 다시 담아야 합니다." },
       { kind: "choice", q: "\"ERROR,Temp,A1,High\".split(\",\")의 길이는?", options: ["1", "3", "4", "5"], answer: 2, explain: "쉼표 3개로 나뉘어 4칸이 됩니다." },
       { kind: "write", q: "len으로 문자열 \"LOT 01\"의 글자 수를 출력하는 코드를 작성하세요. 공백도 세는지 확인해 보세요.", expect: "6", must: ["len\\("], solution: "print(len(\"LOT 01\"))", explain: "공백도 한 글자로 셉니다." },
@@ -1070,7 +1070,6 @@ const QUIZZES = [
       { kind: "choice", q: "출력 결과는?", code: "for i, v in enumerate([\"OK\", \"NG\"]):\n    print(i, v)", options: ["0 OK / 1 NG", "1 OK / 2 NG", "OK 0 / NG 1", "오류가 난다"], answer: 0, explain: "enumerate는 0부터 시작하는 (인덱스, 값) 쌍을 줍니다." },
       { kind: "write", q: "get으로 d에서 '기포' 개수를 읽되, 키가 없으면 0이 나오게 출력하는 코드를 작성하세요.", given: "d = {\"찍힘\": 2}", expect: "0", must: ["\\.get\\("], solution: "d = {\"찍힘\": 2}\nprint(d.get(\"기포\", 0))", explain: "get(키, 기본값)은 키가 없으면 기본값을 돌려줍니다. d[\"기포\"]는 KeyError가 납니다." },
       { kind: "write", q: "리스트 컴프리헨션으로 nums에서 4보다 큰 값만 남긴 리스트를 출력하는 코드를 작성하세요.", given: "nums = [3, 8, 5, 10]", expect: "[8, 5, 10]", must: ["\\[.+\\bfor\\b.+\\bin\\b.+\\bif\\b.+\\]"], solution: "nums = [3, 8, 5, 10]\nprint([x for x in nums if x > 4])", explain: "조건을 만족하는 값만 원래 순서대로 남습니다." },
-      { kind: "choice", q: "max([3, 11, 5])의 결과는?", options: ["3", "5", "11", "19"], answer: 2, explain: "가장 큰 값을 돌려줍니다. 위치가 필요하면 리스트.index()나 enumerate를 함께 씁니다." },
     ],
   },
   {
@@ -1080,7 +1079,6 @@ const QUIZZES = [
       { kind: "ox", q: "표본 데이터의 표준편차는 arr.std(ddof=1)로 구한다.", answer: true, explain: "기본값 ddof=0은 모표준편차입니다. Cp, Cpk 계산에서 자주 틀리는 부분입니다." },
       { kind: "choice", q: "2차원 배열 data에서 data.sum(axis=1)이 계산하는 것은?", options: ["열마다 합계", "행마다 합계", "전체 합계", "행과 열을 바꾼 배열"], answer: 1, explain: "axis=1은 옆으로(행 안에서) 더합니다. 행이 라인이면 라인별 합계입니다." },
       { kind: "write", q: "불리언 인덱싱으로 a에서 24.5보다 큰 값만 출력하는 코드를 작성하세요.", given: "import numpy as np\na = np.array([24, 26, 25])", expect: "[26 25]", must: ["a\\[\\s*a\\s*>"], solution: "import numpy as np\na = np.array([24, 26, 25])\nprint(a[a > 24.5])", explain: "불리언 인덱싱은 조건이 True인 값만 남깁니다." },
-      { kind: "ox", q: "[1, 2] + [3, 4]와 np.array([1, 2]) + np.array([3, 4])의 결과는 같다.", answer: false, explain: "리스트 +는 이어 붙이기([1, 2, 3, 4]), 배열 +는 같은 위치끼리 더하기([4 6])입니다." },
       { kind: "choice", q: "np.argmax([3, 9, 4])의 결과는?", options: ["9", "1", "2", "0"], answer: 1, explain: "argmax는 가장 큰 값의 위치(인덱스)를 돌려줍니다." },
     ],
   },
@@ -1089,16 +1087,14 @@ const QUIZZES = [
     questions: [
       { kind: "choice", q: "기존 내용을 지우지 않고 뒤에 이어 쓰는 모드는?", options: ["\"r\"", "\"w\"", "\"a\"", "\"b\""], answer: 2, explain: "a는 append입니다. w는 기존 내용을 지우고 새로 씁니다." },
       { kind: "ox", q: "with open(...) as f: 블록이 끝나면 f.close()를 쓰지 않아도 파일이 닫힌다.", answer: true, explain: "with가 블록이 끝날 때, 중간에 오류가 나도 파일을 닫아 줍니다." },
-      { kind: "choice", q: "f.readlines()가 돌려주는 것은?", options: ["파일 전체를 담은 문자열 하나", "각 줄을 담은 리스트", "첫 줄 하나", "열 이름을 키로 하는 딕셔너리"], answer: 1, explain: "각 줄 끝에 \\n이 붙어 있으니 strip()으로 지워서 씁니다." },
       { kind: "ox", q: "csv.DictReader로 읽은 row[\"value\"]가 90이면, 그 값은 숫자 90이다.", answer: false, explain: "CSV에서 읽은 값은 모두 문자열 '90'입니다. 계산하려면 int()나 float()로 바꿔야 합니다." },
       { kind: "choice", q: "json.dump(data, f, ensure_ascii=False)에서 ensure_ascii=False의 역할은?", options: ["들여쓰기를 넣는다", "한글을 \\uXXXX로 바꾸지 않고 그대로 저장한다", "저장 후 파일을 닫는다", "키를 정렬한다"], answer: 1, explain: "기본값(True)이면 한글이 \\uB3C4 같은 코드로 저장됩니다. 들여쓰기는 indent입니다." },
       { kind: "short", q: "CSV 파일을 쓸 때 줄 사이에 빈 줄이 생기지 않도록 open()에 넣는 인자를 쓰세요. (예: encoding=\"utf-8\" 처럼)", answer: ["newline=\"\"", "newline=''"], explain: "open(\"out.csv\", \"w\", newline=\"\", encoding=\"utf-8\")" },
-      { kind: "choice", q: "JSON 파일을 읽어 파이썬 딕셔너리로 만드는 함수는?", options: ["json.dump(f)", "json.load(f)", "json.read(f)", "f.json()"], answer: 1, explain: "dump는 파이썬 → 파일, load는 파일 → 파이썬입니다. 문자열을 다룰 때는 dumps/loads입니다." },
     ],
   },
 ];
 PROBLEMS.unshift(...DAY1_PROBLEMS);
-PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES, ...SM_PROBLEMS, ...SM_QUIZZES);
+PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES, ...SM_PROBLEMS, ...SM_QUIZZES, ...PB_PROBLEMS, ...PB_QUIZZES);
 // 단원 순서, 단원 안에서는 개념 퀴즈 → 기본 → 도전 (sort는 안정 정렬이라 원래 순서 유지)
 const order = (p) => (p.type === "quiz" ? 0 : p.challenge ? 2 : 1);
 PROBLEMS.sort((a, b) => a.unit - b.unit || order(a) - order(b));
