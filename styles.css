@@ -1030,3 +1030,11 @@ kbd {
 .sql-msg { margin: 0; font-size: 13px; color: var(--ink-2); }
 .sql-err { display: grid; gap: 4px; padding: 8px 10px; border-radius: 6px; background: var(--fail-soft); color: var(--fail); font-size: 13px; }
 .sql-err span:not(.mono) { color: var(--ink-2); }
+.fig .link { fill: none; stroke: var(--cyan); stroke-width: 1.6; stroke-dasharray: 4 4; opacity: .7; }
+.fig .plug { fill: var(--cyan); }
+.fig .hub { fill: var(--track-soft); stroke: var(--track); stroke-width: 2; }
+.fig .hub-glow { fill: none; stroke: var(--track); stroke-width: 1; stroke-dasharray: 2 5; opacity: .6; }
+.fig .ico-bg { fill: var(--surface-3); }
+.fig .ico .dot-i { fill: var(--ink-2); stroke: none; }
+.fig .ico .thin { stroke-width: 1; opacity: .7; }
+.fig .ico-lg { stroke-width: 1.5; }
