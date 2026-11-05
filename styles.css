@@ -1045,3 +1045,11 @@ kbd {
 .login-modal .lead b { color: var(--ink); }
 .lm-close { position: absolute; top: 12px; right: 14px; width: 32px; height: 32px; border: 0; background: none; color: var(--muted); font-size: 24px; line-height: 1; cursor: pointer; border-radius: var(--radius); }
 .lm-close:hover { color: var(--ink); background: var(--code-bg); }
+.lesson-person { display: flex; align-items: center; gap: 20px; margin: 18px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); }
+.lesson-person img { width: 132px; height: auto; aspect-ratio: 3 / 4; object-fit: cover; flex: none; border-radius: 10px; }
+.lesson-person figcaption { display: grid; gap: 6px; margin: 0; text-align: left; }
+.lesson-person b { font-size: 20px; color: var(--ink); }
+.lesson-person span { color: var(--ink-2); font-size: 14px; }
+.lesson-person p { margin: 2px 0 0; color: var(--ink-2); font-size: 15px; line-height: 1.6; }
+.lesson-person small { color: var(--subtle); font-size: 12px; }
+@media (max-width: 560px) { .lesson-person { flex-direction: column; align-items: flex-start; gap: 12px; } .lesson-person img { width: 112px; } }
