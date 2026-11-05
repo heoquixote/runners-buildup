@@ -828,7 +828,7 @@ function viewVideos() {
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">영상</span></nav>
     <header class="unit-hero"><span class="tcard-en">Data Learners</span><h1>개념 모션 영상</h1>
       <p class="muted">글로는 어려운 개념만 1~3분 모션그래픽으로 만듭니다. 제작되는 순서대로 레슨 안에 들어갑니다.</p></header>
-    ${TRACKS.map((t) => { const vids = VIDEOS.filter((v) => v.track === t.id); return vids.length ? `<section class="part" ${trackStyle(t)}><h2 class="part-title">${esc(t.label)}</h2><ul class="vlist panel">${vids.map(videoRow).join("")}</ul></section>` : ""; }).join("")}
+    ${TRACKS.map((t) => { const vids = VIDEOS.filter((v) => v.track === t.id && youtubeId(v)); return vids.length ? `<section class="part" ${trackStyle(t)}><h2 class="part-title">${esc(t.label)}</h2><ul class="vlist panel">${vids.map(videoRow).join("")}</ul></section>` : ""; }).join("")}
   </main>`;
   bindTopbar();
 }
@@ -876,9 +876,7 @@ function videoBlock(attrs) {
   const v = videoById[attrs.ref];
   if (!v) return `<div class="video-block pending"><b>영상 참조 오류</b><span class="muted">${esc(attrs.ref)}</span></div>`;
   const yt = youtubeId(v);
-  if (!yt) {
-    return `<div class="video-block pending"><div class="video-ico" aria-hidden="true">▶</div><div><span class="eyebrow">Video · 영상 준비 중</span><b>${esc(v.title)}</b><span class="muted">${esc(v.brief)} (${esc(v.length)}) — 모션그래픽이 올라오면 여기서 바로 재생됩니다.</span></div></div>`;
-  }
+  if (!yt) return ""; // 제작 전 영상은 수강생 화면에 표시하지 않는다
   const q = new URLSearchParams({ rel: "0", modestbranding: "1" });
   if (attrs.start) q.set("start", attrs.start);
   if (attrs.end) q.set("end", attrs.end);
@@ -1642,7 +1640,7 @@ function viewProblem(p) {
 function routeAdmin(hash) {
   if (!state.adminToken) return viewAdminLogin();
   const section = hash.split("/")[2] || "matrix";
-  const tabs = [["matrix", "제출 현황"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
+  const tabs = [["matrix", "회차 과제"], ["progress", "학습 현황"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
   $app.innerHTML = `${topbar({ admin: true })}<main class="page wide">
     <div class="admin-bar"><nav class="admin-tabs">${tabs.map(([k, l]) => `<a href="#/admin/${k}" ${k === section ? 'aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
       <label class="group-select"><span>그룹</span><select id="group-select"><option value="">전체</option></select></label></div>
@@ -1661,6 +1659,7 @@ function routeAdmin(hash) {
   const sel = $app.querySelector("#group-select");
   const run = () => {
     if (section === "roster") return adminRoster(body).catch(fail);
+    if (section === "progress") return adminProgress(body).catch(fail);
     if (section === "stats") return adminStats(body).catch(fail);
     return adminMatrix(body).catch(fail);
   };
@@ -1728,6 +1727,64 @@ function downloadCsv(filename, rows) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// 학습 현황: 수강생별 트랙 레슨 · 문제 진도. 회차 과제 밖의 학습도 모두 포함한다.
+async function adminProgress(body) {
+  const [{ students, raw }, lessonRes] = await Promise.all([loadAdminData(), api.adminLessons(state.adminToken)]);
+  if (!students.length) {
+    body.innerHTML = `<div class="panel empty-state"><b>아직 등록된 수강생이 없습니다.</b>명단 · 번호 탭에서 이름을 붙여넣거나 가입 코드를 안내하세요.</div>`;
+    return;
+  }
+  const passed = {}, solvedSet = {}, last = {};
+  const touch = (sid, at) => { if (at && (!last[sid] || Date.parse(at) > Date.parse(last[sid]))) last[sid] = at; };
+  for (const r of lessonRes.rows || []) {
+    touch(r.student_id, r.updated_at);
+    if (r.status === "passed") (passed[r.student_id] ||= new Set()).add(r.lesson_id);
+  }
+  for (const c of raw) {
+    touch(c.student_id, c.last_at);
+    if (c.solved) (solvedSet[c.student_id] ||= new Set()).add(c.problem_id);
+  }
+  const tracks = TRACKS.filter((t) => coursesOf(t.id).some(isReady));
+  const statOf = (s) => {
+    const prog = programOfJoinCode(s.group);
+    const byTrack = tracks.map((t) => {
+      const courses = coursesOf(t.id).filter(isReady);
+      const ls = courses.flatMap(coreLessons), ps = courses.flatMap((c) => courseProblems(c, prog));
+      return {
+        lessons: ls.length, lessonsDone: ls.filter((l) => passed[s.id]?.has(l.id)).length,
+        problems: ps.length, solved: ps.filter((p) => solvedSet[s.id]?.has(p.id)).length,
+      };
+    });
+    const sum = (k) => byTrack.reduce((a, t) => a + t[k], 0);
+    return { s, byTrack, lessons: sum("lessons"), lessonsDone: sum("lessonsDone"), problems: sum("problems"), solved: sum("solved"), last: last[s.id] };
+  };
+  const rows = students.map(statOf).sort((a, b) => (Date.parse(b.last) || 0) - (Date.parse(a.last) || 0) || a.s.name.localeCompare(b.s.name, "ko"));
+  const weekAgo = Date.now() - 7 * 864e5;
+  const recent = rows.filter((r) => Date.parse(r.last) >= weekAgo).length;
+  const avg = (k) => (rows.reduce((a, r) => a + r[k], 0) / rows.length).toFixed(1);
+  const cell = (t) => (t.lessonsDone || t.solved
+    ? `<td class="num">${t.lessonsDone} · ${t.solved}</td>`
+    : `<td class="num muted">·</td>`);
+  body.innerHTML = `<div style="display:grid;gap:16px">
+    <div class="kpis">
+      <div class="panel kpi"><span class="k">수강생</span><span class="v">${rows.length}명</span></div>
+      <div class="panel kpi"><span class="k">최근 7일 학습</span><span class="v">${recent}명</span></div>
+      <div class="panel kpi"><span class="k">1인 평균 레슨</span><span class="v">${avg("lessonsDone")}</span></div>
+      <div class="panel kpi"><span class="k">1인 평균 문제</span><span class="v">${avg("solved")}</span></div>
+    </div>
+    <div class="toolbar"><span class="muted" style="font-size:13px">트랙 칸은 완료한 레슨 · 맞힌 문제 수입니다. 최근 학습한 수강생부터 보여줍니다.</span>
+      <span class="spacer"></span><button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
+    <div class="panel table-scroll"><table class="stats-table"><thead><tr><th>이름</th><th class="num">레슨</th><th class="num">문제</th><th>최근 학습</th>${tracks.map((t) => `<th class="num">${esc(t.label)}</th>`).join("")}</tr></thead><tbody>
+    ${rows.map((r) => `<tr><td>${esc(r.s.name)}</td><td class="num">${r.lessonsDone}/${r.lessons}</td><td class="num">${r.solved}/${r.problems}</td><td class="muted">${r.last ? esc(fmtTime(r.last)) : "–"}</td>${r.byTrack.map(cell).join("")}</tr>`).join("")}
+    </tbody></table></div></div>`;
+  body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/progress"));
+  body.querySelector("#csv").addEventListener("click", () => {
+    const head = ["이름", "그룹", "레슨 완료", "레슨 전체", "문제 해결", "문제 전체", "최근 학습", ...tracks.flatMap((t) => [`${t.label} 레슨`, `${t.label} 문제`])];
+    const lines = rows.map((r) => [r.s.name, groupLabel(r.s.group), r.lessonsDone, r.lessons, r.solved, r.problems, r.last ? fmtTime(r.last) : "", ...r.byTrack.flatMap((t) => [t.lessonsDone, t.solved])]);
+    downloadCsv("학습현황.csv", [head, ...lines]);
+  });
+}
+
 async function adminMatrix(body) {
   const { students, cells, raw } = await loadAdminData();
   const today = new Date().toDateString();
@@ -1765,7 +1822,7 @@ async function adminMatrix(body) {
       <span><i style="background:var(--fail-soft);border:1px solid var(--fail)"></i>미통과 (숫자 = 시도 횟수)</span><span>· 미제출</span></div>
       <span class="spacer"></span><button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
     <div class="panel matrix-scroll"><table class="matrix"><thead><tr><th class="sname">이름</th><th>해결</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="muted" style="font-size:13px">칸을 누르면 그 학생의 제출 코드와 실패한 케이스를 볼 수 있습니다.</p></div>`;
+    <p class="muted" style="font-size:13px">QAQC 회차 과제만 모은 표입니다. 칸을 누르면 그 학생의 제출 코드와 실패한 케이스를 볼 수 있습니다. 트랙 전체 학습은 학습 현황 탭에서 봅니다.</p></div>`;
 
   body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/matrix"));
   body.querySelector("#csv").addEventListener("click", () => {

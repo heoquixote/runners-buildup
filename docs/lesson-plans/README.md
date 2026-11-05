@@ -43,5 +43,5 @@
 - 그래프 글자는 영어 (브라우저 파이썬에 한글 글꼴 없음).
 - 실행 결과에 나온 숫자를 본문에서 그대로 짚는다. 결과와 본문이 어긋나면 안 된다.
 - 앞 레슨에서 이미 가르친 내용은 다시 길게 가르치지 않고 "ml-03에서 배운 재현율" 식으로 연결만 한다.
-- 영상은 `::video{ref="dl-mNN"}`로 관련 설명 바로 뒤에 넣는다. 아직 제작 전이면 '영상 준비 중'으로 보이고, `content/videos.js`에 `release_url`(유튜브 주소)이나 `youtube_id`를 넣으면 바로 재생된다.
+- 영상은 `::video{ref="dl-mNN"}`로 관련 설명 바로 뒤에 넣는다. 아직 제작 전이면 화면에 표시되지 않고, `content/videos.js`에 `release_url`(유튜브 주소)이나 `youtube_id`를 넣으면 바로 재생된다.
 - 그림은 `::figure{src="content/img/<track>/<name>.svg" alt="..." caption="..."}`로 넣는다.

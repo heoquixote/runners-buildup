@@ -61,7 +61,7 @@ python3 -m http.server 8000   # http://localhost:8000
 1. `content/index.js`의 코스에 레슨 항목(`id`, `title`, `minutes`, `concepts`, `quiz`)을 넣습니다. 코스가 `status: "planned"`이면 지웁니다.
 2. `content/<track>/<lesson-id>.md`에 본문을 씁니다. 실행 셀은 그 자체로 돌아가고 `print()`로 무언가 출력해야 합니다 (검증 스크립트가 확인).
 0. 먼저 `docs/lesson-plans/<track>.md`에 페이지 기획안을 씁니다 (작성 기준: `docs/lesson-plans/README.md`, 원본 원고: `docs/sources/`).
-3. 영상은 관련 설명 바로 뒤에 `::video{ref="dl-mNN"}`로 넣습니다. 제작 전이면 '영상 준비 중'으로 보이고, `content/videos.js`에 `release_url`(유튜브 주소)이나 `youtube_id`를 채우면 그 자리에서 재생됩니다. `start`, `end`(초)로 구간을 지정할 수 있습니다.
+3. 영상은 관련 설명 바로 뒤에 `::video{ref="dl-mNN"}`로 넣습니다. 제작 전이면 화면에 표시되지 않고, `content/videos.js`에 `release_url`(유튜브 주소)이나 `youtube_id`를 채우면 그 자리에서 재생됩니다. `start`, `end`(초)로 구간을 지정할 수 있습니다.
 4. 그림은 `::figure{src="content/img/<track>/<name>.svg" alt="..." caption="..."}`로 넣습니다. ML 도식은 `python3 scripts/figures_ml.py`로 다시 만듭니다.
 5. 예제 데이터는 `pd.read_csv("titanic.csv")`처럼 파일 이름만 쓰면 됩니다. 브라우저에서는 코드에 이름이 보이면 `datasets/`에서 자동으로 받아 둡니다.
 
