@@ -38,9 +38,9 @@ export const VIDEOS = [
   { id: "dl-m30", ep: 30, kind: "motion", track: "ml", title: "데이터 단위가 다를 때 인공지능이 겪는 착각 (정규화와 표준화)", concepts: ["ml.feature"], length: "3:21", brief: "단위가 큰 열이 거리·기울기 계산을 독차지하는 문제와 정규화·표준화로 잣대를 맞추는 방법", youtube_id: null, release_url: "https://www.youtube.com/watch?v=DgM-sZers1M", status: "published" },
   { id: "dl-m31", ep: 31, kind: "motion", track: "dl", title: "손실 함수 MSE vs 로그 손실: 왜 분류에선 로그를 쓸까?", concepts: ["dl.loss"], length: "3:26", brief: "회귀는 MSE, 분류는 로그 손실(교차엔트로피)을 쓰는 이유. 자신 있게 틀릴수록 벌점이 폭발", youtube_id: null, release_url: "https://www.youtube.com/watch?v=rfCLDbwXjlU", status: "published" },
   { id: "dl-m32", ep: 32, kind: "motion", track: "dl", title: "미니배치와 확률적 경사하강법(SGD)", concepts: ["dl.loss", "ml.gd"], length: "2:35", brief: "전체 데이터 대신 일부로 기울기를 계산해 빠르게 내려가는 방법, 배치·SGD·미니배치 비교", youtube_id: null, release_url: "https://www.youtube.com/watch?v=vJhHRNjPNZ4", status: "published" },
-  // 아직 넣을 레슨이 없는 영상(영상 목록에만 표시).
-  { id: "dl-m33", ep: 33, kind: "motion", track: "ml", title: "나이브 베이즈: 복잡한 확률을 단순하게 푸는 마법", concepts: [], length: "3:25", brief: "특성들이 서로 독립이라고 가정해 조건부 확률을 곱으로 단순화하는 분류기", youtube_id: null, release_url: "https://www.youtube.com/watch?v=YK9E8RsUveY", status: "published" },
-  { id: "dl-m34", ep: 34, kind: "motion", track: "ml", title: "라플라스 스무딩 | 확률이 0이 되는 재앙을 막는 방법", concepts: [], length: "3:04", brief: "한 번도 안 나온 값 때문에 확률 곱이 0이 되는 문제를 모든 빈도에 1을 더해 막는 방법", youtube_id: null, release_url: "https://www.youtube.com/watch?v=S76hQR33eBA", status: "published" },
+  // 나이브 베이즈 영상: ml-10-2 레슨 본문에 배치(2026-11-05).
+  { id: "dl-m33", ep: 33, kind: "motion", track: "ml", title: "나이브 베이즈: 복잡한 확률을 단순하게 푸는 마법", concepts: ["ml.nb"], length: "3:25", brief: "특성들이 서로 독립이라고 가정해 조건부 확률을 곱으로 단순화하는 분류기", youtube_id: null, release_url: "https://www.youtube.com/watch?v=YK9E8RsUveY", status: "published" },
+  { id: "dl-m34", ep: 34, kind: "motion", track: "ml", title: "라플라스 스무딩 | 확률이 0이 되는 재앙을 막는 방법", concepts: ["ml.nb"], length: "3:04", brief: "한 번도 안 나온 값 때문에 확률 곱이 0이 되는 문제를 모든 빈도에 1을 더해 막는 방법", youtube_id: null, release_url: "https://www.youtube.com/watch?v=S76hQR33eBA", status: "published" },
 ];
 
 export const videoById = Object.fromEntries(VIDEOS.map((v) => [v.id, v]));

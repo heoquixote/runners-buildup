@@ -360,73 +360,191 @@ export const COURSES = [
   // ── 머신러닝 ─────────────────────────────────────────────
   { id: "ml-00", track: "ml", intro: true, title: "머신러닝 시작하기", summary: "기계가 배운다는 것, 학습과 예측, 회귀 · 분류 · 비지도", level: "입문",
     concepts: ["ml.intro"],
-    lessons: [{ id: "ml-00-1", title: "기계는 어떻게 배울까", minutes: 20, concepts: ["ml.intro"],
+    lessons: [
+    { id: "ml-00-1", title: "기계는 어떻게 배울까", minutes: 15, concepts: ["ml.intro"],
+      quiz: [
+        { kind: "ox", q: "생존 여부 기록(정답)이 하나도 없어도, 승객 정보만으로 생존 예측 모델을 학습시킬 수 있다.", answer: false, explain: "생존을 맞히는 지도 학습은 예전 정답 기록이 있어야 '무엇을 맞히는지' 배울 수 있습니다." },
+      ] },
+    { id: "ml-00-2", title: "어떤 문제를 풀 수 있을까", minutes: 12, concepts: ["ml.intro"],
       quiz: [
         { kind: "choice", q: "'내일 가게 매출액(원)을 예측하기'는 어떤 문제일까?", options: ["회귀", "분류", "군집", "차원 축소"], answer: 0, explain: "맞히려는 답이 연속된 숫자(매출액)이므로 회귀입니다." },
         { kind: "choice", q: "'정답 없이, 구매 행동이 비슷한 고객끼리 무리로 나누기'는 어떤 문제일까?", options: ["회귀", "분류", "군집 (비지도 학습)", "기준 모델"], answer: 2, explain: "정답(y)이 없고 비슷한 것끼리 묶으므로 비지도 학습의 군집입니다." },
-        { kind: "ox", q: "생존 여부 기록(정답)이 하나도 없어도, 승객 정보만으로 생존 예측 모델을 학습시킬 수 있다.", answer: false, explain: "생존을 맞히는 지도 학습은 예전 정답 기록이 있어야 '무엇을 맞히는지' 배울 수 있습니다." },
       ] }] },
-  { id: "ml-01", track: "ml", title: "ML 워크플로와 데이터 분할", summary: "train/test, stratify, 기준 모델, 누수", unit: 17, level: "입문",
-    concepts: ["ml.workflow"],
-    lessons: [{ id: "ml-01-1", title: "모델보다 먼저: 손질하고, 나누고, 새지 않게", minutes: 35, concepts: ["ml.workflow"],
+  { id: "ml-01", track: "ml", title: "ML 워크플로와 데이터 준비", summary: "특성과 정답, 결측치, 인코딩, train/test, stratify, 기준 모델, 누수", unit: 17, level: "입문",
+    concepts: ["ml.workflow", "ml.missing", "ml.encoding"],
+    lessons: [
+    { id: "ml-01-1", title: "데이터를 표로 보기: 특성과 정답", minutes: 12, concepts: ["ml.workflow"],
+      quiz: [
+        { kind: "choice", q: "타이타닉에서 '생존 여부'를 예측하려고 한다. 정답(y)이 되는 열은?", options: ["pclass", "sex", "survived", "fare"], answer: 2, explain: "맞히고 싶은 값이 정답 y이고, 나머지 중 예측에 쓰는 열이 특성 X입니다." },
+      ] },
+    { id: "ml-01-2", title: "결측치: 비어 있는 칸 다루기", minutes: 15, concepts: ["ml.missing"],
+      quiz: [
+        { kind: "choice", q: "운임처럼 아주 비싼 표(튀는 값)가 몇 개 섞인 숫자 열의 빈칸은 무엇으로 채우는 게 보통 더 안전할까?", options: ["평균", "중앙값", "최빈값", "0"], answer: 1, explain: "평균은 튀는 값에 끌려가지만 중앙값은 가운데 값이라 거의 흔들리지 않습니다." },
+        { kind: "choice", q: "deck(갑판) 열은 77%가 비어 있다. 가장 알맞은 처리는?", options: ["빈칸이 있는 행을 모두 지운다", "열을 통째로 뺀다", "평균으로 채운다", "그대로 모델에 넣는다"], answer: 1, explain: "행을 지우면 891명 중 182명만 남습니다. 대부분이 빈 열은 열째 빼는 편이 낫습니다." },
+      ] },
+    { id: "ml-01-3", title: "인코딩: 글자를 숫자로", minutes: 15, concepts: ["ml.encoding"],
+      quiz: [
+        { kind: "choice", q: "혈액형(A, B, O, AB)처럼 순서가 없는 범주 열은 어떻게 숫자로 바꾸는 게 좋을까?", options: ["A=0, B=1, O=2, AB=3 번호 매기기", "원-핫 인코딩", "평균으로 바꾸기", "열을 지운다"], answer: 1, explain: "순서 없는 범주에 번호를 매기면 'AB는 A의 3배' 같은 가짜 크기가 생깁니다. 종류마다 0/1 열을 만드는 원-핫이 맞습니다." },
+        { kind: "ox", q: "제품 등급 L < M < H처럼 순서가 있는 범주는 순서대로 0, 1, 2 번호를 매겨도 자연스럽다.", answer: true, explain: "진짜 순서가 있으면 번호의 크기 관계가 현실과 맞습니다. 이것이 순서 인코딩입니다." },
+      ] },
+    { id: "ml-01-4", title: "학습용과 시험용 나누기", minutes: 15, concepts: ["ml.workflow"],
       quiz: [
         { kind: "choice", q: "train_test_split에서 클래스 비율을 유지하는 인자는?", options: ["shuffle", "stratify", "random_state", "test_size"], answer: 1, explain: "stratify=y." },
+      ] },
+    { id: "ml-01-5", title: "기준 모델과 누수", minutes: 15, concepts: ["ml.workflow"],
+      quiz: [
         { kind: "ox", q: "스케일러는 전체 데이터로 fit 한 뒤 나누는 것이 정석이다.", answer: false, explain: "분할 후 학습 데이터로만 fit 해야 누수가 없습니다." },
         { kind: "choice", q: "타이타닉 생존(survived) 예측 모델의 특성으로 넣으면 안 되는 열은?", options: ["pclass (객실 등급)", "age (나이)", "alive (생존 여부 yes/no)", "fare (운임)"], answer: 2, explain: "alive는 정답을 다른 말로 쓴 열이라 넣으면 정답을 그대로 읽는 누수가 됩니다." },
       ] }] },
-  { id: "ml-02", track: "ml", title: "선형 · 로지스틱 회귀", summary: "계수 해석, R², 확률 출력", unit: 18, level: "기본",
+  { id: "ml-02", track: "ml", title: "선형 · 로지스틱 회귀", summary: "직선 예측, MAE · RMSE · R², 경사하강법, 다중 회귀, 확률 출력", unit: 18, level: "기본",
     concepts: ["ml.linear", "ml.gd"],
-    lessons: [{ id: "ml-02-1", title: "직선 하나로 예측하고, 확률로 분류하기", minutes: 25, concepts: ["ml.linear", "ml.gd"],
+    lessons: [
+    { id: "ml-02-1", title: "선형회귀: 직선 하나로 예측하기", minutes: 12, concepts: ["ml.linear"],
       quiz: [
         { kind: "choice", q: "LinearRegression에서 기울기가 들어 있는 속성은?", options: ["model.slope", "model.coef_", "model.weight", "model.intercept_"], answer: 1, explain: "coef_는 피처별 기울기 배열, intercept_는 절편입니다." },
+      ] },
+    { id: "ml-02-2", title: "오차 재기: MAE · RMSE · R²", minutes: 12, concepts: ["ml.linear"],
+      quiz: [
+        { kind: "choice", q: "어떤 회귀 모델의 R²가 0이 나왔다. 무슨 뜻일까?", options: ["완벽하게 맞혔다", "항상 평균값만 말하는 것과 같은 수준이다", "오차가 0이다", "모델이 음수를 예측했다"], answer: 1, explain: "R² = 1 − (모델 오차 제곱합 / 평균만 찍을 때 오차 제곱합). 0이면 평균만 찍은 것과 같고, 음수면 그보다 못합니다." },
+      ] },
+    { id: "ml-02-3", title: "모델은 어떻게 직선을 찾을까: 경사하강법", minutes: 15, concepts: ["ml.gd"],
+      quiz: [
+        { kind: "ox", q: "경사하강법에서 학습률(보폭)을 너무 크게 하면 오차가 줄지 않고 오히려 커질 수 있다.", answer: true, explain: "보폭이 너무 크면 골짜기를 건너뛰어 반대편으로 더 높이 올라가기를 반복합니다(발산). 학습률 1.1에서 확인했습니다." },
+      ] },
+    { id: "ml-02-4", title: "특성을 여러 개 쓰면", minutes: 10, concepts: ["ml.linear"],
+      quiz: [
+      ] },
+    { id: "ml-02-5", title: "로지스틱 회귀: 확률로 분류하기", minutes: 15, concepts: ["ml.linear"],
+      quiz: [
         { kind: "ox", q: "LogisticRegression의 predict는 확률이 0.5 이상이면 1로 판정한다.", answer: true, explain: "이진 분류의 기본 임계값은 0.5입니다." },
       ] }] },
-  { id: "ml-03", track: "ml", title: "평가지표", summary: "혼동행렬, precision · recall · F1, 임계값, ROC-AUC", unit: 19, level: "기본",
+  { id: "ml-03", track: "ml", title: "평가지표", summary: "혼동행렬, precision · recall · F1, 임계값, ROC-AUC · PR-AUC", unit: 19, level: "기본",
     concepts: ["ml.metrics"],
-    lessons: [{ id: "ml-03-1", title: "정확도 말고 무엇을 볼까", minutes: 25, concepts: ["ml.metrics"],
+    lessons: [
+    { id: "ml-03-1", title: "혼동행렬: 맞힘과 틀림을 네 칸으로", minutes: 12, concepts: ["ml.metrics"],
+      quiz: [
+        { kind: "choice", q: "화재경보기가 불이 났는데 울리지 않았다. 혼동행렬의 어느 칸일까?", options: ["TP", "FP", "FN", "TN"], answer: 2, explain: "'아니다(N)'라고 했는데 틀렸으니(F) FN, 놓침입니다." },
+      ] },
+    { id: "ml-03-2", title: "정밀도, 재현율, F1", minutes: 15, concepts: ["ml.metrics"],
       quiz: [
         { kind: "short", q: "TP=6, FN=2일 때 재현율은? (소수)", answer: ["0.75", ".75"], explain: "6 / (6 + 2) = 0.75." },
-        { kind: "choice", q: "임계값을 낮추면 보통 어떻게 되나?", options: ["recall↓ precision↑", "recall↑ precision↓", "둘 다 ↑", "변화 없음"], answer: 1, explain: "더 많이 1로 판정해 놓침은 줄고 오탐은 늘어납니다." },
         { kind: "choice", q: "암 검진의 1차 선별 검사에서 가장 중요하게 봐야 할 지표는?", options: ["정확도", "정밀도", "재현율", "R²"], answer: 2, explain: "1차 선별에서 환자를 놓치면(FN) 치명적입니다. 헛경보는 2차 정밀 검사에서 걸러낼 수 있습니다." },
-      ] }] },
-  { id: "ml-04", track: "ml", title: "트리와 앙상블", summary: "결정트리, 깊이와 과적합, 랜덤포레스트, 피처 중요도", unit: 20, level: "기본",
-    concepts: ["ml.tree", "ml.overfit"],
-    lessons: [{ id: "ml-04-1", title: "질문을 쌓는 결정트리, 투표하는 숲", minutes: 25, concepts: ["ml.tree", "ml.overfit"],
+      ] },
+    { id: "ml-03-3", title: "임계값: 경보 감도 조절", minutes: 12, concepts: ["ml.metrics"],
+      quiz: [
+        { kind: "choice", q: "임계값을 낮추면 보통 어떻게 되나?", options: ["recall↓ precision↑", "recall↑ precision↓", "둘 다 ↑", "변화 없음"], answer: 1, explain: "더 많이 1로 판정해 놓침은 줄고 오탐은 늘어납니다." },
+      ] },
+    { id: "ml-03-4", title: "ROC 곡선과 AUC", minutes: 12, concepts: ["ml.metrics"],
       quiz: [
       ] }] },
-  { id: "ml-05", track: "ml", title: "교차검증과 하이퍼파라미터", summary: "K-fold, GridSearchCV, 검증 곡선", unit: 35, level: "기본",
+  { id: "ml-04", track: "ml", title: "트리와 앙상블", summary: "결정트리, 지니 불순도, 과적합 · 과소적합, 랜덤포레스트, 부스팅, 피처 중요도", unit: 20, level: "기본",
+    concepts: ["ml.tree", "ml.overfit"],
+    lessons: [
+    { id: "ml-04-1", title: "결정트리: 스무고개로 예측하기", minutes: 15, concepts: ["ml.tree"],
+      quiz: [
+        { kind: "choice", q: "결정트리가 첫 질문을 고르는 기준은?", options: ["열 이름의 알파벳 순서", "나눈 뒤 그룹들이 가장 덜 섞이는(불순도가 가장 낮아지는) 질문", "값의 종류가 가장 많은 열", "사람이 정해 준 순서"], answer: 1, explain: "후보 질문마다 나눈 뒤 지니 불순도를 계산해 가장 많이 줄어드는 질문을 고릅니다. 타이타닉에서는 성별이었습니다." },
+      ] },
+    { id: "ml-04-2", title: "깊어질수록 외운다: 과적합과 과소적합", minutes: 15, concepts: ["ml.overfit"],
+      quiz: [
+      ] },
+    { id: "ml-04-3", title: "랜덤포레스트: 여러 트리의 투표", minutes: 12, concepts: ["ml.tree"],
+      quiz: [
+      ] },
+    { id: "ml-04-4", title: "부스팅과 피처 중요도", minutes: 12, concepts: ["ml.tree"],
+      quiz: [
+        { kind: "choice", q: "앞 트리들이 틀린 부분을 고치도록 트리를 하나씩 차례로 쌓는 방법은?", options: ["랜덤포레스트(배깅)", "부스팅", "교차검증", "PCA"], answer: 1, explain: "배깅은 독립된 트리들의 다수결, 부스팅은 앞 트리의 실수를 차례로 보완합니다." },
+      ] }] },
+  { id: "ml-05", track: "ml", title: "교차검증과 하이퍼파라미터", summary: "K-fold, GridSearchCV, 검증 곡선 · 학습 곡선", unit: 35, level: "기본",
     concepts: ["ml.cv", "ml.overfit"],
-    lessons: [{ id: "ml-05-1", title: "한 번 나눈 점수를 믿지 말자", minutes: 22, concepts: ["ml.cv", "ml.overfit"],
+    lessons: [
+    { id: "ml-05-1", title: "K-fold 교차검증: 돌아가며 시험 보기", minutes: 15, concepts: ["ml.cv"],
       quiz: [
         { kind: "write", q: "cross_val_score로 5-fold 점수를 구한 뒤 점수 개수를 출력하는 코드를 작성하세요.", given: "import numpy as np\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.tree import DecisionTreeClassifier\nX = np.arange(40).reshape(20, 2)\ny = np.array([0, 1] * 10)", expect: "5", must: ["cross_val_score\\("], solution: "import numpy as np\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.tree import DecisionTreeClassifier\nX = np.arange(40).reshape(20, 2)\ny = np.array([0, 1] * 10)\nprint(len(cross_val_score(DecisionTreeClassifier(random_state=0), X, y, cv=5)))", explain: "cv=5면 점수 5개가 나옵니다." },
+      ] },
+    { id: "ml-05-2", title: "하이퍼파라미터와 GridSearchCV", minutes: 15, concepts: ["ml.cv"],
+      quiz: [
         { kind: "ox", q: "GridSearchCV로 고른 모델은 테스트 데이터로 마지막에 한 번만 평가한다.", answer: true, explain: "테스트를 여러 번 보면 그 점수도 낙관적으로 부풀려집니다." },
+      ] },
+    { id: "ml-05-3", title: "검증 곡선: 설정값에 따라 점수가 어떻게 변하나", minutes: 15, concepts: ["ml.cv", "ml.overfit"],
+      quiz: [
+        { kind: "choice", q: "검증 곡선에서 학습 점수와 검증 점수가 둘 다 낮고 서로 붙어 있다. 어떤 상태일까?", options: ["과적합", "과소적합", "누수", "딱 좋음"], answer: 1, explain: "둘 다 낮으면 데이터의 패턴도 다 배우지 못한 과소적합입니다. 학습 점수만 높고 간격이 크게 벌어지면 과적합입니다." },
       ] }] },
-  { id: "ml-06", track: "ml", title: "피처 엔지니어링과 Pipeline", summary: "스케일링, 원-핫 인코딩, ColumnTransformer, Pipeline", unit: 36, level: "실무",
+  { id: "ml-06", track: "ml", title: "피처 엔지니어링과 Pipeline", summary: "SimpleImputer · OneHotEncoder, 표준화 · 정규화, 새 특성, ColumnTransformer · Pipeline", unit: 36, level: "실무",
     concepts: ["ml.feature"],
-    lessons: [{ id: "ml-06-1", title: "전처리와 모델을 한 줄로 잇기", minutes: 25, concepts: ["ml.feature"],
+    lessons: [
+    { id: "ml-06-1", title: "도구로 빈칸 채우고 글자 바꾸기", minutes: 15, concepts: ["ml.feature", "ml.missing", "ml.encoding"],
+      quiz: [
+      ] },
+    { id: "ml-06-2", title: "숫자 크기 맞추기: 표준화와 정규화", minutes: 12, concepts: ["ml.feature"],
+      quiz: [
+        { kind: "ox", q: "랜덤포레스트 같은 트리 모델은 표준화를 하지 않아도 결과가 거의 같다.", answer: true, explain: "트리는 '기준값보다 큰가?'만 묻기 때문에 숫자의 단위가 바뀌어도 나누는 방식이 같습니다. 거리를 재는 KNN·K-means·SVM은 꼭 필요합니다." },
+      ] },
+    { id: "ml-06-3", title: "새 특성 만들기: 피처 엔지니어링", minutes: 12, concepts: ["ml.feature"],
+      quiz: [
+      ] },
+    { id: "ml-06-4", title: "Pipeline: 손질부터 모델까지 한 줄로", minutes: 12, concepts: ["ml.feature"],
       quiz: [
       ] }] },
   { id: "ml-07", track: "ml", title: "비지도 학습", summary: "K-means 군집, 엘보 · 실루엣, PCA", unit: 37, level: "실무",
     concepts: ["ml.kmeans", "ml.pca"],
-    lessons: [{ id: "ml-07-1", title: "정답 없이 묶고, 줄이기", minutes: 25, concepts: ["ml.kmeans", "ml.pca"],
+    lessons: [
+    { id: "ml-07-1", title: "K-means: 정답 없이 묶기", minutes: 15, concepts: ["ml.kmeans"],
       quiz: [
         { kind: "ox", q: "회전수(1,000 단위)와 토크(10 단위)를 표준화하지 않고 K-means를 돌리면 거리가 거의 회전수로만 정해진다.", answer: true, explain: "K-means는 거리로 묶기 때문에 숫자가 큰 열이 거리를 독차지합니다. 그래서 표준화가 먼저입니다." },
         { kind: "ox", q: "K-means는 데이터에 뚜렷한 그룹이 없으면 그룹을 나누지 않는다.", answer: false, explain: "k를 주면 그룹이 없어도 무조건 k개로 나눕니다. 그룹이 의미 있는지는 사람이 확인해야 합니다." },
+      ] },
+    { id: "ml-07-2", title: "k는 몇 개로 할까: 엘보와 실루엣", minutes: 10, concepts: ["ml.kmeans"],
+      quiz: [
+        { kind: "choice", q: "K-means에서 k를 늘리면 inertia(점과 중심 사이 거리 제곱합)는 어떻게 될까?", options: ["거의 항상 줄어든다", "항상 늘어난다", "변하지 않는다", "0이 된다"], answer: 0, explain: "중심이 많아질수록 점이 더 가까운 중심을 찾으니 inertia는 계속 줄어듭니다. 그래서 값 자체보다 줄어드는 폭이 꺾이는 지점(엘보)을 봅니다." },
+      ] },
+    { id: "ml-07-3", title: "PCA: 여러 열을 몇 개로 요약하기", minutes: 15, concepts: ["ml.pca"],
+      quiz: [
         { kind: "ox", q: "PCA의 첫 번째 주성분은 데이터의 분산이 가장 큰 방향이다.", answer: true, explain: "두 번째는 첫 번째와 직교하면서 남은 분산이 가장 큰 방향입니다." },
       ] }] },
-  { id: "ml-08", track: "ml", title: "불균형 데이터", summary: "정확도의 함정, class_weight, 임계값, 오버샘플링", unit: 38, level: "실무",
+  { id: "ml-08", track: "ml", title: "불균형 데이터", summary: "정확도의 함정, class_weight, 임계값과 비용, 오버샘플링", unit: 38, level: "실무",
     concepts: ["ml.imbalance"],
-    lessons: [{ id: "ml-08-1", title: "드문 불량을 놓치지 않으려면", minutes: 25, concepts: ["ml.imbalance"],
+    lessons: [
+    { id: "ml-08-1", title: "고장은 드물다: 불균형과 정확도의 함정", minutes: 12, concepts: ["ml.imbalance"],
+      quiz: [
+        { kind: "ox", q: "고장이 3%인 데이터에서 '전부 정상'이라고만 답해도 정확도는 약 97%가 나온다.", answer: true, explain: "정확도는 높지만 고장은 하나도 못 잡습니다(재현율 0). 불균형 데이터에서는 재현율·정밀도·F1을 봅니다." },
+      ] },
+    { id: "ml-08-2", title: "드문 쪽을 더 혼내기: class_weight", minutes: 12, concepts: ["ml.imbalance"],
+      quiz: [
+      ] },
+    { id: "ml-08-3", title: "판정 기준선 내리기: 임계값과 비용", minutes: 15, concepts: ["ml.imbalance"],
       quiz: [
         { kind: "choice", q: "고장 1건을 놓치면 100만 원, 헛경보 1건은 1만 원이 든다. 판정 기준선(임계값)은 0.5에서 어떻게 바꾸는 게 맞을까?", options: ["더 낮춘다", "더 높인다", "0.5 그대로 둔다", "기준선은 비용과 상관없다"], answer: 0, explain: "놓침이 훨씬 비싸므로 기준선을 낮춰 헛경보가 늘더라도 놓침을 줄이는 쪽이 총비용이 적습니다." },
+      ] },
+    { id: "ml-08-4", title: "드문 쪽 데이터 늘리기: 오버샘플링", minutes: 12, concepts: ["ml.imbalance"],
+      quiz: [
         { kind: "ox", q: "오버샘플링은 train/test로 나누기 전에 전체 데이터에 해야 한다.", answer: false, explain: "나누기 전에 복사하면 같은 행의 복사본이 시험용에도 들어가 점수가 부풀려집니다. 반드시 나눈 뒤 학습용에만 합니다." },
       ] }] },
   { id: "ml-09", track: "ml", title: "모델 해석", summary: "피처 중요도, 순열 중요도, 표준화 계수, 부분 의존도", unit: 39, level: "실무",
     concepts: ["ml.explain"],
-    lessons: [{ id: "ml-09-1", title: "모델이 무엇을 보고 판단했나", minutes: 25, concepts: ["ml.explain"],
+    lessons: [
+    { id: "ml-09-1", title: "무엇을 많이 봤나: 피처 중요도와 순열 중요도", minutes: 15, concepts: ["ml.explain"],
       quiz: [
         { kind: "choice", q: "테스트 데이터에서 열을 섞어 점수 하락으로 중요도를 재는 방법은?", options: ["feature_importances_", "permutation_importance", "coef_", "PCA"], answer: 1, explain: "sklearn.inspection.permutation_importance." },
         { kind: "ox", q: "상관이 높은 두 변수는 중요도를 서로 나눠 가져 각각 낮게 보일 수 있다.", answer: true, explain: "한 열을 섞어도 다른 열이 정보를 대신하기 때문입니다." },
+      ] },
+    { id: "ml-09-2", title: "어느 방향으로, 어떤 모양으로: 계수와 부분 의존도", minutes: 15, concepts: ["ml.explain"],
+      quiz: [
+        { kind: "ox", q: "부분 의존도에서 토크가 60을 넘을 때 고장 확률이 급히 오르면, 토크를 낮추면 반드시 고장이 줄어든다고 결론 내릴 수 있다.", answer: false, explain: "부분 의존도는 모델이 배운 관계(상관)를 보여 줄 뿐 인과를 증명하지 않습니다. 실제 조치는 현장 지식과 실험으로 확인합니다." },
+      ] }] },
+  { id: "ml-10", track: "ml", title: "다른 모델 둘러보기", summary: "KNN, 나이브 베이즈와 라플라스 스무딩, SVM과 커널, 모델 고르기", level: "실무",
+    concepts: ["ml.knn", "ml.nb", "ml.svm"],
+    lessons: [
+    { id: "ml-10-1", title: "KNN: 가까운 이웃에게 묻기", minutes: 15, concepts: ["ml.knn"],
+      quiz: [
+        { kind: "ox", q: "KNN은 거리로 이웃을 고르므로, 운임(0~512)과 성별(0/1)을 표준화 없이 넣으면 운임이 거리를 거의 독차지한다.", answer: true, explain: "표준화 없이 0.698, 표준화 후 0.793이었습니다. 거리를 재는 모델은 스케일링이 꼭 필요합니다." },
+      ] },
+    { id: "ml-10-2", title: "나이브 베이즈: 확률을 곱해서 분류하기", minutes: 15, concepts: ["ml.nb"],
+      quiz: [
+        { kind: "choice", q: "나이브 베이즈에서 한 번도 나오지 않은 단어 때문에 확률 곱 전체가 0이 되는 것을 막는 방법은?", options: ["표준화", "라플라스 스무딩(개수에 1 더하기)", "원-핫 인코딩", "임계값 낮추기"], answer: 1, explain: "모든 개수에 1을 더해 '한 번도 안 나왔다 = 절대 안 나온다'로 단정하지 않게 합니다." },
+      ] },
+    { id: "ml-10-3", title: "SVM: 가장 넓은 길 찾기, 그리고 모델 고르기", minutes: 15, concepts: ["ml.svm"],
+      quiz: [
+        { kind: "choice", q: "새 표 데이터 분류 문제를 받았다. 이 트랙에서 정리한 순서대로라면 가장 먼저 할 일은?", options: ["부스팅 설정값을 GridSearch로 튜닝한다", "기준 모델(찍기) 점수를 확인한다", "SVM 커널을 바꿔 본다", "딥러닝 모델을 만든다"], answer: 1, explain: "기준 모델로 최소선을 확인하고 → 로지스틱 회귀 → 트리 앙상블 순서로 시도합니다." },
       ] }] },
 
   // ── 딥러닝 (개념 학습, 실습 없음) ───────────────────────────

@@ -84,6 +84,11 @@ export const CONCEPTS = {
   "ml.pca": { name: "PCA", track: "ml" },
   "ml.imbalance": { name: "불균형 데이터", track: "ml" },
   "ml.explain": { name: "모델 해석", track: "ml" },
+  "ml.missing": { name: "결측치 처리", track: "ml" },
+  "ml.encoding": { name: "범주 인코딩", track: "ml" },
+  "ml.knn": { name: "KNN", track: "ml" },
+  "ml.nb": { name: "나이브 베이즈", track: "ml" },
+  "ml.svm": { name: "SVM", track: "ml" },
   // 딥러닝
   "dl.perceptron": { name: "퍼셉트론과 활성화 함수", track: "dl" },
   "dl.loss": { name: "손실함수와 경사하강법", track: "dl" },
