@@ -49,6 +49,9 @@ const cno = (p) => { const i = problemList(p).filter((x) => x.type !== "quiz").i
 const isReady = (c) => c.status !== "planned";
 // 트랙 안 몇 번째 날인지(화면 표시용). 코스 id · 진도 기록과는 무관하다.
 const dayNo = (c) => coursesOf(c.track).indexOf(c) + 1;
+// 코스 페이지 없이 바로 레슨으로 들어간다. 레슨이 여러 개면 아직 안 끝낸 첫 레슨, 레슨이 없는 코스만 코스 페이지.
+const courseEntry = (c) => { const l = c.lessons.find((x) => !lessonDone(x.id)) || c.lessons[0]; return l && lessonById[l.id]; };
+const courseHref = (c) => { const l = courseEntry(c); return l ? `#/l/${l.id}` : `#/c/${c.id}`; };
 const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
 const solved = (pid) => !!state.progress[pid]?.solved;
 const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)" };
@@ -244,7 +247,11 @@ async function route() {
   const l = hash.match(/^#\/l\/([\w-]+)/);
   if (l && lessonById[l[1]]) return viewLesson(lessonById[l[1]]);
   const c = hash.match(/^#\/c\/([\w-]+)/);
-  if (c && courseById[c[1]]) return viewCourse(courseById[c[1]]);
+  if (c && courseById[c[1]]) {
+    const cl = courseEntry(courseById[c[1]]);
+    if (cl) { history.replaceState(null, "", `#/l/${cl.id}`); return viewLesson(cl); } // 예전 코스 주소는 레슨으로
+    return viewCourse(courseById[c[1]]);
+  }
   const t = hash.match(/^#\/t\/([\w-]+)/);
   if (t && trackById[t[1]]) return viewTrack(trackById[t[1]]);
   if (hash.startsWith("#/videos")) return viewVideos();
@@ -612,7 +619,7 @@ function trackRun(t) {
     if (i < ready.length - 1 && total) ticks.push((acc / total) * 100);
   });
   const nextLesson = current?.lessons.find((l) => !lessonDone(l.id));
-  const href = current ? (nextLesson ? `#/l/${nextLesson.id}` : `#/c/${current.id}`) : `#/t/${t.id}`;
+  const href = current ? (nextLesson ? `#/l/${nextLesson.id}` : courseHref(current)) : `#/t/${t.id}`;
   return { t, s, total, done, p: pct(done, total), ticks, current, day: current ? all.indexOf(current) + 1 : 0, finished, courses: ready.length, href, last: trackLastAt(t) };
 }
 const RUNNER_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="15.2" cy="4.2" r="2.3" fill="currentColor" stroke="none"/><path d="M13.6 7.6 11 13.2M13 9.2l3.6 1 2.4-2.4M13 9.2l-3.8-.4-2.4 2.6M11 13.2l4 1.8.2 5.2M11 13.2l-2.2 4-4.2.8"/></svg>`;
@@ -695,11 +702,11 @@ function viewHome() {
 function courseRow(c, i) {
   const s = courseStats(c);
   const ready = isReady(c);
-  const next = ready ? (c.lessons.find((l) => !lessonDone(l.id)) ? `#/l/${c.lessons.find((l) => !lessonDone(l.id)).id}` : `#/c/${c.id}`) : null;
+  const next = ready ? courseHref(c) : null;
   const done = ready && s.lessonsDone === s.lessons && s.solved === s.problems && s.lessons + s.problems > 0;
   return `<li class="crow${ready ? "" : " planned"}${done ? " complete" : ""}">
     <span class="cno"><small>DAY</small>${String(dayNo(c)).padStart(2, "0")}</span>
-    <div class="crow-main">${ready ? `<a href="#/c/${c.id}"><b>${esc(c.title)}</b></a>` : `<b>${esc(c.title)}</b>`}<span class="muted">${esc(c.summary)}</span>
+    <div class="crow-main">${ready ? `<a href="${next}"><b>${esc(c.title)}</b></a>` : `<b>${esc(c.title)}</b>`}<span class="muted">${esc(c.summary)}</span>
       <div class="crow-meta"><span class="lvl">${esc(c.level)}</span>${ready ? `<span>레슨 ${s.lessonsDone}/${s.lessons}</span><span>문제 ${s.solved}/${s.problems}</span>` : '<span class="soon">준비 중</span>'}</div></div>
     ${ready ? `<a class="btn small${done ? " ghost" : ""}" href="${next}">${done ? "복습" : s.lessonsDone || s.solved ? "이어서" : "시작"} →</a>` : ""}
   </li>`;
@@ -764,7 +771,7 @@ function viewCourse(c) {
       ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span><span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
     ${c.intro && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
       ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>`}
-    <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="#/c/${prevC.id}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="#/c/${nextC.id}">${esc(nextC.title)} →</a>` : ""}</nav>
+    <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="${courseHref(prevC)}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="${courseHref(nextC)}">${esc(nextC.title)} →</a>` : ""}</nav>
   </main>`;
   bindTopbar();
   preload();
@@ -816,17 +823,23 @@ async function viewLesson(l) {
   const tl = coursesOf(c.track);
   const nextC = tl.slice(tl.indexOf(c) + 1).find(isReady);
   const nextCLesson = nextC?.lessons[0];
+  const prevC = tl.slice(0, tl.indexOf(c)).reverse().find(isReady);
+  const prevCLesson = prevC?.lessons[prevC.lessons.length - 1];
+  const cs = courseStats(c);
+  const multi = c.lessons.length > 1;
   const sid = state.session.student.id;
   $app.innerHTML = `${topbar()}<main class="page lesson-page" ${trackStyle(t)}>
-    <nav class="crumb"><a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><a href="#/c/${c.id}">${esc(c.title)}</a><span class="sep">/</span><span class="muted">레슨 ${idx + 1}</span>
+    <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span>${multi ? `<span>${esc(c.title)}</span><span class="sep">/</span><span class="muted">레슨 ${idx + 1}</span>` : `<span class="muted">${esc(c.title)}</span>`}
       <span class="nav">${prev ? `<a class="btn small" href="#/l/${prev.id}">← 이전</a>` : ""}${next ? `<a class="btn small" href="#/l/${next.id}">다음 →</a>` : ""}</span></nav>
-    <header class="lesson-head"><div class="meta-line"><span class="tag">레슨 ${idx + 1} / ${c.lessons.length}</span><span class="muted" style="font-size:13px">약 ${l.minutes}분</span>${lessonDone(l.id) ? '<span class="status solved">완료</span>' : ""}<span class="engine"></span></div>
+    <header class="lesson-head"><div class="meta-line"><span class="tchip">${esc(t.label)} · Day ${String(dayNo(c)).padStart(2, "0")} · ${esc(c.level)}</span>${multi ? `<span class="tag">레슨 ${idx + 1} / ${c.lessons.length}</span>` : ""}<span class="muted" style="font-size:13px">약 ${l.minutes}분 · 레슨 ${cs.lessonsDone}/${cs.lessons} · 문제 ${cs.solved}/${cs.problems}</span>${lessonDone(l.id) ? '<span class="status solved">완료</span>' : ""}<span class="engine"></span></div>
       <h1>${esc(l.title)}</h1>
       <div class="concepts">${l.concepts.map((k) => `<span class="concept">${esc(conceptName(k))}</span>`).join("")}</div></header>
     <article class="lesson-body panel" id="lesson-body"><p class="muted">불러오는 중…</p></article>
     <section class="lesson-practice panel" id="lesson-practice" hidden></section>
     <section class="lesson-quiz panel" id="lesson-quiz"></section>
-    <nav class="unit-nav">${prev ? `<a class="btn small ghost" href="#/l/${prev.id}">← ${esc(prev.title)}</a>` : `<a class="btn small ghost" href="#/c/${c.id}">← 코스로</a>`}${next ? `<a class="btn small ghost" href="#/l/${next.id}">${esc(next.title)} →</a>` : probs[0] ? `<a class="btn small ghost" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 →</a>` : nextCLesson ? `<a class="btn small ghost" href="#/l/${nextCLesson.id}">다음 코스: ${esc(nextC.title)} →</a>` : ""}</nav>
+    ${!next && probs.length ? `<section class="part" id="lesson-problems"><h2 class="part-title">연습문제 <span class="muted">${cs.solved} / ${cs.problems}</span></h2>
+      <ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol></section>` : ""}
+    <nav class="unit-nav">${prev ? `<a class="btn small ghost" href="#/l/${prev.id}">← ${esc(prev.title)}</a>` : prevCLesson ? `<a class="btn small ghost" href="#/l/${prevCLesson.id}">← 이전 코스: ${esc(prevC.title)}</a>` : "<span></span>"}${next ? `<a class="btn small ghost" href="#/l/${next.id}">${esc(next.title)} →</a>` : nextCLesson ? `<a class="btn small ghost" href="#/l/${nextCLesson.id}">다음 코스: ${esc(nextC.title)} →</a>` : ""}</nav>
   </main>`;
   bindTopbar();
   renderEngine($app.querySelector(".engine"));
@@ -890,7 +903,7 @@ async function viewLesson(l) {
   const quizEl = $app.querySelector("#lesson-quiz");
   const qs = l.quiz || [];
   const finishHtml = () => `<div class="lesson-done"><b>레슨 완료</b><span class="muted">다음 단계로 이어 가세요.</span>
-    <div class="btns">${next ? `<a class="btn primary" href="#/l/${next.id}">다음 레슨: ${esc(next.title)} →</a>` : ""}${probs.length ? `<a class="btn${next ? "" : " primary"}" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 풀기</a>` : ""}${!next && !probs.length && nextCLesson ? `<a class="btn primary" href="#/l/${nextCLesson.id}">다음 코스: ${esc(nextC.title)} →</a>` : ""}<a class="btn ghost" href="#/c/${c.id}">코스로</a></div></div>`;
+    <div class="btns">${next ? `<a class="btn primary" href="#/l/${next.id}">다음 레슨: ${esc(next.title)} →</a>` : ""}${probs.length ? `<a class="btn${next ? "" : " primary"}" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 풀기</a>` : ""}${!next && nextCLesson ? `<a class="btn${probs.length ? " ghost" : " primary"}" href="#/l/${nextCLesson.id}">다음 코스: ${esc(nextC.title)} →</a>` : ""}</div></div>`;
   // 퀴즈 없는 읽기 레슨: 다 읽었다고 누르면 완료
   if (!qs.length) {
     const doneRead = () => { quizEl.innerHTML = finishHtml(); };
@@ -1026,7 +1039,7 @@ function viewUnit(u) {
     </header>
     <ol class="plist simple panel">${list.map((p) => `<li><a class="srow" href="#/p/${p.id}">
       ${statusIcon(p.id)}<span class="pid">${no(p.id)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}</a></li>`).join("")}</ol>
-    ${courses.length ? `<section class="part"><h2 class="part-title">관련 코스 · 레슨</h2><ol class="plist simple panel">${courses.map((c) => `<li><a class="srow" href="#/c/${c.id}"><span class="st st-none">→</span><span class="ptitle">${esc(c.title)}</span><span class="muted" style="font-size:13px">레슨 ${c.lessons.length}개</span></a></li>`).join("")}</ol></section>` : ""}
+    ${courses.length ? `<section class="part"><h2 class="part-title">관련 코스 · 레슨</h2><ol class="plist simple panel">${courses.map((c) => `<li><a class="srow" href="${courseHref(c)}"><span class="st st-none">→</span><span class="ptitle">${esc(c.title)}</span><span class="muted" style="font-size:13px">레슨 ${c.lessons.length}개</span></a></li>`).join("")}</ol></section>` : ""}
     <nav class="unit-nav">${prevU ? `<a class="btn small ghost" href="#/u/${prevU.id}">← ${esc(prevU.title)}</a>` : "<span></span>"}${nextU ? `<a class="btn small ghost" href="#/u/${nextU.id}">${esc(nextU.title)} →</a>` : ""}</nav>
   </main>`;
   bindTopbar();
@@ -1081,7 +1094,7 @@ function problemCrumb(p) {
   const idx = list.indexOf(p);
   const prev = list[idx - 1], next = list[idx + 1];
   const t = c ? trackById[c.track] : null;
-  const back = c ? `<a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><a href="#/c/${c.id}">${esc(c.title)}</a>` : `<a href="#/">홈</a>`;
+  const back = c ? `<a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><a href="${courseHref(c)}">${esc(c.title)}</a>` : `<a href="#/">홈</a>`;
   const navBtn = (q, dir) => q ? `<a class="btn small" href="#/p/${q.id}">${dir < 0 ? `← ${cno(q)}` : `${cno(q)} →`}</a>` : "";
   return `<nav class="crumb">${back}<span class="sep">/</span><span class="muted">${p.type === "quiz" ? "개념 퀴즈" : `문제 ${cno(p)}`}</span>
     <span class="nav">${navBtn(prev, -1)}${navBtn(next, 1)}</span></nav>`;
