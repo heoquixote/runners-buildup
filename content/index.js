@@ -233,15 +233,18 @@ export const COURSES = [
   // ── SQL ──────────────────────────────────────────────────
   // SQL 실행 셀(```sqlrun)과 SQL 코드 작성 문항(lang: "sql")은 브라우저 SQLite로 돌린다 (sql.js). 기획안: docs/lesson-plans/sql.md
   // 배열 순서 = 화면의 Day 순서. CASE · 문자열(sq-06)을 JOIN 앞에 둔다 (코스 id는 그대로).
-  { id: "sq-00", track: "sql", intro: true, title: "SQL 시작하기", summary: "데이터베이스 · 테이블 · 행 · 열 · 키, 실습 데이터 소개", level: "입문",
+  { id: "sq-00", track: "sql", intro: true, title: "SQL 시작하기", summary: "SQL이란, 쓰이는 곳, 역사, 엑셀 · 파이썬과 비교, 데이터베이스 구조와 실습 데이터", level: "입문",
     concepts: ["sql.intro"],
-    lessons: [{ id: "sq-00-1", title: "데이터베이스에 질문하는 언어, SQL", minutes: 12, concepts: ["sql.intro"] }] },
+    lessons: [
+      { id: "sq-00-0", title: "SQL은 무엇이고, 왜 SQL인가", minutes: 10, concepts: ["sql.intro"] },
+      { id: "sq-00-1", title: "데이터베이스 구조와 첫 쿼리", minutes: 12, concepts: ["sql.intro"] },
+    ] },
   { id: "sq-01", track: "sql", title: "SELECT · WHERE", summary: "열 고르기, 별칭, DISTINCT, 비교 · 논리 연산자, IN · BETWEEN · LIKE, NULL", level: "입문",
     concepts: ["sql.select"],
     lessons: [{ id: "sq-01-1", title: "필요한 열만, 필요한 행만", minutes: 20, concepts: ["sql.select"],
       quiz: [
         { kind: "write", lang: "sql", q: "11번 부서에서 직급이 과장 또는 대리인 사원의 이름(ename_ko)과 직급(joblv)을 조회하는 SQL을 작성하세요.", given: "SELECT ename_ko, joblv\nFROM emp\nWHERE ", solution: "SELECT ename_ko, joblv\nFROM emp\nWHERE deptno = 11 AND joblv IN ('과장', '대리');", explain: "두 조건이 모두 참이어야 하므로 AND, 직급 목록은 IN으로 씁니다. (joblv = '과장' OR joblv = '대리')처럼 괄호로 묶어도 됩니다." },
-        { kind: "write", lang: "sql", q: "titanic에서 1등실(pclass = 1)에 탄 여성(sex = 'female') 중 운임(fare)이 200 이상인 승객의 passenger_id와 fare를 조회하는 SQL을 작성하세요.", given: "SELECT passenger_id, fare\nFROM titanic\nWHERE ", solution: "SELECT passenger_id, fare\nFROM titanic\nWHERE pclass = 1 AND sex = 'female' AND fare >= 200;", explain: "조건 세 개를 AND로 잇습니다. 글자 'female'은 작은따옴표로 감쌉니다. 12명이 나옵니다." },
+        { kind: "write", lang: "sql", q: "orders에서 상품 분류(category)가 '전자'이고 결제 금액(amount)이 300000 이상인 주문의 order_id와 amount를 조회하는 SQL을 작성하세요.", given: "SELECT order_id, amount\nFROM orders\nWHERE ", solution: "SELECT order_id, amount\nFROM orders\nWHERE category = '전자' AND amount >= 300000;", explain: "두 조건이 모두 참이어야 하므로 AND로 잇습니다. 글자 '전자'는 작은따옴표로 감쌉니다. 8건이 나옵니다." },
         { kind: "ox", q: "WHERE comm = NULL 로 성과급이 NULL인 행을 찾을 수 있다.", answer: false, explain: "NULL과의 비교는 참도 거짓도 아닌 '모름'이라 아무 행도 나오지 않습니다. IS NULL을 씁니다." },
       ] }] },
   { id: "sq-02", track: "sql", title: "정렬 · LIMIT · 내장 함수", summary: "ORDER BY, LIMIT · OFFSET, 계산 열, 정수 나눗셈, ROUND · CAST", level: "입문",
@@ -255,9 +258,9 @@ export const COURSES = [
     concepts: ["sql.group", "sql.exec-order"],
     lessons: [{ id: "sq-03-1", title: "묶어서 세고, 묶은 뒤 거르기", minutes: 22, concepts: ["sql.group", "sql.exec-order"],
       quiz: [
-        { kind: "write", lang: "sql", q: "titanic에서 객실 등급(pclass)별 승객 수와 생존율을 조회하는 SQL을 작성하세요. 생존율은 ROUND(AVG(survived), 3)으로 소수 셋째 자리까지 나타냅니다.", given: "SELECT pclass\nFROM titanic", solution: "SELECT pclass, COUNT(*) AS n, ROUND(AVG(survived), 3) AS survival_rate\nFROM titanic\nGROUP BY pclass;", explain: "pclass로 묶고, 바구니마다 COUNT(*)와 AVG(survived)를 구합니다. 1등실 63.0%, 3등실 24.2%입니다." },
-        { kind: "choice", q: "titanic에서 '승객이 100명 넘게 탄 항구만' 남기려고 한다. COUNT(*) > 100 조건은 어디에 써야 할까?", options: ["WHERE", "HAVING", "ORDER BY", "SELECT"], answer: 1, explain: "항구별로 묶은 뒤의 개수에 거는 조건이므로 HAVING입니다. WHERE는 묶기 전에 실행되어 COUNT를 알 수 없습니다." },
-        { kind: "ox", q: "COUNT(age)는 나이가 비어 있는(NULL) 승객까지 센다.", answer: false, explain: "COUNT(열)은 NULL을 빼고 셉니다. 891명 중 714명만 셉니다. 모든 행을 세려면 COUNT(*)." },
+        { kind: "write", lang: "sql", q: "orders에서 상품 분류(category)별 주문 수와 평균 결제 금액을 조회하는 SQL을 작성하세요. 평균은 ROUND(AVG(amount))로 정수까지 반올림합니다.", given: "SELECT category\nFROM orders", solution: "SELECT category, COUNT(*) AS n, ROUND(AVG(amount)) AS avg_amount\nFROM orders\nGROUP BY category;", explain: "category로 묶고, 바구니마다 COUNT(*)와 AVG(amount)를 구합니다. 의류가 140건으로 가장 많고, 평균 금액은 전자가 203,937원으로 가장 큽니다." },
+        { kind: "choice", q: "orders에서 '주문이 100건 넘는 상품 분류만' 남기려고 한다. COUNT(*) > 100 조건은 어디에 써야 할까?", options: ["WHERE", "HAVING", "ORDER BY", "SELECT"], answer: 1, explain: "분류별로 묶은 뒤의 개수에 거는 조건이므로 HAVING입니다. WHERE는 묶기 전에 실행되어 COUNT를 알 수 없습니다." },
+        { kind: "ox", q: "events에서 COUNT(user_id)는 user_id가 비어 있는(NULL) 비회원 방문 기록까지 센다.", answer: false, explain: "COUNT(열)은 NULL을 빼고 셉니다. 1,113건 중 625건만 셉니다. 모든 행을 세려면 COUNT(*)." },
       ] }] },
   { id: "sq-06", track: "sql", title: "CASE · 날짜 · 문자열", summary: "문자열 함수, IFNULL · COALESCE, CASE 구간화, strftime 날짜", level: "기본",
     concepts: ["sql.case-date"],
