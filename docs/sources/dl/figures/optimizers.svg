@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" width="1200" height="660" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif">
+<rect width="1200" height="660" fill="#ffffff"/>
+<text x="600" y="44" text-anchor="middle" font-size="27" font-weight="700" fill="#0f172a">최적화 알고리즘의 계보</text>
+<text x="600" y="72" text-anchor="middle" font-size="14" fill="#64748b">각 알고리즘은 앞의 방법이 겪던 문제 하나를 다룹니다</text>
+<rect x="40" y="102" width="274" height="288" rx="12" fill="#f8fafc" stroke="#dc2626" stroke-width="2"/>
+<text x="177" y="130" text-anchor="middle" font-size="16" font-weight="700" fill="#dc2626">SGD</text>
+<text x="177" y="150" text-anchor="middle" font-size="11" fill="#64748b">기울기 방향으로만</text>
+<defs><clipPath id="clip0"><rect x="62" y="168" width="230" height="148"/></clipPath></defs>
+<rect x="62" y="168" width="230" height="148" fill="#ffffff" stroke="#e2e8f0"/>
+<g clip-path="url(#clip0)">
+<ellipse cx="232.2" cy="242.0" rx="18.3" ry="9.8" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="232.2" cy="242.0" rx="37.4" ry="20.1" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="232.2" cy="242.0" rx="59.8" ry="32.1" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="232.2" cy="242.0" rx="84.7" ry="45.5" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<path d="M75.6 183.1 L90.1 295.5 L104.3 198.2 L116.5 279.0 L125.2 210.5 L135.2 270.8 L143.0 217.2 L150.6 261.1 L158.6 224.6 L166.9 253.5 L174.7 231.6 L180.3 250.2 L185.0 231.8 L189.5 251.3 L192.7 232.1 L196.8 245.9 L200.6 233.6 L205.1 251.8 L210.0 235.4 L211.7 246.9 L213.1 239.0 L213.7 244.1 L216.1 238.8 L218.7 244.6 L220.8 242.2 L223.8 239.3 L225.7 239.5 L224.2 238.6 L225.3 243.7 L224.1 235.9 L223.7 245.5 L224.7 237.4 L224.7 243.3 L225.5 241.7 L224.1 236.7 L223.2 248.7 L224.6 236.9 L225.8 250.2 L226.2 234.5 L227.0 248.0 L227.6 234.8 L225.8 243.8 L230.3 240.2 L230.7 244.4 L231.0 239.6 L230.8 246.3 L231.4 237.4" fill="none" stroke="#dc2626" stroke-width="2.2"/>
+<circle cx="75.6" cy="183.1" r="2.4" fill="#dc2626"/>
+<circle cx="135.2" cy="270.8" r="2.4" fill="#dc2626"/>
+<circle cx="174.7" cy="231.6" r="2.4" fill="#dc2626"/>
+<circle cx="196.8" cy="245.9" r="2.4" fill="#dc2626"/>
+<circle cx="213.1" cy="239.0" r="2.4" fill="#dc2626"/>
+<circle cx="223.8" cy="239.3" r="2.4" fill="#dc2626"/>
+<circle cx="223.7" cy="245.5" r="2.4" fill="#dc2626"/>
+<circle cx="223.2" cy="248.7" r="2.4" fill="#dc2626"/>
+<circle cx="227.6" cy="234.8" r="2.4" fill="#dc2626"/>
+<circle cx="230.8" cy="246.3" r="2.4" fill="#dc2626"/>
+<circle cx="75.6" cy="183.1" r="4.6" fill="#dc2626"/>
+<circle cx="232.2" cy="242.0" r="4" fill="#0f172a"/>
+</g>
+<text x="177" y="336" text-anchor="middle" font-size="10.5" fill="#94a3b8">좁고 긴 골짜기에서의 경로</text>
+<text x="177" y="362" text-anchor="middle" font-size="11.5" font-weight="700" fill="#dc2626">양쪽 벽을 오가며 진동합니다</text>
+<rect x="328" y="102" width="274" height="288" rx="12" fill="#f8fafc" stroke="#d97706" stroke-width="2"/>
+<text x="465" y="130" text-anchor="middle" font-size="16" font-weight="700" fill="#d97706">모멘텀</text>
+<text x="465" y="150" text-anchor="middle" font-size="11" fill="#64748b">이전 방향을 관성으로</text>
+<defs><clipPath id="clip1"><rect x="350" y="168" width="230" height="148"/></clipPath></defs>
+<rect x="350" y="168" width="230" height="148" fill="#ffffff" stroke="#e2e8f0"/>
+<g clip-path="url(#clip1)">
+<ellipse cx="520.2" cy="242.0" rx="18.3" ry="9.8" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="520.2" cy="242.0" rx="37.4" ry="20.1" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="520.2" cy="242.0" rx="59.8" ry="32.1" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="520.2" cy="242.0" rx="84.7" ry="45.5" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<path d="M363.6 183.1 L366.4 204.3 L371.4 234.8 L378.1 261.8 L386.1 276.3 L394.8 275.5 L404.1 262.8 L413.5 245.2 L423.1 229.9 L432.4 222.0 L441.5 222.9 L450.2 230.5 L458.4 240.7 L466.0 249.3 L473.1 253.6 L479.7 252.8 L485.6 248.3 L491.0 242.4 L495.9 237.6 L500.2 235.3 L504.0 235.9 L507.3 238.5 L510.2 241.9 L512.7 244.7 L514.9 245.9 L516.7 245.5 L518.2 243.9 L519.4 241.9 L520.4 240.4 L521.2 239.7 L521.8 240.0 L522.3 241.0 L522.6 242.1 L522.9 243.0 L523.0 243.3 L523.1 243.1 L523.1 242.6 L523.0 241.9 L522.9 241.4 L522.8 241.2 L522.6 241.4 L522.5 241.7 L522.3 242.1 L522.1 242.3 L522.0 242.4 L521.8 242.4 L521.6 242.2" fill="none" stroke="#d97706" stroke-width="2.2"/>
+<circle cx="363.6" cy="183.1" r="2.4" fill="#d97706"/>
+<circle cx="394.8" cy="275.5" r="2.4" fill="#d97706"/>
+<circle cx="441.5" cy="222.9" r="2.4" fill="#d97706"/>
+<circle cx="479.7" cy="252.8" r="2.4" fill="#d97706"/>
+<circle cx="504.0" cy="235.9" r="2.4" fill="#d97706"/>
+<circle cx="516.7" cy="245.5" r="2.4" fill="#d97706"/>
+<circle cx="521.8" cy="240.0" r="2.4" fill="#d97706"/>
+<circle cx="523.1" cy="243.1" r="2.4" fill="#d97706"/>
+<circle cx="522.6" cy="241.4" r="2.4" fill="#d97706"/>
+<circle cx="521.8" cy="242.4" r="2.4" fill="#d97706"/>
+<circle cx="363.6" cy="183.1" r="4.6" fill="#dc2626"/>
+<circle cx="520.2" cy="242.0" r="4" fill="#0f172a"/>
+</g>
+<text x="465" y="336" text-anchor="middle" font-size="10.5" fill="#94a3b8">좁고 긴 골짜기에서의 경로</text>
+<text x="465" y="362" text-anchor="middle" font-size="11.5" font-weight="700" fill="#d97706">좌우 성분이 상쇄되어 안정됩니다</text>
+<rect x="616" y="102" width="274" height="288" rx="12" fill="#f8fafc" stroke="#0891b2" stroke-width="2"/>
+<text x="753" y="130" text-anchor="middle" font-size="16" font-weight="700" fill="#0891b2">Adagrad</text>
+<text x="753" y="150" text-anchor="middle" font-size="11" fill="#64748b">매개변수별 학습률</text>
+<defs><clipPath id="clip2"><rect x="638" y="168" width="230" height="148"/></clipPath></defs>
+<rect x="638" y="168" width="230" height="148" fill="#ffffff" stroke="#e2e8f0"/>
+<g clip-path="url(#clip2)">
+<ellipse cx="808.2" cy="242.0" rx="18.3" ry="9.8" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="808.2" cy="242.0" rx="37.4" ry="20.1" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="808.2" cy="242.0" rx="59.8" ry="32.1" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="808.2" cy="242.0" rx="84.7" ry="45.5" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<path d="M651.6 183.1 L666.7 199.2 L676.8 208.7 L684.8 215.4 L691.5 220.5 L697.3 224.5 L702.5 227.6 L707.2 230.2 L711.6 232.3 L715.5 234.0 L719.2 235.4 L722.7 236.6 L726.0 237.5 L729.0 238.3 L731.9 239.0 L734.6 239.5 L737.3 239.9 L739.7 240.3 L742.1 240.6 L744.3 240.8 L746.5 241.0 L748.6 241.2 L750.5 241.3 L752.4 241.5 L754.2 241.6 L756.0 241.6 L757.7 241.7 L759.3 241.7 L760.8 241.8 L762.3 241.8 L763.8 241.9 L765.2 241.9 L766.5 241.9 L767.8 241.9 L769.1 241.9 L770.3 241.9 L771.5 242.0 L772.6 242.0 L773.7 242.0 L774.7 242.0 L775.8 242.0 L776.8 242.0 L777.7 242.0 L778.6 242.0 L779.5 242.0 L780.4 242.0 L781.2 242.0" fill="none" stroke="#0891b2" stroke-width="2.2"/>
+<circle cx="651.6" cy="183.1" r="2.4" fill="#0891b2"/>
+<circle cx="697.3" cy="224.5" r="2.4" fill="#0891b2"/>
+<circle cx="719.2" cy="235.4" r="2.4" fill="#0891b2"/>
+<circle cx="734.6" cy="239.5" r="2.4" fill="#0891b2"/>
+<circle cx="746.5" cy="241.0" r="2.4" fill="#0891b2"/>
+<circle cx="756.0" cy="241.6" r="2.4" fill="#0891b2"/>
+<circle cx="763.8" cy="241.9" r="2.4" fill="#0891b2"/>
+<circle cx="770.3" cy="241.9" r="2.4" fill="#0891b2"/>
+<circle cx="775.8" cy="242.0" r="2.4" fill="#0891b2"/>
+<circle cx="780.4" cy="242.0" r="2.4" fill="#0891b2"/>
+<circle cx="651.6" cy="183.1" r="4.6" fill="#dc2626"/>
+<circle cx="808.2" cy="242.0" r="4" fill="#0f172a"/>
+</g>
+<text x="753" y="336" text-anchor="middle" font-size="10.5" fill="#94a3b8">좁고 긴 골짜기에서의 경로</text>
+<text x="753" y="362" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0891b2">누적이 쌓여 학습이 느려집니다</text>
+<rect x="904" y="102" width="274" height="288" rx="12" fill="#f8fafc" stroke="#059669" stroke-width="2"/>
+<text x="1041" y="130" text-anchor="middle" font-size="16" font-weight="700" fill="#059669">Adam</text>
+<text x="1041" y="150" text-anchor="middle" font-size="11" fill="#64748b">모멘텀 + RMSProp</text>
+<defs><clipPath id="clip3"><rect x="926" y="168" width="230" height="148"/></clipPath></defs>
+<rect x="926" y="168" width="230" height="148" fill="#ffffff" stroke="#e2e8f0"/>
+<g clip-path="url(#clip3)">
+<ellipse cx="1096.2" cy="242.0" rx="18.3" ry="9.8" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="1096.2" cy="242.0" rx="37.4" ry="20.1" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="1096.2" cy="242.0" rx="59.8" ry="32.1" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<ellipse cx="1096.2" cy="242.0" rx="84.7" ry="45.5" fill="none" stroke="#cbd5e1" stroke-width="1.2"/>
+<path d="M939.6 183.1 L948.9 193.0 L958.1 202.9 L967.4 212.5 L976.5 221.9 L985.7 230.7 L994.7 239.0 L1003.6 246.3 L1012.4 252.5 L1021.0 257.5 L1029.5 261.1 L1037.7 263.3 L1045.7 264.2 L1053.5 264.0 L1060.9 262.8 L1068.0 260.8 L1074.8 258.1 L1081.2 255.0 L1087.1 251.6 L1092.7 248.1 L1097.7 244.7 L1102.3 241.4 L1106.4 238.5 L1110.0 236.0 L1113.1 234.0 L1115.8 232.5 L1117.9 231.7 L1119.5 231.4 L1120.7 231.7 L1121.5 232.5 L1121.9 233.7 L1121.8 235.2 L1121.5 236.9 L1120.8 238.7 L1119.8 240.5 L1118.6 242.2 L1117.2 243.8 L1115.6 245.2 L1113.8 246.2 L1112.0 246.9 L1110.1 247.3 L1108.2 247.3 L1106.2 247.1 L1104.3 246.5 L1102.4 245.8 L1100.6 244.9 L1098.9 243.9 L1097.3 242.9 L1095.9 241.9 L1094.5 241.0 L1093.3 240.3 L1092.3 239.7 L1091.4 239.3 L1090.7 239.2 L1090.2 239.2 L1089.8 239.4 L1089.6 239.8 L1089.4 240.2 L1089.5 240.8 L1089.6 241.4 L1089.8 241.9 L1090.2 242.4 L1090.6 242.9 L1091.1 243.2 L1091.6 243.4" fill="none" stroke="#059669" stroke-width="2.2"/>
+<circle cx="939.6" cy="183.1" r="2.4" fill="#059669"/>
+<circle cx="985.7" cy="230.7" r="2.4" fill="#059669"/>
+<circle cx="1029.5" cy="261.1" r="2.4" fill="#059669"/>
+<circle cx="1068.0" cy="260.8" r="2.4" fill="#059669"/>
+<circle cx="1097.7" cy="244.7" r="2.4" fill="#059669"/>
+<circle cx="1115.8" cy="232.5" r="2.4" fill="#059669"/>
+<circle cx="1121.9" cy="233.7" r="2.4" fill="#059669"/>
+<circle cx="1118.6" cy="242.2" r="2.4" fill="#059669"/>
+<circle cx="1110.1" cy="247.3" r="2.4" fill="#059669"/>
+<circle cx="1100.6" cy="244.9" r="2.4" fill="#059669"/>
+<circle cx="1093.3" cy="240.3" r="2.4" fill="#059669"/>
+<circle cx="1089.8" cy="239.4" r="2.4" fill="#059669"/>
+<circle cx="1089.8" cy="241.9" r="2.4" fill="#059669"/>
+<circle cx="939.6" cy="183.1" r="4.6" fill="#dc2626"/>
+<circle cx="1096.2" cy="242.0" r="4" fill="#0f172a"/>
+</g>
+<text x="1041" y="336" text-anchor="middle" font-size="10.5" fill="#94a3b8">좁고 긴 골짜기에서의 경로</text>
+<text x="1041" y="362" text-anchor="middle" font-size="11.5" font-weight="700" fill="#059669">두 문제를 함께 다룹니다</text>
+<rect x="40" y="410" width="1120" height="152" rx="12" fill="#f8fafc" stroke="#0f172a" stroke-width="1.8"/>
+<text x="600" y="438" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">무엇을 다루는가</text>
+<text x="130" y="464" text-anchor="middle" font-size="12.5" font-weight="700" fill="#dc2626">SGD</text>
+<text x="290" y="464" text-anchor="middle" font-size="11.5" fill="#475569">—</text>
+<text x="390" y="464" font-size="12" fill="#334155">단순하지만 진동하고 느립니다</text>
+<line x1="76" y1="471" x2="1124" y2="471" stroke="#e2e8f0" stroke-width="1"/>
+<text x="130" y="486" text-anchor="middle" font-size="12.5" font-weight="700" fill="#d97706">모멘텀</text>
+<text x="290" y="486" text-anchor="middle" font-size="11.5" fill="#475569">진동</text>
+<text x="390" y="486" font-size="12" fill="#334155">이전 방향을 관성으로 유지해 좌우 성분을 상쇄합니다</text>
+<line x1="76" y1="493" x2="1124" y2="493" stroke="#e2e8f0" stroke-width="1"/>
+<text x="130" y="508" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0891b2">Adagrad</text>
+<text x="290" y="508" text-anchor="middle" font-size="11.5" fill="#475569">학습률</text>
+<text x="390" y="508" font-size="12" fill="#334155">갱신이 많던 것은 작게 — 다만 누적이 쌓여 학습이 멈춥니다</text>
+<line x1="76" y1="515" x2="1124" y2="515" stroke="#e2e8f0" stroke-width="1"/>
+<text x="130" y="530" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0891b2">RMSProp</text>
+<text x="290" y="530" text-anchor="middle" font-size="11.5" fill="#475569">학습률</text>
+<text x="390" y="530" font-size="12" fill="#334155">누적 대신 지수 이동평균을 써서 멈춤 문제를 해결합니다</text>
+<line x1="76" y1="537" x2="1124" y2="537" stroke="#e2e8f0" stroke-width="1"/>
+<text x="130" y="552" text-anchor="middle" font-size="12.5" font-weight="700" fill="#059669">Adam</text>
+<text x="290" y="552" text-anchor="middle" font-size="11.5" fill="#475569">진동 + 학습률</text>
+<text x="390" y="552" font-size="12" fill="#334155">두 방법을 합쳤습니다. 딥러닝의 기본 선택입니다</text>
+<rect x="40" y="580" width="1120" height="64" rx="12" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+<text x="600" y="606" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">Adam이 언제나 최선은 아닙니다</text>
+<text x="600" y="630" text-anchor="middle" font-size="12.5" fill="#334155">빠르게 좋은 지점에 도달하지만, 마지막 미세한 수렴에서는 잘 조정된 SGD와 모멘텀이 나은 경우가 보고되어 있습니다</text>
+</svg>

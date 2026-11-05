@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 660" width="1180" height="660" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif">
+  <rect width="1180" height="660" fill="#ffffff"/>
+  <text x="590" y="46" text-anchor="middle" font-size="28" font-weight="700" fill="#0f172a">인공지능·기계학습·딥러닝의 관계와 학습 방식</text>
+  <text x="590" y="74" text-anchor="middle" font-size="14" fill="#64748b">포함 관계는 좁아지고, 사람이 개입하는 몫은 줄어듭니다</text>
+
+  <!-- 왼쪽: 포함관계 -->
+  <rect x="45" y="110" width="480" height="500" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+  <text x="285" y="145" text-anchor="middle" font-size="18" font-weight="700" fill="#334155">포함 관계</text>
+
+  <rect x="80" y="170" width="410" height="400" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+  <text x="285" y="202" text-anchor="middle" font-size="19" font-weight="700" fill="#1e3a8a">인공지능</text>
+  <text x="285" y="223" text-anchor="middle" font-size="11.5" fill="#2563eb">인간의 지적 능력을 컴퓨터로 구현</text>
+
+  <rect x="115" y="243" width="340" height="310" rx="12" fill="#ecfeff" stroke="#0891b2" stroke-width="2.5"/>
+  <text x="285" y="275" text-anchor="middle" font-size="18" font-weight="700" fill="#164e63">기계학습</text>
+  <text x="285" y="296" text-anchor="middle" font-size="11.5" fill="#0891b2">데이터로부터 규칙을 학습</text>
+  <text x="285" y="318" text-anchor="middle" font-size="11" font-weight="600" fill="#dc2626">특징은 사람이 설계</text>
+
+  <rect x="150" y="338" width="270" height="195" rx="12" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2.5"/>
+  <text x="285" y="370" text-anchor="middle" font-size="18" font-weight="700" fill="#4c1d95">딥러닝</text>
+  <text x="285" y="391" text-anchor="middle" font-size="11.5" fill="#7c3aed">신경망을 여러 층으로 깊게</text>
+  <text x="285" y="415" text-anchor="middle" font-size="11" font-weight="700" fill="#059669">특징도 스스로 학습</text>
+  <line x1="175" y1="432" x2="395" y2="432" stroke="#ddd6fe" stroke-width="1.4"/>
+  <text x="285" y="454" text-anchor="middle" font-size="11" fill="#4c1d95">앞쪽 층 · 선과 모서리</text>
+  <text x="285" y="475" text-anchor="middle" font-size="11" fill="#4c1d95">중간 층 · 눈과 귀</text>
+  <text x="285" y="496" text-anchor="middle" font-size="11" fill="#4c1d95">뒤쪽 층 · 얼굴 전체</text>
+  <text x="285" y="521" text-anchor="middle" font-size="10.5" fill="#7c3aed">낮은 수준에서 높은 수준으로 조합</text>
+
+  <text x="285" y="592" text-anchor="middle" font-size="12" font-weight="600" fill="#475569">안으로 들어갈수록 사람이 개입하는 몫이 줄어듭니다</text>
+
+  <!-- 오른쪽: 학습 방식 -->
+  <rect x="555" y="110" width="580" height="500" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+  <text x="845" y="145" text-anchor="middle" font-size="18" font-weight="700" fill="#334155">기계학습의 종류</text>
+  <text x="845" y="167" text-anchor="middle" font-size="11.5" fill="#64748b">정답이 주어지는가에 따라 나뉩니다</text>
+
+  <rect x="585" y="185" width="520" height="92" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8"/>
+  <text x="608" y="211" font-size="15.5" font-weight="700" fill="#1e3a8a">지도학습</text>
+  <text x="700" y="211" font-size="11.5" fill="#2563eb">Supervised</text>
+  <text x="1082" y="211" text-anchor="end" font-size="11.5" font-weight="700" fill="#2563eb">정답 · 전부 있음</text>
+  <text x="608" y="235" font-size="12" fill="#334155">입력과 정답의 쌍을 보고 관계를 학습</text>
+  <text x="608" y="262" font-size="12" fill="#1e40af">분류 — 어느 쪽인가 (범주)    ·    회귀 — 얼마인가 (수치)</text>
+
+  <rect x="585" y="289" width="520" height="112" rx="10" fill="#ecfeff" stroke="#0891b2" stroke-width="1.8"/>
+  <text x="608" y="315" font-size="15.5" font-weight="700" fill="#164e63">비지도학습</text>
+  <text x="716" y="315" font-size="11.5" fill="#0891b2">Unsupervised</text>
+  <text x="1082" y="315" text-anchor="end" font-size="11.5" font-weight="700" fill="#0891b2">정답 · 없음</text>
+  <text x="608" y="339" font-size="12" fill="#334155">데이터 자체의 구조와 패턴을 찾아냄</text>
+  <text x="608" y="364" font-size="12" fill="#155e75">군집 — 유사한 것끼리 묶기</text>
+  <text x="608" y="385" font-size="12" fill="#155e75">오토인코더 — 압축과 복원    ·    GAN — 경쟁을 통한 생성</text>
+
+  <rect x="585" y="413" width="520" height="88" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.8"/>
+  <text x="608" y="439" font-size="15.5" font-weight="700" fill="#92400e">준지도학습</text>
+  <text x="716" y="439" font-size="11.5" fill="#d97706">Semi-supervised</text>
+  <text x="1082" y="439" text-anchor="end" font-size="11.5" font-weight="700" fill="#d97706">정답 · 일부만</text>
+  <text x="608" y="463" font-size="12" fill="#334155">소량의 정답 있는 데이터 + 대량의 정답 없는 데이터</text>
+  <text x="608" y="487" font-size="11.5" font-weight="600" fill="#b45309">정답 붙이는 비용이 병목이기 때문에 필요합니다</text>
+
+  <rect x="585" y="513" width="520" height="76" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.8"/>
+  <text x="608" y="539" font-size="15.5" font-weight="700" fill="#4c1d95">강화학습</text>
+  <text x="700" y="539" font-size="11.5" fill="#7c3aed">Reinforcement</text>
+  <text x="1082" y="539" text-anchor="end" font-size="11.5" font-weight="700" fill="#7c3aed">정답 대신 보상</text>
+  <text x="608" y="563" font-size="12" fill="#334155">행동한 결과로 받은 보상을 통해 더 나은 행동을 학습</text>
+  <text x="608" y="582" font-size="11.5" fill="#5b21b6">에이전트 · 환경 · 상태 · 행동 · 보상 — 누적 보상을 최대화</text>
+</svg>
