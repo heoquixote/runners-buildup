@@ -727,6 +727,19 @@ kbd {
 .tcard-meter .ucard-bar span { background: var(--tc, var(--accent)); }
 @media (max-width: 900px) { .tcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .tcards { grid-template-columns: minmax(0, 1fr); } }
+
+/* 학습 트랙 카테고리 묶음: 왼쪽 카테고리 머리, 오른쪽 트랙 카드 2장 */
+.tgroups { display: grid; gap: 0; }
+.tgroup { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; padding: 18px 0; align-items: start; }
+.tgroup + .tgroup { border-top: 1px solid var(--line); }
+.tgroup:first-child { padding-top: 4px; }
+.tgroup-head { display: grid; gap: 6px; padding-top: 14px; }
+.tgroup-en { font: 600 11px/1 var(--font-en); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.tgroup-head h3 { font-size: 20px; }
+.tgroup-head p { margin: 0; font-size: 13px; line-height: 1.5; }
+.tgroup .tcards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 900px) { .tgroup { grid-template-columns: minmax(0, 1fr); gap: 10px; } .tgroup-head { padding-top: 0; } }
+@media (max-width: 560px) { .tgroup .tcards { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .tcard { transition: none; } .tcard:hover { transform: none; } }
 
 .track-page .unit-hero, .unit-page .unit-hero { padding-top: 4px; }
