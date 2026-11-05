@@ -1023,42 +1023,42 @@ export const SM_PROBLEMS = [
     "id": "17-1",
     "unit": 17,
     "domain": "mfg",
-    "title": "불량 데이터 나누기 (stratify)",
+    "title": "고장 데이터 나누기 (stratify)",
     "type": "steps",
-    "level": 2,
+    "level": 1,
     "uses": [
       [
         "train_test_split(..., stratify=y)",
-        "클래스 비율을 유지하며 분할"
+        "고장 비율을 유지하며 나누기"
       ],
       [
-        "배열.mean()",
+        "y.mean()",
         "0/1 배열의 평균 = 1의 비율"
       ]
     ],
     "origin": "신규",
-    "desc": "<p>도금 로트 120개(온도, 전류밀도)와 불량 여부입니다. 25%를 테스트로 떼되 불량 비율이 유지되게 나눕니다.</p>\n<ol><li><code>split</code>: train_test_split 결과 4개 (X_train, X_test, y_train, y_test)</li><li><code>defect_rate_all</code>: 전체 불량 비율</li><li><code>defect_rate_test</code>: 테스트 세트 불량 비율</li></ol>",
-    "starter": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\n\n# 1. train_test_split 결과 4개 (X_train, X_test, y_train, y_test)\nsplit = \n# 2. 전체 불량 비율\ndefect_rate_all = \n# 3. 테스트 세트 불량 비율\ndefect_rate_test = \n\nX_train, X_test, y_train, y_test = split\nprint(X_train.shape, X_test.shape, round(defect_rate_all, 3), round(defect_rate_test, 3))\n",
-    "solution": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\n\n# 1. train_test_split 결과 4개 (X_train, X_test, y_train, y_test)\nsplit = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n# 2. 전체 불량 비율\ndefect_rate_all = y.mean()\n# 3. 테스트 세트 불량 비율\ndefect_rate_test = split[3].mean()\n\nX_train, X_test, y_train, y_test = split\nprint(X_train.shape, X_test.shape, round(defect_rate_all, 3), round(defect_rate_test, 3))\n",
+    "desc": "<p><b>데이터</b>: 실제 공개 데이터인 AI4I 2020 설비 고장 데이터(1만 건)입니다. 열은 <code>air_temp</code>(주변 온도, K), <code>process_temp</code>(공정 온도, K), <code>rpm</code>(회전수), <code>torque</code>(토크, Nm), <code>tool_wear</code>(공구 사용 시간, 분), <code>failure</code>(고장 1 / 정상 0)이고, 고장은 약 3.4%로 드뭅니다. 시작 코드가 <code>pd.read_csv('ai4i2020.csv')</code>로 불러와 <code>X</code>(5개 열), <code>y</code>(고장 여부)를 만들어 둡니다.</p><p>25%를 시험용(테스트)으로 떼어 둡니다. 고장이 드물기 때문에 <code>stratify=y</code>로 두 세트의 고장 비율을 똑같이 맞춥니다.</p>\n<ol><li><code>split</code>: 나눈 결과 4개 (test_size=0.25, random_state=0, stratify=y)</li><li><code>rate_all</code>: 전체 고장 비율</li><li><code>rate_test</code>: 테스트 세트 고장 비율 (split[3]이 y_test)</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\n# 1. 나눈 결과 4개 (test_size=0.25, random_state=0, stratify=y)\nsplit = \n# 2. 전체 고장 비율\nrate_all = \n# 3. 테스트 세트 고장 비율 (split[3]이 y_test)\nrate_test = \n\nX_train, X_test, y_train, y_test = split\nprint(X_train.shape, X_test.shape)\nprint('all', round(rate_all, 4), 'test', round(rate_test, 4))\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\n# 1. 나눈 결과 4개 (test_size=0.25, random_state=0, stratify=y)\nsplit = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n# 2. 전체 고장 비율\nrate_all = y.mean()\n# 3. 테스트 세트 고장 비율 (split[3]이 y_test)\nrate_test = split[3].mean()\n\nX_train, X_test, y_train, y_test = split\nprint(X_train.shape, X_test.shape)\nprint('all', round(rate_all, 4), 'test', round(rate_test, 4))\n",
     "hints": [
       "train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 train_test_split 결과 4개 (X_train, X_test, y_train, y_test)",
-        "expr": "len(split) == 4 and np.shape(split[0]) == (90, 2) and np.shape(split[1]) == (30, 2)",
+        "label": "1단계 나눈 결과 4개 (test_size=0.25, random_state=0, stratify=y)",
+        "expr": "len(split) == 4 and np.shape(split[0]) == (7500, 5) and np.shape(split[1]) == (2500, 5)",
         "hint": "train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)"
       },
       {
-        "label": "2단계 전체 불량 비율",
-        "expr": "abs(defect_rate_all - y.mean()) < 1e-12",
+        "label": "2단계 전체 고장 비율",
+        "expr": "abs(rate_all - y.mean()) < 1e-12",
         "hint": "y.mean()"
       },
       {
-        "label": "3단계 테스트 세트 불량 비율",
-        "expr": "abs(defect_rate_test - np.asarray(split[3]).mean()) < 1e-12 and abs(defect_rate_test - y.mean()) < 0.05",
-        "hint": "split[3].mean()  (y_test)"
+        "label": "3단계 테스트 세트 고장 비율 (split[3]이 y_test)",
+        "expr": "abs(rate_test - np.asarray(split[3]).mean()) < 1e-12 and abs(rate_test - y.mean()) < 0.002",
+        "hint": "split[3].mean()"
       }
     ]
   },
@@ -1066,31 +1066,31 @@ export const SM_PROBLEMS = [
     "id": "17-2",
     "unit": 17,
     "domain": "mfg",
-    "title": "정확도의 함정: 기준 모델",
+    "title": "정확도 97%의 함정: 기준 모델",
     "type": "steps",
-    "level": 2,
+    "level": 1,
     "uses": [
       [
         "DummyClassifier(strategy='most_frequent')",
-        "가장 많은 클래스만 예측"
+        "무조건 가장 많은 답(정상)만 하는 모델"
       ],
       [
         "recall_score",
-        "실제 불량 중 잡아낸 비율"
+        "실제 고장 중 잡아낸 비율"
       ]
     ],
     "origin": "신규",
-    "desc": "<p>불량이 적은 데이터에서는 \"전부 양품\"이라고만 해도 정확도가 높게 나옵니다. 기준 모델의 정확도와 불량 재현율을 확인합니다.</p>\n<ol><li><code>base</code>: 학습된 기준 모델</li><li><code>base_acc</code>: 테스트 정확도</li><li><code>base_recall</code>: 불량 재현율 (recall)</li></ol>\n<p class=\"qc\">정확도가 높아도 불량을 하나도 못 잡을 수 있습니다. 불균형 데이터에서는 재현율·정밀도를 함께 봅니다.</p>",
-    "starter": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.dummy import DummyClassifier\nfrom sklearn.metrics import accuracy_score, recall_score\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습된 기준 모델\nbase = \n# 2. 테스트 정확도\nbase_acc = \n# 3. 불량 재현율 (recall)\nbase_recall = \n\nprint(round(base_acc, 3), base_recall)\n",
-    "solution": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.dummy import DummyClassifier\nfrom sklearn.metrics import accuracy_score, recall_score\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습된 기준 모델\nbase = DummyClassifier(strategy='most_frequent').fit(X_train, y_train)\n# 2. 테스트 정확도\nbase_acc = accuracy_score(y_test, base.predict(X_test))\n# 3. 불량 재현율 (recall)\nbase_recall = recall_score(y_test, base.predict(X_test))\n\nprint(round(base_acc, 3), base_recall)\n",
+    "desc": "<p><b>데이터</b>: 실제 공개 데이터인 AI4I 2020 설비 고장 데이터(1만 건)입니다. 열은 <code>air_temp</code>(주변 온도, K), <code>process_temp</code>(공정 온도, K), <code>rpm</code>(회전수), <code>torque</code>(토크, Nm), <code>tool_wear</code>(공구 사용 시간, 분), <code>failure</code>(고장 1 / 정상 0)이고, 고장은 약 3.4%로 드뭅니다. 시작 코드가 <code>pd.read_csv('ai4i2020.csv')</code>로 불러와 <code>X</code>(5개 열), <code>y</code>(고장 여부)를 만들어 둡니다.</p><p>아무것도 배우지 않고 \"전부 정상\"이라고만 답하는 기준 모델을 만들어 봅니다. 정확도는 높은데 고장은 하나도 못 잡는다는 것을 숫자로 확인합니다.</p>\n<ol><li><code>base</code>: 학습한 기준 모델</li><li><code>base_acc</code>: 테스트 정확도</li><li><code>base_recall</code>: 고장 재현율</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.dummy import DummyClassifier\nfrom sklearn.metrics import accuracy_score, recall_score\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습한 기준 모델\nbase = \n# 2. 테스트 정확도\nbase_acc = \n# 3. 고장 재현율\nbase_recall = \n\nprint('accuracy', round(base_acc, 3), 'recall', base_recall)\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.dummy import DummyClassifier\nfrom sklearn.metrics import accuracy_score, recall_score\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습한 기준 모델\nbase = DummyClassifier(strategy='most_frequent').fit(X_train, y_train)\n# 2. 테스트 정확도\nbase_acc = accuracy_score(y_test, base.predict(X_test))\n# 3. 고장 재현율\nbase_recall = recall_score(y_test, base.predict(X_test))\n\nprint('accuracy', round(base_acc, 3), 'recall', base_recall)\n",
     "hints": [
       "DummyClassifier(strategy='most_frequent').fit(X_train, y_train)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 학습된 기준 모델",
-        "expr": "hasattr(base, 'predict') and set(np.unique(base.predict(X_test))) == {0}",
+        "label": "1단계 학습한 기준 모델",
+        "expr": "set(np.unique(base.predict(X_test))) == {0}",
         "hint": "DummyClassifier(strategy='most_frequent').fit(X_train, y_train)"
       },
       {
@@ -1099,7 +1099,7 @@ export const SM_PROBLEMS = [
         "hint": "accuracy_score(y_test, base.predict(X_test))"
       },
       {
-        "label": "3단계 불량 재현율 (recall)",
+        "label": "3단계 고장 재현율",
         "expr": "base_recall == 0",
         "hint": "recall_score(y_test, base.predict(X_test))"
       }
@@ -1109,42 +1109,42 @@ export const SM_PROBLEMS = [
     "id": "17-3",
     "unit": 17,
     "domain": "general",
-    "title": "해지 고객 데이터 나누기",
+    "title": "타이타닉 데이터 나누기",
     "type": "steps",
-    "level": 2,
+    "level": 1,
     "uses": [
       [
         "train_test_split",
-        "학습/테스트 분할"
+        "학습용 / 시험용 나누기"
       ],
       [
         "np.bincount(y)",
-        "클래스별 개수"
+        "0과 1이 각각 몇 개인지"
       ]
     ],
     "origin": "신규",
-    "desc": "<p>구독 고객 120명(월 이용시간, 문의 수)과 해지 여부입니다. 30%를 테스트로 나누고 해지 비율을 비교합니다.</p>\n<ol><li><code>split</code>: 분할 결과 4개 (test_size=0.3, random_state=1, stratify=y)</li><li><code>counts_train</code>: 학습 세트 클래스별 개수 (np.bincount)</li><li><code>churn_test</code>: 테스트 세트 해지 비율</li></ol>",
-    "starter": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\n\n# 1. 분할 결과 4개 (test_size=0.3, random_state=1, stratify=y)\nsplit = \n# 2. 학습 세트 클래스별 개수 (np.bincount)\ncounts_train = \n# 3. 테스트 세트 해지 비율\nchurn_test = \n\nX_train, X_test, y_train, y_test = split\nprint(counts_train, round(churn_test, 3))\n",
-    "solution": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\n\n# 1. 분할 결과 4개 (test_size=0.3, random_state=1, stratify=y)\nsplit = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n# 2. 학습 세트 클래스별 개수 (np.bincount)\ncounts_train = np.bincount(split[2])\n# 3. 테스트 세트 해지 비율\nchurn_test = split[3].mean()\n\nX_train, X_test, y_train, y_test = split\nprint(counts_train, round(churn_test, 3))\n",
+    "desc": "<p><b>데이터</b>: 머신러닝 입문용으로 가장 유명한 타이타닉 승객 데이터(891명)입니다. <code>X</code>의 열은 <code>pclass</code>(객실 등급 1~3), <code>female</code>(여성 1), <code>age</code>(나이), <code>sibsp</code>(함께 탄 형제·배우자 수), <code>parch</code>(함께 탄 부모·자녀 수), <code>fare</code>(운임)이고, <code>y</code>는 생존 여부(1 생존)입니다. 시작 코드가 <code>pd.read_csv('titanic.csv')</code>로 불러와 준비해 둡니다.</p><p>30%를 시험용으로 나누고, 학습 세트에 사망(0)과 생존(1)이 몇 명씩 들어갔는지 셉니다.</p>\n<ol><li><code>split</code>: 나눈 결과 4개 (test_size=0.3, random_state=1, stratify=y)</li><li><code>counts_train</code>: 학습 세트의 [사망 수, 생존 수] (np.bincount)</li><li><code>surv_test</code>: 테스트 세트 생존 비율</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\n# 1. 나눈 결과 4개 (test_size=0.3, random_state=1, stratify=y)\nsplit = \n# 2. 학습 세트의 [사망 수, 생존 수] (np.bincount)\ncounts_train = \n# 3. 테스트 세트 생존 비율\nsurv_test = \n\nX_train, X_test, y_train, y_test = split\nprint(counts_train, round(surv_test, 3))\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\n# 1. 나눈 결과 4개 (test_size=0.3, random_state=1, stratify=y)\nsplit = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n# 2. 학습 세트의 [사망 수, 생존 수] (np.bincount)\ncounts_train = np.bincount(split[2])\n# 3. 테스트 세트 생존 비율\nsurv_test = split[3].mean()\n\nX_train, X_test, y_train, y_test = split\nprint(counts_train, round(surv_test, 3))\n",
     "hints": [
       "train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 분할 결과 4개 (test_size=0.3, random_state=1, stratify=y)",
-        "expr": "len(split) == 4 and np.shape(split[1]) == (36, 2)",
+        "label": "1단계 나눈 결과 4개 (test_size=0.3, random_state=1, stratify=y)",
+        "expr": "len(split) == 4 and np.shape(split[1]) == (268, 6)",
         "hint": "train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)"
       },
       {
-        "label": "2단계 학습 세트 클래스별 개수 (np.bincount)",
+        "label": "2단계 학습 세트의 [사망 수, 생존 수] (np.bincount)",
         "expr": "list(counts_train) == list(np.bincount(split[2]))",
-        "hint": "np.bincount(y_train)"
+        "hint": "np.bincount(split[2])  (split[2]가 y_train)"
       },
       {
-        "label": "3단계 테스트 세트 해지 비율",
-        "expr": "abs(churn_test - np.asarray(split[3]).mean()) < 1e-12",
-        "hint": "y_test.mean()"
+        "label": "3단계 테스트 세트 생존 비율",
+        "expr": "abs(surv_test - np.asarray(split[3]).mean()) < 1e-12",
+        "hint": "split[3].mean()"
       }
     ]
   },
@@ -1154,7 +1154,7 @@ export const SM_PROBLEMS = [
     "domain": "general",
     "title": "누수 없는 표준화",
     "type": "steps",
-    "level": 3,
+    "level": 2,
     "uses": [
       [
         "StandardScaler().fit(X_train)",
@@ -1162,37 +1162,32 @@ export const SM_PROBLEMS = [
       ],
       [
         "scaler.transform(X_test)",
-        "같은 기준으로 변환"
+        "같은 기준으로 바꾸기"
       ]
     ],
     "origin": "신규",
-    "desc": "<p>표준화 기준(평균, 표준편차)은 학습 데이터로만 정하고, 테스트 데이터에는 <code>transform</code>만 적용합니다.</p>\n<ol><li><code>scaler</code>: 학습 데이터로 fit 한 StandardScaler</li><li><code>Xtr_s</code>: 변환된 학습 데이터</li><li><code>Xte_s</code>: 변환된 테스트 데이터</li><li><code>test_mean_is_zero</code>: 테스트 데이터 열 평균이 정확히 0인가 (np.allclose)</li></ol>\n<p class=\"qc\">테스트 평균이 0이 아닌 것이 정상입니다. 테스트까지 함께 fit 하면 0이 되지만, 그건 미래 데이터를 미리 본 누수입니다.</p>",
-    "starter": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n\n# 1. 학습 데이터로 fit 한 StandardScaler\nscaler = \n# 2. 변환된 학습 데이터\nXtr_s = \n# 3. 변환된 테스트 데이터\nXte_s = \n# 4. 테스트 데이터 열 평균이 정확히 0인가 (np.allclose)\ntest_mean_is_zero = \n\nprint(scaler.mean_.round(2), Xte_s.mean(axis=0).round(3), test_mean_is_zero)\n",
-    "solution": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n\n# 1. 학습 데이터로 fit 한 StandardScaler\nscaler = StandardScaler().fit(X_train)\n# 2. 변환된 학습 데이터\nXtr_s = scaler.transform(X_train)\n# 3. 변환된 테스트 데이터\nXte_s = scaler.transform(X_test)\n# 4. 테스트 데이터 열 평균이 정확히 0인가 (np.allclose)\ntest_mean_is_zero = bool(np.allclose(Xte_s.mean(axis=0), 0))\n\nprint(scaler.mean_.round(2), Xte_s.mean(axis=0).round(3), test_mean_is_zero)\n",
+    "desc": "<p><b>데이터</b>: 머신러닝 입문용으로 가장 유명한 타이타닉 승객 데이터(891명)입니다. <code>X</code>의 열은 <code>pclass</code>(객실 등급 1~3), <code>female</code>(여성 1), <code>age</code>(나이), <code>sibsp</code>(함께 탄 형제·배우자 수), <code>parch</code>(함께 탄 부모·자녀 수), <code>fare</code>(운임)이고, <code>y</code>는 생존 여부(1 생존)입니다. 시작 코드가 <code>pd.read_csv('titanic.csv')</code>로 불러와 준비해 둡니다.</p><p>나이(0~80)와 운임(0~500)은 숫자 크기가 많이 다릅니다. 표준화로 크기를 맞추되, 기준(평균·표준편차)은 <b>학습 데이터로만</b> 정합니다.</p>\n<ol><li><code>scaler</code>: X_train으로 fit 한 StandardScaler</li><li><code>Xte_s</code>: 같은 scaler로 바꾼 테스트 데이터</li><li><code>test_mean</code>: 바뀐 테스트 데이터의 열 평균 (딱 0은 아님)</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n\n# 1. X_train으로 fit 한 StandardScaler\nscaler = \n# 2. 같은 scaler로 바꾼 테스트 데이터\nXte_s = \n# 3. 바뀐 테스트 데이터의 열 평균 (딱 0은 아님)\ntest_mean = \n\nprint(scaler.mean_.round(2))\nprint(test_mean.round(3))\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n\n# 1. X_train으로 fit 한 StandardScaler\nscaler = StandardScaler().fit(X_train)\n# 2. 같은 scaler로 바꾼 테스트 데이터\nXte_s = scaler.transform(X_test)\n# 3. 바뀐 테스트 데이터의 열 평균 (딱 0은 아님)\ntest_mean = Xte_s.mean(axis=0)\n\nprint(scaler.mean_.round(2))\nprint(test_mean.round(3))\n",
     "hints": [
       "StandardScaler().fit(X_train)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 학습 데이터로 fit 한 StandardScaler",
+        "label": "1단계 X_train으로 fit 한 StandardScaler",
         "expr": "np.allclose(scaler.mean_, X_train.mean(axis=0))",
         "hint": "StandardScaler().fit(X_train)"
       },
       {
-        "label": "2단계 변환된 학습 데이터",
-        "expr": "np.allclose(Xtr_s.mean(axis=0), 0)",
-        "hint": "scaler.transform(X_train)"
-      },
-      {
-        "label": "3단계 변환된 테스트 데이터",
+        "label": "2단계 같은 scaler로 바꾼 테스트 데이터",
         "expr": "np.allclose(Xte_s, (X_test - X_train.mean(axis=0)) / X_train.std(axis=0))",
-        "hint": "scaler.transform(X_test)  (fit 하지 않음!)"
+        "hint": "scaler.transform(X_test)  (다시 fit 하지 않습니다)"
       },
       {
-        "label": "4단계 테스트 데이터 열 평균이 정확히 0인가 (np.allclose)",
-        "expr": "test_mean_is_zero == False",
-        "hint": "np.allclose(Xte_s.mean(axis=0), 0)"
+        "label": "3단계 바뀐 테스트 데이터의 열 평균 (딱 0은 아님)",
+        "expr": "np.allclose(test_mean, ((X_test - X_train.mean(axis=0)) / X_train.std(axis=0)).mean(axis=0))",
+        "hint": "Xte_s.mean(axis=0)"
       }
     ]
   },
@@ -1257,47 +1252,42 @@ export const SM_PROBLEMS = [
     "id": "18-2",
     "unit": 18,
     "domain": "mfg",
-    "title": "불량 확률 예측 (로지스틱 회귀)",
+    "title": "고장 확률 예측 (로지스틱 회귀)",
     "type": "steps",
-    "level": 3,
+    "level": 2,
     "uses": [
       [
-        "LogisticRegression().fit(X, y)",
-        "학습"
+        "make_pipeline(StandardScaler(), LogisticRegression())",
+        "크기 맞추기 + 로지스틱 회귀"
       ],
       [
         ".predict_proba(X)[:, 1]",
-        "불량일 확률"
+        "고장일 확률"
       ]
     ],
     "origin": "신규",
-    "desc": "<p>도금 로트 데이터로 로지스틱 회귀를 학습하고, 새 로트 두 개의 불량 확률을 구합니다.</p>\n<ol><li><code>clf</code>: 학습된 LogisticRegression</li><li><code>proba</code>: 새 로트들의 불량 확률 (길이 2 배열)</li><li><code>train_acc</code>: 학습 데이터 정확도 (clf.score)</li><li><code>temp_effect</code>: 온도 계수가 양수인가 (clf.coef_[0][0] &gt; 0)</li></ol>",
-    "starter": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.linear_model import LogisticRegression\n\nnew_lots = np.array([[56.0, 3.5], [50.0, 2.6]])\n\n# 1. 학습된 LogisticRegression\nclf = \n# 2. 새 로트들의 불량 확률 (길이 2 배열)\nproba = \n# 3. 학습 데이터 정확도 (clf.score)\ntrain_acc = \n# 4. 온도 계수가 양수인가 (clf.coef_[0][0] > 0)\ntemp_effect = \n\nprint(proba.round(3), round(train_acc, 3), temp_effect)\n",
-    "solution": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.linear_model import LogisticRegression\n\nnew_lots = np.array([[56.0, 3.5], [50.0, 2.6]])\n\n# 1. 학습된 LogisticRegression\nclf = LogisticRegression().fit(X, y)\n# 2. 새 로트들의 불량 확률 (길이 2 배열)\nproba = clf.predict_proba(new_lots)[:, 1]\n# 3. 학습 데이터 정확도 (clf.score)\ntrain_acc = clf.score(X, y)\n# 4. 온도 계수가 양수인가 (clf.coef_[0][0] > 0)\ntemp_effect = clf.coef_[0][0] > 0\n\nprint(proba.round(3), round(train_acc, 3), temp_effect)\n",
+    "desc": "<p><b>데이터</b>: 실제 공개 데이터인 AI4I 2020 설비 고장 데이터(1만 건)입니다. 열은 <code>air_temp</code>(주변 온도, K), <code>process_temp</code>(공정 온도, K), <code>rpm</code>(회전수), <code>torque</code>(토크, Nm), <code>tool_wear</code>(공구 사용 시간, 분), <code>failure</code>(고장 1 / 정상 0)이고, 고장은 약 3.4%로 드뭅니다. 시작 코드가 <code>pd.read_csv('ai4i2020.csv')</code>로 불러와 <code>X</code>(5개 열), <code>y</code>(고장 여부)를 만들어 둡니다.</p><p>로지스틱 회귀로 고장 확률을 예측합니다. <code>new_machines</code>는 새로 측정한 설비 2대입니다(첫 번째는 토크와 공구 사용 시간이 큼).</p>\n<ol><li><code>clf</code>: X, y로 학습한 파이프라인 (StandardScaler + LogisticRegression)</li><li><code>proba</code>: 두 설비의 고장 확률 (길이 2 배열)</li><li><code>torque_up</code>: 토크 계수가 양수인지 (토크가 크면 고장 확률↑)</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\nnew_machines = np.array([[302.0, 311.0, 1300, 65.0, 210],\n                         [300.0, 310.0, 1500, 40.0, 50]])\n\n# 1. X, y로 학습한 파이프라인 (StandardScaler + LogisticRegression)\nclf = \n# 2. 두 설비의 고장 확률 (길이 2 배열)\nproba = \n# 3. 토크 계수가 양수인지 (토크가 크면 고장 확률↑)\ntorque_up = \n\nprint(proba.round(3), torque_up)\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\nnew_machines = np.array([[302.0, 311.0, 1300, 65.0, 210],\n                         [300.0, 310.0, 1500, 40.0, 50]])\n\n# 1. X, y로 학습한 파이프라인 (StandardScaler + LogisticRegression)\nclf = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)\n# 2. 두 설비의 고장 확률 (길이 2 배열)\nproba = clf.predict_proba(new_machines)[:, 1]\n# 3. 토크 계수가 양수인지 (토크가 크면 고장 확률↑)\ntorque_up = bool(clf[-1].coef_[0][3] > 0)\n\nprint(proba.round(3), torque_up)\n",
     "hints": [
-      "LogisticRegression().fit(X, y)",
+      "make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 학습된 LogisticRegression",
-        "expr": "hasattr(clf, 'coef_') and clf.coef_.shape == (1, 2)",
-        "hint": "LogisticRegression().fit(X, y)"
+        "label": "1단계 X, y로 학습한 파이프라인 (StandardScaler + LogisticRegression)",
+        "expr": "hasattr(clf, 'predict_proba')",
+        "hint": "make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)"
       },
       {
-        "label": "2단계 새 로트들의 불량 확률 (길이 2 배열)",
+        "label": "2단계 두 설비의 고장 확률 (길이 2 배열)",
         "expr": "np.shape(proba) == (2,) and proba[0] > 0.5 > proba[1]",
-        "hint": "clf.predict_proba(new_lots)[:, 1]"
+        "hint": "clf.predict_proba(new_machines)[:, 1]"
       },
       {
-        "label": "3단계 학습 데이터 정확도 (clf.score)",
-        "expr": "0.85 <= train_acc <= 1",
-        "hint": "clf.score(X, y)"
-      },
-      {
-        "label": "4단계 온도 계수가 양수인가 (clf.coef_[0][0] > 0)",
-        "expr": "bool(temp_effect) is True",
-        "hint": "clf.coef_[0][0] > 0"
+        "label": "3단계 토크 계수가 양수인지 (토크가 크면 고장 확률↑)",
+        "expr": "torque_up == bool(clf[-1].coef_[0][3] > 0)",
+        "hint": "clf[-1].coef_[0][3] > 0  (features에서 torque는 3번)"
       }
     ]
   },
@@ -1353,13 +1343,13 @@ export const SM_PROBLEMS = [
     "id": "18-4",
     "unit": 18,
     "domain": "general",
-    "title": "해지 확률 예측 (로지스틱 회귀)",
+    "title": "생존 확률 예측 (로지스틱 회귀)",
     "type": "steps",
-    "level": 3,
+    "level": 2,
     "uses": [
       [
         "LogisticRegression",
-        "로지스틱 회귀"
+        "확률을 내는 분류 모델"
       ],
       [
         ".predict_proba",
@@ -1371,33 +1361,28 @@ export const SM_PROBLEMS = [
       ]
     ],
     "origin": "신규",
-    "desc": "<p>구독 고객 데이터로 해지 확률을 예측합니다.</p>\n<ol><li><code>clf</code>: 학습된 모델</li><li><code>proba</code>: 두 고객의 해지 확률</li><li><code>labels</code>: 0.5 기준 판정</li><li><code>hours_effect</code>: 이용시간 계수가 음수인가</li></ol>",
-    "starter": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.linear_model import LogisticRegression\n\ncustomers = np.array([[10.0, 4.0], [30.0, 1.0]])\n\n# 1. 학습된 모델\nclf = \n# 2. 두 고객의 해지 확률\nproba = \n# 3. 0.5 기준 판정\nlabels = \n# 4. 이용시간 계수가 음수인가\nhours_effect = \n\nprint(proba.round(3), labels, hours_effect)\n",
-    "solution": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.linear_model import LogisticRegression\n\ncustomers = np.array([[10.0, 4.0], [30.0, 1.0]])\n\n# 1. 학습된 모델\nclf = LogisticRegression().fit(X, y)\n# 2. 두 고객의 해지 확률\nproba = clf.predict_proba(customers)[:, 1]\n# 3. 0.5 기준 판정\nlabels = clf.predict(customers)\n# 4. 이용시간 계수가 음수인가\nhours_effect = clf.coef_[0][0] < 0\n\nprint(proba.round(3), labels, hours_effect)\n",
+    "desc": "<p><b>데이터</b>: 머신러닝 입문용으로 가장 유명한 타이타닉 승객 데이터(891명)입니다. <code>X</code>의 열은 <code>pclass</code>(객실 등급 1~3), <code>female</code>(여성 1), <code>age</code>(나이), <code>sibsp</code>(함께 탄 형제·배우자 수), <code>parch</code>(함께 탄 부모·자녀 수), <code>fare</code>(운임)이고, <code>y</code>는 생존 여부(1 생존)입니다. 시작 코드가 <code>pd.read_csv('titanic.csv')</code>로 불러와 준비해 둡니다.</p><p>두 승객의 생존 확률을 예측합니다. 첫 번째는 1등실 30세 여성(운임 80), 두 번째는 3등실 30세 남성(운임 8)입니다.</p>\n<ol><li><code>clf</code>: X, y로 학습한 파이프라인 (StandardScaler + LogisticRegression)</li><li><code>proba</code>: 두 승객의 생존 확률</li><li><code>labels</code>: 0.5 기준 판정</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\npassengers = np.array([[1, 1, 30, 0, 0, 80.0],\n                       [3, 0, 30, 0, 0, 8.0]])\n\n# 1. X, y로 학습한 파이프라인 (StandardScaler + LogisticRegression)\nclf = \n# 2. 두 승객의 생존 확률\nproba = \n# 3. 0.5 기준 판정\nlabels = \n\nprint(proba.round(3), labels)\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import LogisticRegression\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\npassengers = np.array([[1, 1, 30, 0, 0, 80.0],\n                       [3, 0, 30, 0, 0, 8.0]])\n\n# 1. X, y로 학습한 파이프라인 (StandardScaler + LogisticRegression)\nclf = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)\n# 2. 두 승객의 생존 확률\nproba = clf.predict_proba(passengers)[:, 1]\n# 3. 0.5 기준 판정\nlabels = clf.predict(passengers)\n\nprint(proba.round(3), labels)\n",
     "hints": [
-      "LogisticRegression().fit(X, y)",
+      "make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 학습된 모델",
-        "expr": "hasattr(clf, 'coef_')",
-        "hint": "LogisticRegression().fit(X, y)"
+        "label": "1단계 X, y로 학습한 파이프라인 (StandardScaler + LogisticRegression)",
+        "expr": "hasattr(clf, 'predict_proba')",
+        "hint": "make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)"
       },
       {
-        "label": "2단계 두 고객의 해지 확률",
+        "label": "2단계 두 승객의 생존 확률",
         "expr": "np.shape(proba) == (2,) and proba[0] > 0.5 > proba[1]",
-        "hint": "clf.predict_proba(customers)[:, 1]"
+        "hint": "clf.predict_proba(passengers)[:, 1]"
       },
       {
         "label": "3단계 0.5 기준 판정",
         "expr": "list(labels) == [1, 0]",
-        "hint": "clf.predict(customers)"
-      },
-      {
-        "label": "4단계 이용시간 계수가 음수인가",
-        "expr": "bool(hours_effect) is True",
-        "hint": "clf.coef_[0][0] < 0"
+        "hint": "clf.predict(passengers)"
       }
     ]
   },
@@ -1588,9 +1573,9 @@ export const SM_PROBLEMS = [
     "id": "20-1",
     "unit": 20,
     "domain": "mfg",
-    "title": "결정트리로 불량 판정",
+    "title": "결정트리로 고장 판정",
     "type": "steps",
-    "level": 2,
+    "level": 1,
     "uses": [
       [
         "DecisionTreeClassifier(max_depth, random_state)",
@@ -1598,37 +1583,32 @@ export const SM_PROBLEMS = [
       ],
       [
         ".feature_importances_",
-        "피처 중요도"
+        "어떤 열을 많이 썼나"
       ]
     ],
     "origin": "신규",
-    "desc": "<p>도금 로트 데이터로 깊이 3인 결정트리를 학습합니다. 열 0은 온도, 열 1은 전류밀도입니다.</p>\n<ol><li><code>tree</code>: 학습된 트리 (max_depth=3, random_state=0)</li><li><code>test_acc</code>: 테스트 정확도</li><li><code>importances</code>: 피처 중요도 배열</li><li><code>top_feature</code>: 가장 중요한 열 번호 (int)</li></ol>",
-    "starter": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습된 트리 (max_depth=3, random_state=0)\ntree = \n# 2. 테스트 정확도\ntest_acc = \n# 3. 피처 중요도 배열\nimportances = \n# 4. 가장 중요한 열 번호 (int)\ntop_feature = \n\nprint(round(test_acc, 3), importances.round(3), top_feature)\n",
-    "solution": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습된 트리 (max_depth=3, random_state=0)\ntree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)\n# 2. 테스트 정확도\ntest_acc = tree.score(X_test, y_test)\n# 3. 피처 중요도 배열\nimportances = tree.feature_importances_\n# 4. 가장 중요한 열 번호 (int)\ntop_feature = int(np.argmax(importances))\n\nprint(round(test_acc, 3), importances.round(3), top_feature)\n",
+    "desc": "<p><b>데이터</b>: 실제 공개 데이터인 AI4I 2020 설비 고장 데이터(1만 건)입니다. 열은 <code>air_temp</code>(주변 온도, K), <code>process_temp</code>(공정 온도, K), <code>rpm</code>(회전수), <code>torque</code>(토크, Nm), <code>tool_wear</code>(공구 사용 시간, 분), <code>failure</code>(고장 1 / 정상 0)이고, 고장은 약 3.4%로 드뭅니다. 시작 코드가 <code>pd.read_csv('ai4i2020.csv')</code>로 불러와 <code>X</code>(5개 열), <code>y</code>(고장 여부)를 만들어 둡니다.</p><p>깊이 3인 결정트리를 학습하고, 트리가 어떤 열을 가장 많이 썼는지 봅니다.</p>\n<ol><li><code>tree</code>: 학습한 트리 (max_depth=3, random_state=0)</li><li><code>test_acc</code>: 테스트 정확도</li><li><code>top</code>: 가장 중요한 열 이름 (features에서 꺼내기)</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습한 트리 (max_depth=3, random_state=0)\ntree = \n# 2. 테스트 정확도\ntest_acc = \n# 3. 가장 중요한 열 이름 (features에서 꺼내기)\ntop = \n\nprint(round(test_acc, 4), top)\nprint({f: round(float(v), 3) for f, v in zip(features, tree.feature_importances_)})\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습한 트리 (max_depth=3, random_state=0)\ntree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)\n# 2. 테스트 정확도\ntest_acc = tree.score(X_test, y_test)\n# 3. 가장 중요한 열 이름 (features에서 꺼내기)\ntop = features[int(np.argmax(tree.feature_importances_))]\n\nprint(round(test_acc, 4), top)\nprint({f: round(float(v), 3) for f, v in zip(features, tree.feature_importances_)})\n",
     "hints": [
       "DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 학습된 트리 (max_depth=3, random_state=0)",
+        "label": "1단계 학습한 트리 (max_depth=3, random_state=0)",
         "expr": "tree.get_depth() <= 3",
         "hint": "DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)"
       },
       {
         "label": "2단계 테스트 정확도",
-        "expr": "abs(test_acc - tree.score(X_test, y_test)) < 1e-12 and test_acc >= 0.7",
+        "expr": "abs(test_acc - tree.score(X_test, y_test)) < 1e-12",
         "hint": "tree.score(X_test, y_test)"
       },
       {
-        "label": "3단계 피처 중요도 배열",
-        "expr": "np.isclose(np.sum(importances), 1)",
-        "hint": "tree.feature_importances_"
-      },
-      {
-        "label": "4단계 가장 중요한 열 번호 (int)",
-        "expr": "top_feature == int(np.argmax(tree.feature_importances_))",
-        "hint": "int(np.argmax(importances))"
+        "label": "3단계 가장 중요한 열 이름 (features에서 꺼내기)",
+        "expr": "top == features[int(np.argmax(tree.feature_importances_))]",
+        "hint": "features[np.argmax(tree.feature_importances_)]"
       }
     ]
   },
@@ -1638,7 +1618,7 @@ export const SM_PROBLEMS = [
     "domain": "mfg",
     "title": "깊이와 과적합",
     "type": "steps",
-    "level": 3,
+    "level": 2,
     "uses": [
       [
         "for d in depths",
@@ -1650,28 +1630,23 @@ export const SM_PROBLEMS = [
       ]
     ],
     "origin": "신규",
-    "desc": "<p>트리 깊이 1, 2, 4, 8, None(끝까지)에서 학습·테스트 정확도를 비교합니다.</p>\n<ol><li><code>train_scores</code>: 깊이별 학습 정확도 리스트</li><li><code>test_scores</code>: 깊이별 테스트 정확도 리스트</li><li><code>gap_full</code>: 깊이 None에서 (학습 − 테스트) 정확도 차이</li></ol>",
-    "starter": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\ndepths = [1, 2, 4, 8, None]\n\n# 1. 깊이별 학습 정확도 리스트\ntrain_scores = \n# 2. 깊이별 테스트 정확도 리스트\ntest_scores = \n# 3. 깊이 None에서 (학습 − 테스트) 정확도 차이\ngap_full = \n\nfor d, a, b in zip(depths, train_scores, test_scores):\n    print(d, round(a, 3), round(b, 3))\nprint(\"gap\", round(gap_full, 3))\n",
-    "solution": "import numpy as np\n\n# 도금 공정 120개 로트: 온도(℃), 전류밀도(A/dm²), 불량 여부(1 = 불량)\ni = np.arange(120)\ntemp = 52 + 4 * np.sin(i * 0.37) + 1.5 * np.cos(i * 1.91)\ncurrent = 3.0 + 0.6 * np.cos(i * 0.53) + 0.25 * np.sin(i * 2.71)\nX = np.column_stack([temp, current])\ny = (((temp - 52) / 4 + (current - 3.0) / 0.6 + 0.7 * np.sin(i * 3.33)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\ndepths = [1, 2, 4, 8, None]\n\n# 1. 깊이별 학습 정확도 리스트\ntrain_scores = [DecisionTreeClassifier(max_depth=d, random_state=0).fit(X_train, y_train).score(X_train, y_train) for d in depths]\n# 2. 깊이별 테스트 정확도 리스트\ntest_scores = [DecisionTreeClassifier(max_depth=d, random_state=0).fit(X_train, y_train).score(X_test, y_test) for d in depths]\n# 3. 깊이 None에서 (학습 − 테스트) 정확도 차이\ngap_full = train_scores[-1] - test_scores[-1]\n\nfor d, a, b in zip(depths, train_scores, test_scores):\n    print(d, round(a, 3), round(b, 3))\nprint(\"gap\", round(gap_full, 3))\n",
+    "desc": "<p><b>데이터</b>: 실제 공개 데이터인 AI4I 2020 설비 고장 데이터(1만 건)입니다. 열은 <code>air_temp</code>(주변 온도, K), <code>process_temp</code>(공정 온도, K), <code>rpm</code>(회전수), <code>torque</code>(토크, Nm), <code>tool_wear</code>(공구 사용 시간, 분), <code>failure</code>(고장 1 / 정상 0)이고, 고장은 약 3.4%로 드뭅니다. 시작 코드가 <code>pd.read_csv('ai4i2020.csv')</code>로 불러와 <code>X</code>(5개 열), <code>y</code>(고장 여부)를 만들어 둡니다.</p><p>트리 깊이 1, 2, 4, 8, None(끝까지)에서 학습·테스트 정확도를 비교합니다. 끝까지 자라면 학습 정확도는 1.0이 됩니다.</p>\n<ol><li><code>train_scores</code>: 깊이별 학습 정확도 리스트</li><li><code>test_scores</code>: 깊이별 테스트 정확도 리스트</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\ndepths = [1, 2, 4, 8, None]\n\n# 1. 깊이별 학습 정확도 리스트\ntrain_scores = \n# 2. 깊이별 테스트 정확도 리스트\ntest_scores = \n\nfor d, a, b in zip(depths, train_scores, test_scores):\n    print(d, round(a, 4), round(b, 4))\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\n# AI4I 2020 설비 고장 데이터 (UCI 공개 데이터, 1만 건). failure = 1 이면 고장\ndf = pd.read_csv('ai4i2020.csv')\nfeatures = ['air_temp', 'process_temp', 'rpm', 'torque', 'tool_wear']\nX = df[features].values\ny = df['failure'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\ndepths = [1, 2, 4, 8, None]\n\n# 1. 깊이별 학습 정확도 리스트\ntrain_scores = [DecisionTreeClassifier(max_depth=d, random_state=0).fit(X_train, y_train).score(X_train, y_train) for d in depths]\n# 2. 깊이별 테스트 정확도 리스트\ntest_scores = [DecisionTreeClassifier(max_depth=d, random_state=0).fit(X_train, y_train).score(X_test, y_test) for d in depths]\n\nfor d, a, b in zip(depths, train_scores, test_scores):\n    print(d, round(a, 4), round(b, 4))\n",
     "hints": [
-      "for 문이나 리스트 컴프리헨션으로 depths를 돌며 fit → score(X_train, y_train)",
+      "[DecisionTreeClassifier(max_depth=d, random_state=0).fit(X_train, y_train).score(X_train, y_train) for d in depths]",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
         "label": "1단계 깊이별 학습 정확도 리스트",
-        "expr": "len(train_scores) == 5 and train_scores[-1] == 1.0 and train_scores[0] <= train_scores[-1]",
-        "hint": "for 문이나 리스트 컴프리헨션으로 depths를 돌며 fit → score(X_train, y_train)"
+        "expr": "len(train_scores) == 5 and train_scores[-1] == 1.0",
+        "hint": "[DecisionTreeClassifier(max_depth=d, random_state=0).fit(X_train, y_train).score(X_train, y_train) for d in depths]"
       },
       {
         "label": "2단계 깊이별 테스트 정확도 리스트",
         "expr": "len(test_scores) == 5 and all(0 <= s <= 1 for s in test_scores)",
         "hint": "같은 방식으로 score(X_test, y_test)"
-      },
-      {
-        "label": "3단계 깊이 None에서 (학습 − 테스트) 정확도 차이",
-        "expr": "abs(gap_full - (train_scores[-1] - test_scores[-1])) < 1e-12 and gap_full > 0",
-        "hint": "train_scores[-1] - test_scores[-1]"
       }
     ]
   },
@@ -1679,9 +1654,9 @@ export const SM_PROBLEMS = [
     "id": "20-3",
     "unit": 20,
     "domain": "general",
-    "title": "해지 예측 트리와 중요 피처",
+    "title": "타이타닉 생존 트리",
     "type": "steps",
-    "level": 2,
+    "level": 1,
     "uses": [
       [
         "DecisionTreeClassifier",
@@ -1693,18 +1668,18 @@ export const SM_PROBLEMS = [
       ]
     ],
     "origin": "신규",
-    "desc": "<p>구독 고객 데이터로 깊이 3 트리를 학습합니다. 열 0은 이용시간, 열 1은 문의 수입니다.</p>\n<ol><li><code>tree</code>: 학습된 트리 (max_depth=3, random_state=0)</li><li><code>test_acc</code>: 테스트 정확도</li><li><code>top_feature</code>: 가장 중요한 열 번호</li></ol>",
-    "starter": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n\n# 1. 학습된 트리 (max_depth=3, random_state=0)\ntree = \n# 2. 테스트 정확도\ntest_acc = \n# 3. 가장 중요한 열 번호\ntop_feature = \n\nprint(round(test_acc, 3), top_feature)\n",
-    "solution": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n\n# 1. 학습된 트리 (max_depth=3, random_state=0)\ntree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)\n# 2. 테스트 정확도\ntest_acc = tree.score(X_test, y_test)\n# 3. 가장 중요한 열 번호\ntop_feature = int(np.argmax(tree.feature_importances_))\n\nprint(round(test_acc, 3), top_feature)\n",
+    "desc": "<p><b>데이터</b>: 머신러닝 입문용으로 가장 유명한 타이타닉 승객 데이터(891명)입니다. <code>X</code>의 열은 <code>pclass</code>(객실 등급 1~3), <code>female</code>(여성 1), <code>age</code>(나이), <code>sibsp</code>(함께 탄 형제·배우자 수), <code>parch</code>(함께 탄 부모·자녀 수), <code>fare</code>(운임)이고, <code>y</code>는 생존 여부(1 생존)입니다. 시작 코드가 <code>pd.read_csv('titanic.csv')</code>로 불러와 준비해 둡니다.</p><p>깊이 3 트리로 생존을 예측하고, 가장 중요하게 쓰인 열을 찾습니다.</p>\n<ol><li><code>tree</code>: 학습한 트리 (max_depth=3, random_state=0)</li><li><code>test_acc</code>: 테스트 정확도</li><li><code>top</code>: 가장 중요한 열 이름</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습한 트리 (max_depth=3, random_state=0)\ntree = \n# 2. 테스트 정확도\ntest_acc = \n# 3. 가장 중요한 열 이름\ntop = \n\nprint(round(test_acc, 3), top)\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 학습한 트리 (max_depth=3, random_state=0)\ntree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)\n# 2. 테스트 정확도\ntest_acc = tree.score(X_test, y_test)\n# 3. 가장 중요한 열 이름\ntop = features[int(np.argmax(tree.feature_importances_))]\n\nprint(round(test_acc, 3), top)\n",
     "hints": [
-      "DecisionTreeClassifier(max_depth=3, random_state=0)",
+      "DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 학습된 트리 (max_depth=3, random_state=0)",
+        "label": "1단계 학습한 트리 (max_depth=3, random_state=0)",
         "expr": "tree.get_depth() <= 3",
-        "hint": "DecisionTreeClassifier(max_depth=3, random_state=0)"
+        "hint": "DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_train, y_train)"
       },
       {
         "label": "2단계 테스트 정확도",
@@ -1712,9 +1687,9 @@ export const SM_PROBLEMS = [
         "hint": "tree.score(X_test, y_test)"
       },
       {
-        "label": "3단계 가장 중요한 열 번호",
-        "expr": "top_feature == int(np.argmax(tree.feature_importances_))",
-        "hint": "np.argmax(tree.feature_importances_)"
+        "label": "3단계 가장 중요한 열 이름",
+        "expr": "top == features[int(np.argmax(tree.feature_importances_))]",
+        "hint": "features[np.argmax(tree.feature_importances_)]"
       }
     ]
   },
@@ -1724,11 +1699,11 @@ export const SM_PROBLEMS = [
     "domain": "general",
     "title": "트리 하나 vs 랜덤포레스트",
     "type": "steps",
-    "level": 3,
+    "level": 2,
     "uses": [
       [
         "RandomForestClassifier(n_estimators, random_state)",
-        "랜덤포레스트"
+        "트리 여러 개의 투표"
       ],
       [
         ".score",
@@ -1736,18 +1711,18 @@ export const SM_PROBLEMS = [
       ]
     ],
     "origin": "신규",
-    "desc": "<p>끝까지 자란 트리 하나와 트리 100개짜리 랜덤포레스트의 학습·테스트 정확도를 비교합니다.</p>\n<ol><li><code>tree</code>: 깊이 제한 없는 트리 (random_state=0)</li><li><code>forest</code>: 랜덤포레스트 (n_estimators=100, random_state=0)</li><li><code>tree_test</code>: 트리 테스트 정확도</li><li><code>forest_test</code>: 포레스트 테스트 정확도</li></ol>",
-    "starter": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.ensemble import RandomForestClassifier\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n\n# 1. 깊이 제한 없는 트리 (random_state=0)\ntree = \n# 2. 랜덤포레스트 (n_estimators=100, random_state=0)\nforest = \n# 3. 트리 테스트 정확도\ntree_test = \n# 4. 포레스트 테스트 정확도\nforest_test = \n\nprint(\"tree\", round(tree_test, 3), \"forest\", round(forest_test, 3))\n",
-    "solution": "import numpy as np\n\n# 구독 서비스 고객 120명: 월 이용시간(시간), 고객센터 문의 수, 해지 여부(1 = 해지)\ni = np.arange(120)\nhours = 20 + 8 * np.sin(i * 0.41) + 3 * np.cos(i * 1.73)\ncalls = 2.0 + 1.5 * np.cos(i * 0.59) + 0.6 * np.sin(i * 2.37)\nX = np.column_stack([hours, calls])\ny = ((-(hours - 20) / 8 + (calls - 2.0) / 1.5 + 0.7 * np.sin(i * 3.11)) > 1.0).astype(int)\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.ensemble import RandomForestClassifier\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)\n\n# 1. 깊이 제한 없는 트리 (random_state=0)\ntree = DecisionTreeClassifier(random_state=0).fit(X_train, y_train)\n# 2. 랜덤포레스트 (n_estimators=100, random_state=0)\nforest = RandomForestClassifier(n_estimators=100, random_state=0).fit(X_train, y_train)\n# 3. 트리 테스트 정확도\ntree_test = tree.score(X_test, y_test)\n# 4. 포레스트 테스트 정확도\nforest_test = forest.score(X_test, y_test)\n\nprint(\"tree\", round(tree_test, 3), \"forest\", round(forest_test, 3))\n",
+    "desc": "<p><b>데이터</b>: 머신러닝 입문용으로 가장 유명한 타이타닉 승객 데이터(891명)입니다. <code>X</code>의 열은 <code>pclass</code>(객실 등급 1~3), <code>female</code>(여성 1), <code>age</code>(나이), <code>sibsp</code>(함께 탄 형제·배우자 수), <code>parch</code>(함께 탄 부모·자녀 수), <code>fare</code>(운임)이고, <code>y</code>는 생존 여부(1 생존)입니다. 시작 코드가 <code>pd.read_csv('titanic.csv')</code>로 불러와 준비해 둡니다.</p><p>끝까지 자란 트리 하나와 트리 100개짜리 랜덤포레스트를 비교합니다.</p>\n<ol><li><code>tree_test</code>: 깊이 제한 없는 트리(random_state=0)의 테스트 정확도</li><li><code>forest</code>: 랜덤포레스트 (n_estimators=100, random_state=0)</li><li><code>forest_test</code>: 포레스트 테스트 정확도</li></ol>",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.ensemble import RandomForestClassifier\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 깊이 제한 없는 트리(random_state=0)의 테스트 정확도\ntree_test = \n# 2. 랜덤포레스트 (n_estimators=100, random_state=0)\nforest = \n# 3. 포레스트 테스트 정확도\nforest_test = \n\nprint('tree', round(tree_test, 3), 'forest', round(forest_test, 3))\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.ensemble import RandomForestClassifier\n\n# 타이타닉 승객 891명. survived = 1 이면 생존\ndf = pd.read_csv('titanic.csv')\ndf['female'] = (df['sex'] == 'female').astype(int)   # 여성이면 1\ndf['age'] = df['age'].fillna(df['age'].median())     # 비어 있는 나이는 중앙값으로 채움\nfeatures = ['pclass', 'female', 'age', 'sibsp', 'parch', 'fare']\nX = df[features].values\ny = df['survived'].values\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)\n\n# 1. 깊이 제한 없는 트리(random_state=0)의 테스트 정확도\ntree_test = DecisionTreeClassifier(random_state=0).fit(X_train, y_train).score(X_test, y_test)\n# 2. 랜덤포레스트 (n_estimators=100, random_state=0)\nforest = RandomForestClassifier(n_estimators=100, random_state=0).fit(X_train, y_train)\n# 3. 포레스트 테스트 정확도\nforest_test = forest.score(X_test, y_test)\n\nprint('tree', round(tree_test, 3), 'forest', round(forest_test, 3))\n",
     "hints": [
-      "DecisionTreeClassifier(random_state=0).fit(X_train, y_train)",
+      "DecisionTreeClassifier(random_state=0).fit(X_train, y_train).score(X_test, y_test)",
       "변수 이름을 바꾸지 말고 = 오른쪽만 채우세요. print 줄로 값을 확인할 수 있습니다."
     ],
     "checks": [
       {
-        "label": "1단계 깊이 제한 없는 트리 (random_state=0)",
-        "expr": "tree.score(X_train, y_train) == 1.0",
-        "hint": "DecisionTreeClassifier(random_state=0).fit(X_train, y_train)"
+        "label": "1단계 깊이 제한 없는 트리(random_state=0)의 테스트 정확도",
+        "expr": "abs(tree_test - DecisionTreeClassifier(random_state=0).fit(X_train, y_train).score(X_test, y_test)) < 1e-12",
+        "hint": "DecisionTreeClassifier(random_state=0).fit(X_train, y_train).score(X_test, y_test)"
       },
       {
         "label": "2단계 랜덤포레스트 (n_estimators=100, random_state=0)",
@@ -1755,12 +1730,7 @@ export const SM_PROBLEMS = [
         "hint": "RandomForestClassifier(n_estimators=100, random_state=0).fit(X_train, y_train)"
       },
       {
-        "label": "3단계 트리 테스트 정확도",
-        "expr": "abs(tree_test - tree.score(X_test, y_test)) < 1e-12",
-        "hint": "tree.score(X_test, y_test)"
-      },
-      {
-        "label": "4단계 포레스트 테스트 정확도",
+        "label": "3단계 포레스트 테스트 정확도",
         "expr": "abs(forest_test - forest.score(X_test, y_test)) < 1e-12 and forest_test >= 0.7",
         "hint": "forest.score(X_test, y_test)"
       }

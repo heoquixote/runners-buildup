@@ -17,6 +17,9 @@ FILENAME = "<내 코드>"
 # Pyodide는 시작할 때 MPLBACKEND를 브라우저용 백엔드(js.document 사용)로 미리 채워 두는데,
 # Web Worker에는 document가 없어 ImportError가 난다. 그래서 setdefault가 아니라 덮어쓴다.
 os.environ["MPLBACKEND"] = "Agg"
+# 예제 데이터셋(titanic.csv, ai4i2020.csv 등)이 놓이는 폴더. 브라우저에서는 worker.js 가 코드에 파일 이름이
+# 보이면 사이트의 datasets/ 에서 받아 /datasets 에 써 두고, 로컬 검증은 RB_DATASETS 로 저장소의 datasets/ 를 가리킨다.
+DATASET_DIR = os.environ.get("RB_DATASETS", "/datasets")
 
 HINTS = {
     "NameError": "변수나 함수 이름의 철자, 그리고 사용하기 전에 정의했는지 확인하세요.",
@@ -205,6 +208,20 @@ def _call_solution(ns, args):
         sys.stdout = old_out
 
 
+def _link_datasets(path, files):
+    """예제 데이터셋을 작업 폴더에서 pd.read_csv('titanic.csv') 처럼 이름만으로 열 수 있게 한다."""
+    if not os.path.isdir(DATASET_DIR):
+        return
+    for name in os.listdir(DATASET_DIR):
+        if name in files or not name.endswith(".csv"):
+            continue
+        src, dst = os.path.join(DATASET_DIR, name), os.path.join(path, name)
+        try:
+            os.symlink(src, dst)
+        except OSError:
+            shutil.copyfile(src, dst)
+
+
 @contextlib.contextmanager
 def _workdir(problem, test=None):
     """파일 입출력 문제용: 빈 임시 폴더에 문제 파일을 만들어 두고 그 안에서 실행한다."""
@@ -216,6 +233,7 @@ def _workdir(problem, test=None):
         for name, text in files.items():
             with open(os.path.join(path, name), "w", encoding="utf-8", newline="") as f:
                 f.write(text)
+        _link_datasets(path, files)
         os.chdir(path)
         yield path
     finally:

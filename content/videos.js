@@ -1,7 +1,9 @@
 // 데이터러너즈 영상 카탈로그.
 // kind: "motion"(새로 만드는 모션그래픽 단편) | "lecture"(기존 강의 영상의 구간)
-// status: "planned"(제작 예정) | "producing"(제작 중) | "published"(공개). youtube_id 가 있어야 재생된다.
-// ep 는 유튜브 제작 대기열 시트의 ep 번호와 같다. 영상이 올라오면 youtube_id 와 status 만 채우면 된다.
+// status: "planned"(제작 예정) | "producing"(제작 중) | "published"(공개).
+// ep 는 유튜브 제작 대기열 시트의 ep 번호와 같다. 영상이 올라오면 시트의 release_url(유튜브 주소)을
+// release_url 에 붙여 넣거나 youtube_id 를 채우면, 레슨 본문의 ::video 자리에서 바로 재생된다(나머지는 '영상 준비 중').
+// 영상은 트랙 페이지에 따로 모으지 않고, 관련 레슨 본문 안 흐름에 맞는 위치에 ::video{ref="dl-mNN"} 로 넣는다.
 export const VIDEOS = [
   { id: "dl-m01", ep: 1, kind: "motion", track: "python-da", title: "NumPy 브로드캐스팅", concepts: ["np.broadcast"], length: "2분", brief: "(3,1) + (1,4) 배열이 늘어나 (3,4)가 되는 과정과 형상이 안 맞아 에러가 나는 경우", youtube_id: null, status: "planned" },
   { id: "dl-m02", ep: 2, kind: "motion", track: "python-da", title: "axis=0 / axis=1", concepts: ["np.axis"], length: "1.5분", brief: "sum·mean·concat·drop에서 데이터가 어느 방향으로 접히는지", youtube_id: null, status: "planned" },
