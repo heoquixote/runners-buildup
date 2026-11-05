@@ -62,7 +62,9 @@ export const CONCEPTS = {
   "sql.window": { name: "윈도우 함수", track: "sql" },
   "sql.analytics": { name: "실무 분석 쿼리", track: "sql" },
   // 통계
+  "st.intro": { name: "통계란 · 모집단과 표본 · 척도", track: "stats" },
   "st.descriptive": { name: "기술통계", track: "stats" },
+  "st.probability": { name: "확률 · 조건부확률 · 베이즈", track: "stats" },
   "st.distribution": { name: "확률분포", track: "stats" },
   "st.clt": { name: "표본분포와 중심극한정리", track: "stats" },
   "st.ci": { name: "신뢰구간", track: "stats" },
@@ -71,6 +73,7 @@ export const CONCEPTS = {
   "st.chi-anova": { name: "카이제곱 · ANOVA", track: "stats" },
   "st.regression": { name: "상관과 회귀", track: "stats" },
   "st.abtest": { name: "A/B 테스트", track: "stats" },
+  "st.causal": { name: "상관과 인과 · 결과 보고", track: "stats" },
   // 머신러닝
   "ml.intro": { name: "머신러닝이란", track: "ml" },
   "ml.workflow": { name: "ML 워크플로와 데이터 분할", track: "ml" },

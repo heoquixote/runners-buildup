@@ -392,62 +392,186 @@ export const COURSES = [
       ] }] },
 
   // ── 통계 ─────────────────────────────────────────────────
-  { id: "st-01", track: "stats", title: "기술통계", summary: "평균·중앙값·분산, 사분위수, IQR 이상치, 변동계수", unit: 12, level: "입문",
+  // 코스 · 레슨 id는 유지하고 레슨을 나눴다(2026-11-05). DAY 번호는 아래 배열 순서로 정해진다. 기획안: docs/lesson-plans/stats.md
+  { id: "st-00", track: "stats", intro: true, title: "통계 시작하기", summary: "통계가 하는 일(기술 · 추론), 모집단과 표본, 변수와 척도", level: "입문",
+    concepts: ["st.intro"],
+    lessons: [
+      { id: "st-00-1", title: "통계는 왜 배울까", minutes: 12, concepts: ["st.intro"],
+        quiz: [
+          { kind: "choice", q: "다음 중 추론통계 문장은?", options: ["계산서 244장의 평균 팁은 3.00달러다", "일요일 계산서의 평균 팁이 토요일보다 0.26달러 높다", "이 식당 손님 전체로 봐도 일요일 팁이 더 많을 것이다", "가장 많이 온 요일은 토요일이다"], answer: 2, explain: "가진 데이터 밖(손님 전체)으로 말을 넓히는 문장이 추론통계입니다. 나머지는 가진 데이터를 요약한 기술통계입니다." },
+          { kind: "ox", q: "데이터가 아주 많으면 표본이 한쪽으로 쏠려 있어도(편향) 문제가 저절로 사라진다.", answer: false, explain: "뽑는 방법이 쏠려 있으면 데이터가 많을수록 틀린 값을 더 확신하게 될 뿐입니다." },
+        ] },
+      { id: "st-00-2", title: "데이터의 재료: 모집단 · 표본 · 변수 · 척도", minutes: 15, concepts: ["st.intro"],
+        quiz: [
+          { kind: "choice", q: "설문의 '만족도 1~5점'은 어떤 척도일까?", options: ["명목척도", "서열척도", "등간척도", "비율척도"], answer: 1, explain: "순서는 있지만 4점과 5점의 간격이 1점과 2점의 간격과 같다고 보기 어려운 서열척도입니다." },
+          { kind: "choice", q: "지역 코드(1 = 서울, 2 = 부산, 3 = 대구)를 요약하는 알맞은 방법은?", options: ["평균", "표준편차", "개수 · 비율 · 최빈값", "중앙값"], answer: 2, explain: "숫자는 이름표일 뿐인 명목척도라서 평균이나 중앙값은 의미가 없습니다." },
+          { kind: "ox", q: "표본에서 계산한 평균(통계량)은 모집단의 평균(모수)과 항상 같다.", answer: false, explain: "표본평균은 모평균을 짐작하는 값으로, 뽑을 때마다 흔들립니다." },
+        ] },
+    ] },
+  { id: "st-01", track: "stats", title: "기술통계", summary: "평균 · 중앙값 · 최빈값, 분산 · 표준편차 · 변동계수, 사분위수와 이상치, 분포의 모양", unit: 12, level: "입문",
     concepts: ["st.descriptive"],
-    lessons: [{ id: "st-01-1", title: "평균만 보면 속는다: 대표값과 흩어짐", minutes: 15, concepts: ["st.descriptive"],
-      quiz: [
-        { kind: "choice", q: "이상치가 있는 데이터의 대표값으로 더 안정적인 것은?", options: ["평균", "중앙값", "최댓값", "합계"], answer: 1, explain: "중앙값은 가운데 순서의 값이라 극단값 하나에 거의 흔들리지 않습니다." },
-        { kind: "ox", q: "표본 데이터의 표준편차는 np.std(x, ddof=1)로 구한다.", answer: true, explain: "ddof=1은 n−1로 나누는 표본 표준편차입니다. NumPy 기본값은 ddof=0입니다." },
-      ] }] },
-  { id: "st-02", track: "stats", title: "확률분포", summary: "이항 · 포아송 · 정규, pmf · cdf · sf · ppf", unit: 13, level: "입문",
+    lessons: [
+      { id: "st-01-1", title: "대표값: 평균 · 중앙값 · 최빈값", minutes: 15, concepts: ["st.descriptive"],
+        quiz: [
+          { kind: "choice", q: "이상치가 있는 데이터의 대표값으로 더 안정적인 것은?", options: ["평균", "중앙값", "최댓값", "합계"], answer: 1, explain: "중앙값은 가운데 순서의 값이라 극단값 하나에 거의 흔들리지 않습니다." },
+          { kind: "choice", q: "티셔츠 판매 기록(빨강 · 파랑 · 검정)에서 '가장 잘 팔린 색'을 말하는 대표값은?", options: ["평균", "중앙값", "최빈값", "표준편차"], answer: 2, explain: "범주형 데이터에 쓸 수 있는 대표값은 가장 흔한 값, 최빈값뿐입니다." },
+        ] },
+      { id: "st-01-2", title: "흩어짐: 범위 · 분산 · 표준편차 · 변동계수", minutes: 18, concepts: ["st.descriptive"],
+        quiz: [
+          { kind: "ox", q: "표본 데이터의 표준편차는 np.std(x, ddof=1)로 구한다.", answer: true, explain: "ddof=1은 n−1로 나누는 표본 표준편차입니다. NumPy 기본값은 ddof=0입니다." },
+          { kind: "short", q: "값 2, 4, 6의 분산을 n(=3)으로 나눠 구하세요. (소수 둘째 자리)", answer: ["2.67", "2.666", "2.667", "8/3"], explain: "평균 4, 편차 −2 · 0 · 2, 제곱합 8, 8 ÷ 3 ≈ 2.67." },
+        ] },
+      { id: "st-01-3", title: "위치와 이상치: 사분위수 · 상자그림 · z점수", minutes: 18, concepts: ["st.descriptive"] },
+      { id: "st-01-4", title: "분포의 모양: 히스토그램 · 왜도 · 첨도", minutes: 15, concepts: ["st.descriptive"],
+        quiz: [
+          { kind: "choice", q: "평균이 중앙값보다 훨씬 크다면 분포는 어떤 모양일 가능성이 높을까?", options: ["좌우 대칭", "오른쪽(큰 값 쪽) 꼬리가 긴 분포", "왼쪽(작은 값 쪽) 꼬리가 긴 분포", "봉우리가 없는 평평한 분포"], answer: 1, explain: "큰 값 몇 개가 평균을 오른쪽으로 끌고 가면 평균 > 중앙값이 됩니다." },
+          { kind: "ox", q: "왜도가 0에 가까우면 이상치가 하나도 없다.", answer: false, explain: "왜도는 좌우 균형만 봅니다. 양쪽에 이상치가 비슷하게 있으면 왜도는 0에 가까워도 첨도가 커집니다." },
+        ] },
+    ] },
+  { id: "st-09", track: "stats", title: "확률 기초", summary: "사건과 확률, 큰 수의 법칙, 시뮬레이션, 조건부확률과 베이즈 정리", level: "입문",
+    concepts: ["st.probability"],
+    lessons: [
+      { id: "st-09-1", title: "사건과 확률, 큰 수의 법칙", minutes: 15, concepts: ["st.probability"],
+        quiz: [
+          { kind: "short", q: "공정한 주사위를 한 번 던져 3 이하가 나올 확률은? (소수)", answer: ["0.5", ".5", "1/2"], explain: "{1, 2, 3} 세 개 ÷ 여섯 개 = 0.5." },
+          { kind: "ox", q: "동전을 10번 던져 앞면이 7번 나왔으니, 이 동전의 앞면 확률은 0.7이라고 확신할 수 있다.", answer: false, explain: "10번은 너무 적어서 우연이 크게 작용합니다. 큰 수의 법칙은 아주 많이 반복할 때 성립합니다." },
+        ] },
+      { id: "st-09-2", title: "조건부확률과 베이즈 정리", minutes: 20, concepts: ["st.probability"],
+        quiz: [
+          { kind: "short", q: "남학생 60명 중 15명, 여학생 40명 중 4명이 안경을 썼다. P(안경 | 남학생)은? (소수)", answer: ["0.25", ".25", "1/4"], explain: "조건(남학생) 60명만 분모로: 15 ÷ 60 = 0.25." },
+          { kind: "choice", q: "P(A | B)와 P(B | A)의 관계로 옳은 것은?", options: ["항상 같다", "분자는 같지만 분모가 달라서 보통 다르다", "합이 항상 1이다", "곱이 항상 P(A)다"], answer: 1, explain: "둘 다 분자는 'A이면서 B'이지만, 분모가 B 전체냐 A 전체냐가 다릅니다." },
+          { kind: "ox", q: "정확도 90%인 검사에서 양성이 나왔다면, 그 사람이 실제로 병이 있을 확률도 90%다.", answer: false, explain: "병이 드물면(기저율이 낮으면) 양성 중 진짜 환자의 비율은 훨씬 낮을 수 있습니다. 베이즈 정리로 계산해야 합니다." },
+        ] },
+    ] },
+  { id: "st-02", track: "stats", title: "확률분포", summary: "확률변수 · pmf · cdf · 기댓값, 이항 · 포아송, 정규분포와 표준화", unit: 13, level: "입문",
     concepts: ["st.distribution"],
-    lessons: [{ id: "st-02-1", title: "scipy.stats로 확률 계산하기", minutes: 15, concepts: ["st.distribution"],
-      quiz: [
-        { kind: "choice", q: "\"불량이 2개 이하일 확률\"을 구하는 메서드는?", options: ["pmf(2)", "cdf(2)", "sf(2)", "ppf(2)"], answer: 1, explain: "cdf(k)는 k 이하(누적) 확률입니다." },
-        { kind: "choice", q: "평균과 표준편차로 정해지는 연속 분포는?", options: ["이항분포", "포아송분포", "정규분포", "기하분포"], answer: 2, explain: "stats.norm(loc=평균, scale=표준편차)." },
-      ] }] },
-  { id: "st-03", track: "stats", title: "표본분포와 중심극한정리", summary: "표본평균의 분포, 표준오차, 시뮬레이션", unit: 14, level: "기본",
+    lessons: [
+      { id: "st-02-1", title: "확률변수와 확률분포", minutes: 15, concepts: ["st.distribution"],
+        quiz: [
+          { kind: "choice", q: "\"불량이 2개 이하일 확률\"을 구하는 메서드는?", options: ["pmf(2)", "cdf(2)", "sf(2)", "ppf(2)"], answer: 1, explain: "cdf(k)는 k 이하(누적) 확률입니다." },
+          { kind: "short", q: "X가 0, 1, 2를 각각 확률 0.25, 0.5, 0.25로 가질 때 기댓값은?", answer: ["1", "1.0"], explain: "0 × 0.25 + 1 × 0.5 + 2 × 0.25 = 1." },
+        ] },
+      { id: "st-02-2", title: "이항분포와 포아송분포", minutes: 18, concepts: ["st.distribution"],
+        quiz: [
+          { kind: "choice", q: "이항분포 X에서 \"5개 이상일 확률\"을 구하는 코드는?", options: ["X.sf(5)", "X.sf(4)", "X.cdf(5)", "1 - X.pmf(5)"], answer: 1, explain: "sf(k)는 k 초과입니다. 5 이상 = 4 초과이므로 sf(4)." },
+          { kind: "choice", q: "\"하루 평균 3건 들어오는 민원이 오늘 몇 건 올까\"에 알맞은 분포는?", options: ["이항분포", "포아송분포", "정규분포", "균일분포"], answer: 1, explain: "일정한 시간 동안 드문 일이 일어나는 횟수는 평균 λ 하나로 정해지는 포아송분포를 씁니다." },
+        ] },
+      { id: "st-02-3", title: "정규분포와 표준화", minutes: 18, concepts: ["st.distribution"],
+        quiz: [
+          { kind: "choice", q: "평균과 표준편차로 정해지는 연속 분포는?", options: ["이항분포", "포아송분포", "정규분포", "기하분포"], answer: 2, explain: "stats.norm(loc=평균, scale=표준편차)." },
+          { kind: "short", q: "정규분포에서 평균 ± 2 × 표준편차 안에 들어갈 확률은 약 몇 %? (숫자만)", answer: ["95", "95%"], explain: "68 - 95 - 99.7 규칙: ±1σ 68%, ±2σ 95%, ±3σ 99.7%." },
+        ] },
+    ] },
+  { id: "st-03", track: "stats", title: "표본분포와 중심극한정리", summary: "무작위 추출과 편향, 표본평균의 분포와 표준오차, 중심극한정리", unit: 14, level: "기본",
     concepts: ["st.clt"],
-    lessons: [{ id: "st-03-1", title: "표본평균은 왜 정규분포가 될까", minutes: 15, concepts: ["st.clt"],
-      quiz: [
-        { kind: "choice", q: "모표준편차가 6이고 n = 9일 때 표준오차는?", options: ["6", "3", "2", "0.67"], answer: 2, explain: "SE = σ/√n = 6/3 = 2." },
-        { kind: "ox", q: "표본 크기가 커지면 표본평균들의 분포는 더 좁아진다.", answer: true, explain: "표준오차 σ/√n이 줄어들기 때문입니다." },
-      ] }] },
-  { id: "st-04", track: "stats", title: "신뢰구간", summary: "95%의 의미, t 분포, 비율의 신뢰구간", unit: 15, level: "기본",
+    lessons: [
+      { id: "st-03-1", title: "표본 뽑기와 편향", minutes: 15, concepts: ["st.clt"],
+        quiz: [
+          { kind: "choice", q: "\"고등학생의 하루 공부 시간\"을 학원가 앞에서만 설문했다. 어떤 문제가 생길까?", options: ["무응답 편향", "선택 편향", "흔들림만 커지고 편향은 없다", "아무 문제 없다"], answer: 1, explain: "뽑히기 쉬운 사람(학원에 다니는 학생)만 뽑혀서 실제보다 높게 나오는 선택 편향입니다." },
+          { kind: "ox", q: "편향된 방법으로 뽑더라도 표본을 10배로 늘리면 편향이 줄어든다.", answer: false, explain: "표본을 키우면 흔들림은 줄지만 편향은 그대로입니다. 뽑는 방법을 고쳐야 합니다." },
+        ] },
+      { id: "st-03-2", title: "표본평균의 분포와 표준오차", minutes: 18, concepts: ["st.clt"],
+        quiz: [
+          { kind: "choice", q: "모표준편차가 6이고 n = 9일 때 표준오차는?", options: ["6", "3", "2", "0.67"], answer: 2, explain: "SE = σ/√n = 6/3 = 2." },
+          { kind: "ox", q: "표본 크기가 커지면 표본평균들의 분포는 더 좁아진다.", answer: true, explain: "표준오차 σ/√n이 줄어들기 때문입니다." },
+        ] },
+      { id: "st-03-3", title: "중심극한정리", minutes: 18, concepts: ["st.clt"] },
+    ] },
+  { id: "st-04", track: "stats", title: "신뢰구간", summary: "95%의 의미, 신뢰수준과 폭, t 분포, 평균 · 비율의 신뢰구간", unit: 15, level: "기본",
     concepts: ["st.ci"],
-    lessons: [{ id: "st-04-1", title: "평균과 비율의 95% 신뢰구간", minutes: 15, concepts: ["st.ci"],
-      quiz: [
-        { kind: "short", q: "표본 12개로 평균의 신뢰구간을 만들 때 t 분포의 자유도는?", answer: "11", explain: "n − 1 = 11." },
-        { kind: "ox", q: "같은 데이터로 99% 신뢰구간을 만들면 95% 구간보다 넓다.", answer: true, explain: "더 높은 신뢰수준을 얻으려면 구간이 넓어집니다." },
-      ] }] },
-  { id: "st-05", track: "stats", title: "가설검정과 t검정", summary: "p-value, 유의수준, 1표본 · Welch · 대응표본, 단측", unit: 16, level: "기본",
+    lessons: [
+      { id: "st-04-1", title: "95% 신뢰구간의 뜻", minutes: 18, concepts: ["st.ci"],
+        quiz: [
+          { kind: "choice", q: "95% 신뢰구간의 올바른 해석은?", options: ["모평균이 이 구간에 있을 확률이 95%다", "데이터의 95%가 이 구간 안에 있다", "같은 방법으로 구간을 반복해 만들면 약 95%가 모평균을 포함한다", "표본평균이 맞을 확률이 95%다"], answer: 2, explain: "95%는 구간을 만드는 방법의 성공률입니다. 이미 만든 구간은 모평균을 포함하거나 안 하거나 둘 중 하나입니다." },
+          { kind: "ox", q: "다른 조건이 같다면 표본 수를 늘릴수록 신뢰구간이 좁아진다.", answer: true, explain: "SE = σ/√n이 줄어들기 때문입니다. 4배로 늘리면 폭이 절반." },
+        ] },
+      { id: "st-04-2", title: "t분포로 구하는 평균 · 비율의 신뢰구간", minutes: 18, concepts: ["st.ci"],
+        quiz: [
+          { kind: "short", q: "표본 12개로 평균의 신뢰구간을 만들 때 t 분포의 자유도는?", answer: "11", explain: "n − 1 = 11." },
+          { kind: "ox", q: "같은 데이터로 99% 신뢰구간을 만들면 95% 구간보다 넓다.", answer: true, explain: "더 높은 신뢰수준을 얻으려면 구간이 넓어집니다." },
+        ] },
+    ] },
+  { id: "st-05", track: "stats", title: "가설검정과 t검정", summary: "귀무가설 · p-value · 유의수준, 1종 · 2종 오류와 검정력, 1표본 · Welch · 대응 t검정, 단측", unit: 16, level: "기본",
     concepts: ["st.test", "st.power"],
-    lessons: [{ id: "st-05-1", title: "p-value로 판단하기: 세 가지 t검정", minutes: 18, concepts: ["st.test"],
-      quiz: [
-        { kind: "choice", q: "같은 시편을 두 측정기로 잰 값을 비교할 때 쓰는 함수는?", options: ["stats.ttest_ind", "stats.ttest_rel", "stats.ttest_1samp", "stats.norm.cdf"], answer: 1, explain: "같은 대상을 두 번 잰 대응표본입니다." },
-        { kind: "ox", q: "p-value가 0.05보다 작으면 귀무가설을 기각한다(유의수준 0.05).", answer: true, explain: "관측 결과가 귀무가설 아래에서 드물다는 뜻이므로 기각합니다." },
-      ] }] },
-  { id: "st-06", track: "stats", title: "카이제곱 · ANOVA", summary: "범주 독립성, 세 집단 이상 비교", unit: 32, level: "실무",
+    lessons: [
+      { id: "st-05-1", title: "가설검정의 논리와 p-value", minutes: 20, concepts: ["st.test"],
+        quiz: [
+          { kind: "ox", q: "p-value가 0.05보다 작으면 귀무가설을 기각한다(유의수준 0.05).", answer: true, explain: "관측 결과가 귀무가설 아래에서 드물다는 뜻이므로 기각합니다." },
+          { kind: "choice", q: "p-value = 0.03의 올바른 해석은?", options: ["귀무가설이 맞을 확률이 3%다", "효과의 크기가 3%다", "귀무가설이 맞다면 지금만큼 또는 더 극단적인 결과가 나올 확률이 3%다", "대립가설이 맞을 확률이 97%다"], answer: 2, explain: "p-value는 귀무가설을 가정했을 때의 확률입니다. 가설이 맞을 확률도, 효과 크기도 아닙니다." },
+        ] },
+      { id: "st-05-2", title: "1종 오류 · 2종 오류 · 검정력", minutes: 18, concepts: ["st.power"],
+        quiz: [
+          { kind: "choice", q: "실제로는 효과가 없는 약을 \"효과가 있다\"고 결론 내렸다. 어떤 오류일까?", options: ["1종 오류", "2종 오류", "검정력", "올바른 판단"], answer: 0, explain: "없는 차이를 있다고 판단하는 헛경보가 1종 오류(확률 α)입니다." },
+          { kind: "ox", q: "다른 조건이 같다면 표본 수를 늘릴수록 검정력이 높아진다.", answer: true, explain: "표준오차가 줄어 두 분포의 겹침이 줄어들기 때문입니다." },
+        ] },
+      { id: "st-05-3", title: "세 가지 t검정", minutes: 20, concepts: ["st.test"],
+        quiz: [
+          { kind: "choice", q: "같은 시편을 두 측정기로 잰 값을 비교할 때 쓰는 함수는?", options: ["stats.ttest_ind", "stats.ttest_rel", "stats.ttest_1samp", "stats.norm.cdf"], answer: 1, explain: "같은 대상을 두 번 잰 대응표본입니다." },
+          { kind: "choice", q: "남학생 그룹과 여학생 그룹의 평균 키를 비교할 때 쓰는 함수는?", options: ["stats.ttest_1samp(x, 170)", "stats.ttest_rel(a, b)", "stats.ttest_ind(a, b, equal_var=False)", "stats.chi2_contingency(table)"], answer: 2, explain: "서로 다른 사람들로 된 독립인 두 그룹이므로 독립 2표본(Welch) t검정입니다." },
+        ] },
+    ] },
+  { id: "st-06", track: "stats", title: "카이제곱 · ANOVA", summary: "관측도수와 기대도수, 독립성 · 적합도 검정, 일원분산분석과 사후검정", unit: 32, level: "실무",
     concepts: ["st.chi-anova"],
-    lessons: [{ id: "st-06-1", title: "범주는 카이제곱, 세 집단은 ANOVA", minutes: 18, concepts: ["st.chi-anova"],
-      quiz: [
-        { kind: "choice", q: "세 설비의 평균 두께가 같은지 한 번에 검정하는 함수는?", options: ["stats.ttest_ind", "stats.f_oneway", "stats.chisquare", "stats.pearsonr"], answer: 1, explain: "세 집단 이상 평균 비교는 일원분산분석(f_oneway)입니다." },
-        { kind: "ox", q: "독립성 카이제곱 검정의 자유도는 (행 수 − 1) × (열 수 − 1)이다.", answer: true, explain: "2×3 교차표면 1 × 2 = 2." },
-      ] }] },
-  { id: "st-07", track: "stats", title: "상관과 회귀", summary: "상관계수, 최소제곱, 계수 해석", unit: 33, level: "실무",
+    lessons: [
+      { id: "st-06-1", title: "카이제곱 검정: 범주끼리 관련이 있을까", minutes: 18, concepts: ["st.chi-anova"],
+        quiz: [
+          { kind: "ox", q: "독립성 카이제곱 검정의 자유도는 (행 수 − 1) × (열 수 − 1)이다.", answer: true, explain: "2×3 교차표면 1 × 2 = 2." },
+          { kind: "short", q: "교차표에서 어떤 칸의 행 합계가 40, 열 합계가 50, 전체 합계가 100일 때 기대도수는?", answer: ["20", "20.0"], explain: "40 × 50 ÷ 100 = 20." },
+        ] },
+      { id: "st-06-2", title: "분산분석(ANOVA)과 사후검정", minutes: 20, concepts: ["st.chi-anova"],
+        quiz: [
+          { kind: "choice", q: "세 설비의 평균 두께가 같은지 한 번에 검정하는 함수는?", options: ["stats.ttest_ind", "stats.f_oneway", "stats.chisquare", "stats.pearsonr"], answer: 1, explain: "세 집단 이상 평균 비교는 일원분산분석(f_oneway)입니다." },
+          { kind: "ox", q: "ANOVA 결과가 유의하면 모든 그룹이 서로 다르다는 뜻이다.", answer: false, explain: "'적어도 한 그룹은 다르다'까지만 말해 줍니다. 어느 쌍이 다른지는 사후검정(Tukey HSD)으로 봅니다." },
+        ] },
+    ] },
+  { id: "st-07", track: "stats", title: "상관과 회귀", summary: "공분산 · 상관계수와 그 함정, 최소제곱 회귀, R² · 잔차 진단 · 외삽", unit: 33, level: "실무",
     concepts: ["st.regression"],
-    lessons: [{ id: "st-07-1", title: "함께 움직이는 정도와 직선 하나로 예측하기", minutes: 18, concepts: ["st.regression"],
-      quiz: [
-        { kind: "write", q: "stats.linregress로 x, y의 기울기를 출력하는 코드를 작성하세요.", given: "from scipy import stats\nx = [1, 2, 3, 4]\ny = [1, 3, 5, 7]", expect: ["2.0", "2"], must: ["linregress\\("], solution: "from scipy import stats\nx = [1, 2, 3, 4]\ny = [1, 3, 5, 7]\nprint(round(stats.linregress(x, y).slope, 6))", explain: "y = 2x − 1이므로 기울기는 2." },
-        { kind: "ox", q: "상관계수가 0.95로 높으면 x가 y의 원인이다.", answer: false, explain: "상관은 함께 움직인다는 뜻일 뿐입니다. 숨은 공통 원인이 있을 수 있습니다." },
-      ] }] },
-  { id: "st-08", track: "stats", title: "A/B 테스트와 검정력", summary: "두 비율 비교, 표본 수 설계, 검정력", unit: 34, level: "실무",
+    lessons: [
+      { id: "st-07-1", title: "공분산과 상관계수", minutes: 20, concepts: ["st.regression"],
+        quiz: [
+          { kind: "ox", q: "상관계수가 0.95로 높으면 x가 y의 원인이다.", answer: false, explain: "상관은 함께 움직인다는 뜻일 뿐입니다. 숨은 공통 원인이 있을 수 있습니다." },
+          { kind: "choice", q: "두 변수의 피어슨 상관계수가 0에 가깝다. 옳은 해석은?", options: ["두 변수는 아무 관계가 없다", "직선 관계는 거의 없지만, 곡선 관계는 있을 수 있다", "한 변수가 다른 변수의 원인이 아니다", "데이터에 이상치가 없다"], answer: 1, explain: "피어슨 r은 직선 관계만 잽니다. U자 관계는 r = 0이 나올 수 있으니 산점도를 그려 보세요." },
+        ] },
+      { id: "st-07-2", title: "단순선형회귀: 최소제곱으로 직선 긋기", minutes: 20, concepts: ["st.regression"],
+        quiz: [
+          { kind: "write", q: "stats.linregress로 x, y의 기울기를 출력하는 코드를 작성하세요.", given: "from scipy import stats\nx = [1, 2, 3, 4]\ny = [1, 3, 5, 7]", expect: ["2.0", "2"], must: ["linregress\\("], solution: "from scipy import stats\nx = [1, 2, 3, 4]\ny = [1, 3, 5, 7]\nprint(round(stats.linregress(x, y).slope, 6))", explain: "y = 2x − 1이므로 기울기는 2." },
+          { kind: "choice", q: "지느러미 길이(mm)로 몸무게(g)를 예측한 기울기가 49.7이다. 옳은 해석은?", options: ["지느러미를 1mm 늘리면 몸무게가 49.7g 는다", "지느러미가 1mm 긴 펭귄은 평균적으로 몸무게가 약 49.7g 더 나간다", "몸무게의 49.7%를 지느러미가 설명한다", "지느러미가 0mm면 몸무게는 49.7g이다"], answer: 1, explain: "기울기는 관찰된 경향(평균적인 차이)을 단위와 함께 말합니다. 늘리면 는다는 인과 해석은 할 수 없습니다." },
+        ] },
+      { id: "st-07-3", title: "회귀 결과 읽기와 진단", minutes: 20, concepts: ["st.regression"],
+        quiz: [
+          { kind: "choice", q: "단순회귀의 R² = 0.76의 뜻은?", options: ["예측이 76% 확률로 맞는다", "y 흩어짐의 약 76%를 직선(x)이 설명한다", "기울기가 0.76이다", "데이터의 76%가 직선 위에 있다"], answer: 1, explain: "R² = 1 − 남은 흩어짐 ÷ 전체 흩어짐. y가 다양한 정도 중 x로 설명되는 비율입니다." },
+          { kind: "ox", q: "잔차 그래프에 뚜렷한 U자 패턴이 보이면 직선 모델이 적절하다는 뜻이다.", answer: false, explain: "잔차에 패턴이 남았다면 직선이 데이터의 곡선 모양을 놓친 것입니다." },
+        ] },
+    ] },
+  { id: "st-08", track: "stats", title: "A/B 테스트와 검정력", summary: "무작위 배정, 두 비율 비교와 차이의 신뢰구간, 표본 수 설계, 유의성 vs 중요성", unit: 34, level: "실무",
     concepts: ["st.abtest", "st.power"],
-    lessons: [{ id: "st-08-1", title: "실험을 설계하고 결과를 읽는 법", minutes: 18, concepts: ["st.abtest", "st.power"],
-      quiz: [
-        { kind: "choice", q: "검출하려는 차이를 절반으로 줄이면 필요한 표본 수는 대략?", options: ["절반", "2배", "4배", "같다"], answer: 2, explain: "n ∝ 1/δ²." },
-        { kind: "ox", q: "검정력 80%는 실제 차이가 있을 때 10번 중 8번은 유의한 결과를 얻는다는 뜻이다.", answer: true, explain: "1 − β = 0.8." },
-      ] }] },
+    lessons: [
+      { id: "st-08-1", title: "A/B 테스트의 구조와 두 비율 비교", minutes: 20, concepts: ["st.abtest"],
+        quiz: [
+          { kind: "choice", q: "A/B 테스트에서 사용자를 무작위로 두 그룹에 나누는 가장 큰 이유는?", options: ["계산을 쉽게 하려고", "두 그룹의 크기를 똑같이 맞추려고", "바꾼 것 말고 다른 모든 차이를 두 그룹에 고르게 섞으려고", "p-value를 작게 만들려고"], answer: 2, explain: "무작위 배정은 우리가 재지 못한 특성까지 고르게 섞어서, 남은 차이를 바꾼 것 하나로 돌릴 수 있게 합니다." },
+          { kind: "ox", q: "전환율이 4%에서 5%로 오른 것은 '1% 상승'이라고 써야 정확하다.", answer: false, explain: "절대 차이는 1%p(퍼센트포인트), 상대 차이는 25% 상승입니다." },
+        ] },
+      { id: "st-08-2", title: "표본 수 설계와 실무 판단", minutes: 20, concepts: ["st.abtest", "st.power"],
+        quiz: [
+          { kind: "choice", q: "검출하려는 차이를 절반으로 줄이면 필요한 표본 수는 대략?", options: ["절반", "2배", "4배", "같다"], answer: 2, explain: "n ∝ 1/δ²." },
+          { kind: "ox", q: "검정력 80%는 실제 차이가 있을 때 10번 중 8번은 유의한 결과를 얻는다는 뜻이다.", answer: true, explain: "1 − β = 0.8." },
+        ] },
+    ] },
+  { id: "st-10", track: "stats", title: "통계 해석 실수 피하기", summary: "상관과 인과, 교란변수, 심슨의 역설, 결과를 정직하게 보고하는 법", level: "실무",
+    concepts: ["st.causal"],
+    lessons: [
+      { id: "st-10-1", title: "상관과 인과, 심슨의 역설", minutes: 20, concepts: ["st.causal"],
+        quiz: [
+          { kind: "choice", q: "\"수영장 입장객이 많은 날 에어컨 판매량도 많다\"는 상관을 가장 잘 설명하는 것은?", options: ["수영장이 에어컨 판매를 늘린다", "에어컨이 수영장 입장객을 늘린다", "더운 날씨가 둘 다를 늘린다(교란변수)", "순전히 우연이다"], answer: 2, explain: "숨은 공통 원인(더위)이 두 변수를 함께 움직이는 교란변수의 전형적인 예입니다." },
+          { kind: "choice", q: "심슨의 역설이란?", options: ["표본이 작으면 p-value가 커지는 현상", "그룹별로 본 관계와 그룹을 합쳐 본 관계가 반대로 나오는 현상", "평균이 중앙값보다 커지는 현상", "검정을 여러 번 하면 헛경보가 쌓이는 현상"], answer: 1, explain: "펭귄 부리처럼 종 안에서는 +인데 합치면 −가 될 수 있습니다. 그룹이 교란변수 역할을 합니다." },
+          { kind: "ox", q: "무작위 배정 실험을 하면 교란변수 문제를 크게 줄일 수 있다.", answer: true, explain: "무작위 배정은 재지 않은 변수까지 두 그룹에 고르게 섞어 줍니다." },
+        ] },
+      { id: "st-10-2", title: "통계 결과를 보고하는 법", minutes: 18, concepts: ["st.causal"],
+        quiz: [
+          { kind: "choice", q: "가장 좋은 보고 문장은?", options: ["p = 0.002로 유의함!", "저녁이 점심보다 많이 썼다.", "저녁(176건) 평균 20.80달러, 점심(68건) 17.17달러로 3.63달러 높았다(95% CI 1.33 ~ 5.93, p = 0.002).", "저녁 손님이 21% 더 부자다."], answer: 2, explain: "표본 수 · 요약값 · 효과 크기 · 신뢰구간 · p-value가 모두 들어간 문장입니다." },
+          { kind: "ox", q: "p-value만 적으면 효과의 크기(차이)는 따로 적지 않아도 된다.", answer: false, explain: "p-value는 우연인지 아닌지만 말합니다. 차이의 크기와 신뢰구간을 함께 적어야 판단할 수 있습니다." },
+        ] },
+    ] },
 
   // ── 머신러닝 ─────────────────────────────────────────────
   { id: "ml-00", track: "ml", intro: true, title: "머신러닝 시작하기", summary: "기계가 배운다는 것, 학습과 예측, 회귀 · 분류 · 비지도", level: "입문",
