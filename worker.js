@@ -16,6 +16,22 @@ ready.then(
   (err) => postMessage({ type: "fatal", error: String(err) })
 );
 
+// 예제 데이터셋: 코드에 파일 이름이 보이면 사이트의 datasets/ 에서 한 번 받아 /datasets 에 둔다.
+// 하네스가 실행할 때마다 작업 폴더에 연결해 pd.read_csv('titanic.csv') 처럼 이름만으로 읽힌다.
+const DATASETS = ["titanic.csv", "ai4i2020.csv"];
+async function loadDatasets(py, code) {
+  const need = DATASETS.filter((name) => code.includes(name));
+  if (!need.length) return;
+  if (!py.FS.analyzePath("/datasets").exists) py.FS.mkdir("/datasets");
+  for (const name of need) {
+    const path = "/datasets/" + name;
+    if (py.FS.analyzePath(path).exists) continue;
+    const res = await fetch(new URL("datasets/" + name, self.location.href));
+    if (!res.ok) throw new Error(`데이터셋 ${name}을(를) 불러오지 못했습니다 (${res.status}).`);
+    py.FS.writeFile(path, new Uint8Array(await res.arrayBuffer()));
+  }
+}
+
 self.onmessage = async (event) => {
   const { id, kind, problem, code, stdin } = event.data;
   try {
@@ -29,6 +45,7 @@ self.onmessage = async (event) => {
       try { py.pyimport("seaborn"); }
       catch { await py.loadPackage("micropip"); await py.pyimport("micropip").install("seaborn"); }
     }
+    await loadDatasets(py, code);
     const fn = py.globals.get(kind === "grade" ? "grade_json" : "run_json");
     const json = kind === "grade" ? fn(JSON.stringify(problem), code) : fn(JSON.stringify(problem), code, stdin || "");
     fn.destroy();

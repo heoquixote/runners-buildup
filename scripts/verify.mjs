@@ -11,6 +11,9 @@ import { CONCEPTS } from "../content/concepts.js";
 import { extract } from "../md.js";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+// 예제 데이터셋(titanic.csv 등): 하네스가 작업 폴더에 연결한다 (브라우저에서는 worker.js 가 받아 둔다)
+const DATASETS = path.join(root, "datasets");
+const pyEnv = { ...process.env, RB_DATASETS: DATASETS, MPLBACKEND: "Agg" };
 const py = `
 import json, sys
 sys.path.insert(0, ${JSON.stringify(root)})
@@ -59,7 +62,7 @@ for code in json.load(sys.stdin):
 print(json.dumps(out, ensure_ascii=False))
 `;
 const codes = writeQs.flatMap(({ q }) => [q.solution, q.given ? q.given + "\n" : ""]);
-const ran = JSON.parse(execFileSync("python3", ["-c", pyRun], { input: JSON.stringify(codes), encoding: "utf8" }));
+const ran = JSON.parse(execFileSync("python3", ["-c", pyRun], { input: JSON.stringify(codes), encoding: "utf8", cwd: DATASETS, env: pyEnv }));
 writeQs.forEach(({ where, q }, k) => {
   const expects = Array.isArray(q.expect) ? q.expect : [q.expect];
   const match = (r, code) => !r.error && expects.some((x) => normAnswer(x) === normAnswer(r.stdout)) && (q.must || []).every((re) => new RegExp(re).test(code));
@@ -105,11 +108,13 @@ for (const l of LESSONS) {
   const badQ = badQuestions(l.quiz || []);
   if (badQ.length) { failed++; console.log(`FAIL  ${l.id}  체크 퀴즈 형식 오류: ${badQ.map((x) => x.q).join(" / ")}`); }
   if (!fs.existsSync(file)) { failed++; console.log(`FAIL  ${l.id}  레슨 파일 없음: ${lessonPath(l)}`); continue; }
-  const { runs, videos } = extract(fs.readFileSync(file, "utf8"));
+  const { runs, videos, figures } = extract(fs.readFileSync(file, "utf8"));
   const badV = videos.filter((v) => !videoIds.has(v.ref));
   if (badV.length) { failed++; console.log(`FAIL  ${l.id}  모르는 영상 참조: ${badV.map((v) => v.ref).join(", ")}`); }
+  const badF = figures.filter((f) => !f.src || !fs.existsSync(path.join(root, f.src)) || !f.alt);
+  if (badF.length) { failed++; console.log(`FAIL  ${l.id}  그림 파일 없음 또는 alt 없음: ${badF.map((f) => f.src).join(", ")}`); }
   runs.forEach((code, i) => runCells.push({ id: `${l.id}#${i + 1}`, code }));
-  console.log(`PASS  ${l.id}  레슨 (실행 셀 ${runs.length}, 영상 ${videos.length}, 퀴즈 ${(l.quiz || []).length}문항)`);
+  console.log(`PASS  ${l.id}  레슨 (실행 셀 ${runs.length}, 영상 ${videos.length}, 그림 ${figures.length}, 퀴즈 ${(l.quiz || []).length}문항)`);
 }
 // 레슨 실행 셀은 그 자체로 돌아가고 무언가 출력해야 한다 (학생이 ▶ 실행을 눌렀을 때 빈 화면이 나오지 않도록)
 if (runCells.length) {
@@ -121,6 +126,8 @@ for c in cells:
     buf = io.StringIO()
     err = None
     d = tempfile.mkdtemp()
+    for name in os.listdir(os.environ["RB_DATASETS"]):
+        os.symlink(os.path.join(os.environ["RB_DATASETS"], name), os.path.join(d, name))
     cwd = os.getcwd(); os.chdir(d)
     try:
         with contextlib.redirect_stdout(buf):
@@ -132,19 +139,27 @@ for c in cells:
     out.append({"id": c["id"], "stdout": buf.getvalue(), "error": err})
 print(json.dumps(out, ensure_ascii=False))
 `;
-  const cellRes = JSON.parse(execFileSync("python3", ["-c", cellPy], { input: JSON.stringify(runCells), encoding: "utf8", env: { ...process.env, MPLBACKEND: "Agg" } }));
+  const cellRes = JSON.parse(execFileSync("python3", ["-c", cellPy], { input: JSON.stringify(runCells), encoding: "utf8", env: pyEnv }));
   for (const r of cellRes) {
     const ok = !r.error && r.stdout.trim();
     if (!ok) { failed++; console.log(`FAIL  실행 셀 ${r.id}  ${r.error || "출력이 없음"}`); }
   }
   console.log(`${cellRes.some((r) => r.error || !r.stdout.trim()) ? "FAIL" : "PASS"}  레슨 실행 셀 ${cellRes.length}개 실행`);
 }
+// import · from 문은 코드 맨 위에만 (시작 코드 · 모범답안 · 레슨 예제)
+const lateImport = (code) => { let seen = false; for (const l of String(code || "").split("\n")) { if (/^(import |from \S+ import )/.test(l)) { if (seen) return true; } else if (l.trim() && !l.startsWith("#")) seen = true; } return false; };
+const lateImports = [
+  ...PROBLEMS.flatMap((p) => ["starter", "solution"].filter((k) => lateImport(p[k])).map((k) => `${p.id}.${k}`)),
+  ...LESSONS.flatMap((l) => { const f = path.join(root, lessonPath(l)); return fs.existsSync(f) ? extract(fs.readFileSync(f, "utf8")).runs.flatMap((c, i) => (lateImport(c) ? [`${l.id} 예제 ${i + 1}`] : [])) : []; }),
+];
+if (lateImports.length) { failed++; console.log("FAIL  import가 코드 중간에 있음: " + lateImports.join(", ")); }
+else console.log("PASS  import · from 문은 모두 코드 맨 위");
 const ids = PROBLEMS.map((p) => p.id);
 const dup = ids.filter((id, i) => ids.indexOf(id) !== i);
 if (dup.length) { failed++; console.log("FAIL  중복 id: " + dup.join(", ")); }
 
 const results = JSON.parse(
-  execFileSync("python3", ["-c", py], { input: JSON.stringify(PROBLEMS.filter((p) => p.type !== "quiz")), encoding: "utf8" })
+  execFileSync("python3", ["-c", py], { input: JSON.stringify(PROBLEMS.filter((p) => p.type !== "quiz")), encoding: "utf8", env: pyEnv })
 );
 for (const r of results) {
   const s = r.solution;

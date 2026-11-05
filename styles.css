@@ -790,6 +790,9 @@ kbd {
 .lesson-body th, .lesson-body td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
 .lesson-body th { background: var(--surface-2); font-weight: 600; font-size: 13px; color: var(--ink-2); }
 .lesson-body img { max-width: 100%; border-radius: var(--radius); }
+.lesson-body .md-fig { margin: 4px 0; padding: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); text-align: center; }
+.lesson-body .md-fig img { display: block; width: 100%; max-width: 720px; height: auto; margin: 0 auto; border-radius: 0; }
+.lesson-body .md-fig figcaption { margin-top: 10px; font-size: 14px; color: var(--muted); line-height: 1.5; }
 @media (max-width: 560px) { .lesson-body { padding: 18px 16px 22px; font-size: 15px; } .lesson-head h1 { font-size: 24px; } }
 
 .run-cell { border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; background: var(--code-bg); display: grid; }
@@ -922,15 +925,6 @@ kbd {
 .cel-plan { color: var(--accent); font-weight: 600; margin: 0; }
 
 /* 레슨: 개념 설명 → 실습 순서 */
-.run-ref { display: inline-flex; align-items: center; gap: 8px; justify-self: start; padding: 7px 12px 7px 8px; border: 1px dashed var(--line-strong); border-radius: 999px; font-size: 13px; color: var(--ink-2); text-decoration: none; background: var(--surface); }
-.run-ref:hover { border-style: solid; border-color: var(--tc, var(--track)); color: var(--ink); }
-.lesson-practice { padding: 22px; display: grid; gap: 16px; }
-.practice-head { display: grid; gap: 4px; }
-.practice-head h2 { font-size: 22px; margin: 0; }
-.practice-head p { margin: 0; font-size: 14px; }
-.lesson-practice .run-cell { scroll-margin-top: 80px; transition: box-shadow .3s; }
-.lesson-practice .run-cell.flash { box-shadow: 0 0 0 2px var(--tc, var(--track)); }
-@media (max-width: 560px) { .lesson-practice { padding: 18px 14px; } }
 
 /* 퀴즈: 코드 작성형 */
 .wq { display: grid; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; background: var(--code-bg); }

@@ -3,6 +3,7 @@
 //  - 강조 **굵게** *기울임*, `코드`, [링크](url)
 //  - 코드 펜스 ```python (읽기 전용) / ```run (실행 셀: 화면에서 돌려볼 수 있다)
 //  - 영상 블록 ::video{ref="dl-m03" start="312" end="540"}
+//  - 그림 블록 ::figure{src="content/img/ml/split.svg" alt="..." caption="..."}
 //  - 한 줄이 <로 시작하면 HTML 블록으로 그대로 둔다 (표 등 저작자가 쓴 HTML)
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -25,6 +26,11 @@ export function parseDirective(line) {
   const attrs = {};
   for (const a of m[2].matchAll(/(\w+)=(?:"([^"]*)"|'([^']*)'|(\S+))/g)) attrs[a[1]] = a[2] ?? a[3] ?? a[4];
   return { name: m[1], attrs };
+}
+
+export function figureHtml(a) {
+  const cap = a.caption ? `<figcaption>${inline(a.caption)}</figcaption>` : "";
+  return `<figure class="md-fig"><img src="${esc(a.src)}" alt="${esc(a.alt || a.caption || "")}" loading="lazy">${cap}</figure>`;
 }
 
 // renderers: { run(code, index) -> html, video(attrs, index) -> html }
@@ -57,6 +63,7 @@ export function render(md, renderers = {}) {
     if (directive) {
       flush();
       if (directive.name === "video" && renderers.video) out.push(renderers.video(directive.attrs, videoIdx++));
+      if (directive.name === "figure") out.push(figureHtml(directive.attrs));
       i++;
       continue;
     }
@@ -110,7 +117,8 @@ export function render(md, renderers = {}) {
 
 // 레슨 본문에서 실행 셀과 영상 참조만 뽑는다 (검증 스크립트용)
 export function extract(md) {
-  const runs = [], videos = [];
+  const runs = [], videos = [], figures = [];
+  for (const line of md.split("\n")) { const d = parseDirective(line); if (d && d.name === "figure") figures.push(d.attrs); }
   render(md, { run: (code) => { runs.push(code); return ""; }, video: (attrs) => { videos.push(attrs); return ""; } });
-  return { runs, videos };
+  return { runs, videos, figures };
 }

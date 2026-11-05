@@ -199,7 +199,7 @@ function topbar({ admin = false } = {}) {
   const right = admin
     ? `<a class="btn ghost small" href="#/">수강생 화면</a><button class="btn small" data-act="admin-logout">어드민 로그아웃</button>`
     : state.session
-      ? `<a class="btn ghost small" href="#/videos">영상</a><a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
+      ? `<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
       : `<a class="btn ghost small" href="#/guide">사용 방법</a>`;
   return `<header class="topbar"><div class="topbar-inner">
     <div class="brand-block">
@@ -716,26 +716,23 @@ function courseRow(c, i) {
 function viewTrack(t) {
   const list = coursesOf(t.id);
   const s = trackStats(t);
-  const vids = VIDEOS.filter((v) => v.track === t.id);
   $app.innerHTML = `${topbar()}<main class="page track-page" ${trackStyle(t)}>
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">${esc(t.label)}</span></nav>
     <header class="unit-hero"><span class="tcard-en">${esc(t.en)}</span><h1>${esc(t.label)}</h1><p class="muted">${esc(t.blurb)}</p>
       <div class="unit-actions"><span class="ucard-count">${s.ready} / ${s.courses} 코스 열림 · 레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span></div></header>
     ${t.ready ? "" : `<div class="panel soon-panel"><h2>이 트랙은 준비 중입니다</h2><p class="muted">아래는 예정된 코스 순서입니다. 레슨과 문제가 준비되는 대로 하나씩 열립니다.</p></div>`}
     <ol class="clist panel">${list.map(courseRow).join("")}</ol>
-    ${vids.length ? `<section class="part"><h2 class="part-title">이 트랙의 모션 영상 <a class="muted" href="#/videos" style="font-size:13px;font-weight:400">전체 보기</a></h2>
-      <ul class="vlist panel">${vids.map(videoRow).join("")}</ul></section>` : ""}
   </main>`;
   bindTopbar();
 }
 
 function videoRow(v) {
-  const ready = v.status === "published" && v.youtube_id;
+  const ready = youtubeId(v);
   const lessons = LESSONS.filter((l) => l.concepts.some((c) => v.concepts.includes(c)));
   return `<li class="vrow${ready ? "" : " pending"}"><span class="vno mono">${String(v.ep).padStart(2, "0")}</span>
     <div class="vrow-main"><b>${esc(v.title)}</b><span class="muted">${esc(v.brief)}</span>
       <div class="crow-meta"><span>${esc(v.length)}</span><span class="${ready ? "ok" : "soon"}">${VIDEO_STATUS[v.status]}</span>${v.concepts.map((c) => `<span class="concept">${esc(conceptName(c))}</span>`).join("")}</div></div>
-    ${ready ? `<a class="btn small" href="https://www.youtube.com/watch?v=${esc(v.youtube_id)}" target="_blank" rel="noopener">보기</a>` : lessons[0] ? `<a class="btn small ghost" href="#/l/${lessons[0].id}">레슨</a>` : ""}</li>`;
+    ${ready ? `<a class="btn small" href="https://www.youtube.com/watch?v=${esc(ready)}" target="_blank" rel="noopener">보기</a>` : lessons[0] ? `<a class="btn small ghost" href="#/l/${lessons[0].id}">레슨</a>` : ""}</li>`;
 }
 
 function viewVideos() {
@@ -790,23 +787,27 @@ async function loadLesson(l) {
 function videoBlock(attrs) {
   const v = videoById[attrs.ref];
   if (!v) return `<div class="video-block pending"><b>영상 참조 오류</b><span class="muted">${esc(attrs.ref)}</span></div>`;
-  const live = v.status === "published" && v.youtube_id;
-  if (!live) {
-    return `<div class="video-block pending"><div class="video-ico" aria-hidden="true">▶</div><div><span class="eyebrow">Video · ${VIDEO_STATUS[v.status]}</span><b>${esc(v.title)}</b><span class="muted">${esc(v.brief)} (${esc(v.length)}) — 모션그래픽이 올라오면 여기서 바로 재생됩니다.</span></div></div>`;
+  const yt = youtubeId(v);
+  if (!yt) {
+    return `<div class="video-block pending"><div class="video-ico" aria-hidden="true">▶</div><div><span class="eyebrow">Video · 영상 준비 중</span><b>${esc(v.title)}</b><span class="muted">${esc(v.brief)} (${esc(v.length)}) — 모션그래픽이 올라오면 여기서 바로 재생됩니다.</span></div></div>`;
   }
   const q = new URLSearchParams({ rel: "0", modestbranding: "1" });
   if (attrs.start) q.set("start", attrs.start);
   if (attrs.end) q.set("end", attrs.end);
   const span = attrs.start || attrs.end ? ` · ${fmtSec(attrs.start)}–${fmtSec(attrs.end)}` : "";
   return `<details class="video-block"><summary><span class="video-ico" aria-hidden="true">▶</span><span><span class="eyebrow">Video · 데이터러너즈</span><b>${esc(v.title)}</b><span class="muted">${esc(v.length)}${span}</span></span></summary>
-    <div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${esc(v.youtube_id)}?${q}" title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-    <a class="muted" style="font-size:13px" href="https://www.youtube.com/watch?v=${esc(v.youtube_id)}" target="_blank" rel="noopener">유튜브에서 전체 영상 보기</a></details>`;
+    <div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${esc(yt)}?${q}" title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <a class="muted" style="font-size:13px" href="https://www.youtube.com/watch?v=${esc(yt)}" target="_blank" rel="noopener">유튜브에서 전체 영상 보기</a></details>`;
+}
+// youtube_id가 없어도 release_url(유튜브 주소)만 채우면 재생된다.
+function youtubeId(v) {
+  if (v.youtube_id) return v.youtube_id;
+  const m = String(v.release_url || "").match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/);
+  return m ? m[1] : null;
 }
 const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
-// 레슨 본문의 실행 셀 자리에는 안내 링크만 남기고, 셀은 개념 설명 아래 '직접 실행해 보기'로 모은다.
-const runRefHtml = (code, i) => `<a class="run-ref" href="#run-${i}" data-ref="${i}"><span class="run-lang">PYTHON</span>예제 ${i + 1} · 아래 실습에서 직접 실행해 보기 ↓</a>`;
-
+// 레슨 본문: 설명 → 실행 셀 → 설명 → 실행 셀 순서로, 셀은 마크다운에 놓인 자리에 그대로 들어간다.
 function runCellHtml(code, i, topic = "", note = "") {
   return `<div class="run-cell" id="run-${i}" data-cell="${i}">
     <div class="run-head"><span class="run-lang">PYTHON</span><span class="run-title">예제 ${i + 1}${topic ? ` · ${esc(topic)}` : ""}</span><span class="run-tip muted">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
@@ -836,7 +837,6 @@ async function viewLesson(l) {
       <h1>${esc(l.title)}</h1>
       <div class="concepts">${l.concepts.map((k) => `<span class="concept">${esc(conceptName(k))}</span>`).join("")}</div></header>
     <article class="lesson-body panel" id="lesson-body"><p class="muted">불러오는 중…</p></article>
-    <section class="lesson-practice panel" id="lesson-practice" hidden></section>
     <section class="lesson-quiz panel" id="lesson-quiz"></section>
     ${!next && probs.length ? `<section class="part" id="lesson-problems"><h2 class="part-title">연습문제 <span class="muted">${cs.solved} / ${cs.problems}</span></h2>
       <ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol></section>` : ""}
@@ -848,21 +848,11 @@ async function viewLesson(l) {
   let md;
   try { md = await loadLesson(l); } catch (err) { body.innerHTML = `<p class="form-error">${esc(err.message)}</p>`; return; }
   if (location.hash !== `#/l/${l.id}`) return; // 그사이 다른 화면으로 이동
-  const codes = [];
-  body.innerHTML = renderMd(md, { run: (code, i) => { codes[i] = code; return runRefHtml(code, i); }, video: videoBlock });
-  // 각 예제가 어느 소제목 아래 있었는지 찾아 실습 셀 제목으로 쓴다
-  // 예제 바로 앞 문단(그 예제를 소개하는 설명)을 실습 셀 위에 함께 보여 준다. 본문 렌더러가 만든 HTML이라 그대로 쓴다.
-  const noteOf = (el) => { const n = el.previousElementSibling; return n && (n.tagName === "P" || n.tagName === "BLOCKQUOTE") ? n.innerHTML : ""; };
-  const topicOf = (el) => { for (let n = el.previousElementSibling; n; n = n.previousElementSibling) if (/^H[23]$/.test(n.tagName)) return n.textContent.trim(); return ""; };
-  const practice = $app.querySelector("#lesson-practice");
-  if (codes.length) {
-    const refs = [...body.querySelectorAll(".run-ref")];
-    practice.hidden = false;
-    practice.innerHTML = `<div class="practice-head"><span class="eyebrow">Practice · 직접 실행해 보기</span><h2>개념을 코드로 확인하기</h2>
-      <p class="muted">위에서 읽은 내용을 그대로 실행해 봅니다. 숫자를 바꿔 다시 돌려 보면 개념이 더 잘 잡힙니다.</p></div>
-      ${codes.map((code, i) => runCellHtml(code, i, refs[i] ? topicOf(refs[i]) : "", refs[i] ? noteOf(refs[i]) : "")).join("")}`;
-    refs.forEach((r) => r.addEventListener("click", (e) => { e.preventDefault(); const t = practice.querySelector(`#run-${r.dataset.ref}`); t?.scrollIntoView({ behavior: "smooth", block: "start" }); t?.classList.add("flash"); setTimeout(() => t?.classList.remove("flash"), 1200); }));
-  }
+  body.innerHTML = renderMd(md, { run: (code, i) => runCellHtml(code, i), video: videoBlock });
+  // 각 예제가 놓인 소제목을 셀 제목에 붙인다
+  const topicOf = (el) => { for (let n = el.previousElementSibling; n; n = n.previousElementSibling) if (/^H[234]$/.test(n.tagName)) return n.textContent.trim(); return ""; };
+  body.querySelectorAll(".run-cell").forEach((cell) => { const t = topicOf(cell); if (t) cell.querySelector(".run-title").textContent += ` · ${t}`; });
+  const practice = body;
 
   // 실행 셀
   const cells = [];
@@ -1109,10 +1099,8 @@ function noteTabHtml(p) {
   const c = courseOf(p);
   const lessons = c?.lessons || [];
   const concepts = new Set(lessons.flatMap((l) => l.concepts));
-  const vids = VIDEOS.filter((v) => v.concepts.some((k) => concepts.has(k)));
-  const related = lessons.length || vids.length ? `<div class="related"><h4>함께 보기</h4><ul class="related-list">
+  const related = lessons.length ? `<div class="related"><h4>함께 보기</h4><ul class="related-list">
     ${lessons.map((l) => `<li><a href="#/l/${l.id}">${lessonIcon(l.id)} 레슨 · ${esc(l.title)}</a></li>`).join("")}
-    ${vids.map((v) => `<li><a href="#/videos">🎬 영상 · ${esc(v.title)}</a> <span class="muted" style="font-size:12px">${VIDEO_STATUS[v.status]}</span></li>`).join("")}
   </ul></div>` : "";
   return `<div class="eyebrow">개념 노트</div><h1>${esc(u?.title || "")}</h1>${related}<div class="note">${u?.note || ""}</div>`;
 }
