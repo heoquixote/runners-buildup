@@ -21,7 +21,7 @@ export function inline(text) {
 }
 
 export function parseDirective(line) {
-  const m = line.match(/^::(\w+)\{([^}]*)\}\s*$/);
+  const m = line.match(/^::(\w+)\{(.*)\}\s*$/);
   if (!m) return null;
   const attrs = {};
   for (const a of m[2].matchAll(/(\w+)=(?:"([^"]*)"|'([^']*)'|(\S+))/g)) attrs[a[1]] = a[2] ?? a[3] ?? a[4];
