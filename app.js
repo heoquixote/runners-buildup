@@ -50,9 +50,11 @@ const isReady = (c) => c.status !== "planned";
 // 트랙 안 몇 번째 날인지(화면 표시용). 코스 id · 진도 기록과는 무관하다.
 const dayNo = (c) => coursesOf(c.track).indexOf(c) + 1;
 // 코스 페이지 없이 바로 레슨으로 들어간다. 레슨이 여러 개면 아직 안 끝낸 첫 레슨, 레슨이 없는 코스만 코스 페이지.
-const courseEntry = (c) => { const l = c.lessons.find((x) => !lessonDone(x.id)) || c.lessons[0]; return l && lessonById[l.id]; };
+const courseEntry = (c) => { const l = coreLessons(c).find((x) => !lessonDone(x.id)) || c.lessons[0]; return l && lessonById[l.id]; };
 const courseHref = (c) => { const l = courseEntry(c); return l ? `#/l/${l.id}` : `#/c/${c.id}`; };
 const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
+// 진도 계산과 추천에 쓰는 필수 레슨 (optional: 고르는 레슨은 뺀다)
+const coreLessons = (c) => c.lessons.filter((l) => !l.optional);
 const solved = (pid) => !!state.progress[pid]?.solved;
 const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)" };
 const trackStyle = (t) => `style="--tc:${TRACK_COLOR[t.color] || "var(--track)"}"`;
@@ -498,7 +500,7 @@ const pmark = (p) => p.type === "quiz" ? '<span class="pmark quiz" title="개념
 const domainMark = () => ""; // 과정 구분은 화면에 표시하지 않는다
 
 function courseStats(c) {
-  const ls = c.lessons, ps = courseProblems(c);
+  const ls = coreLessons(c), ps = courseProblems(c);
   return { lessons: ls.length, lessonsDone: ls.filter((l) => lessonDone(l.id)).length, problems: ps.length, solved: ps.filter((p) => solved(p.id)).length };
 }
 function trackStats(t) {
@@ -524,10 +526,10 @@ function pickPlan() {
   const items = [];
   const ready = TRACKS.flatMap((t) => coursesOf(t.id).filter(isReady));
   const recent = Object.entries(state.lessons)
-    .filter(([id, v]) => lessonById[id] && v.status !== "passed")
+    .filter(([id, v]) => lessonById[id] && !lessonById[id].optional && v.status !== "passed")
     .sort((a, b) => String(b[1].updated_at || "").localeCompare(String(a[1].updated_at || "")))[0];
   let lesson = recent ? lessonById[recent[0]] : null;
-  if (!lesson) for (const c of ready) { const l = c.lessons.find((x) => !lessonDone(x.id)); if (l) { lesson = lessonById[l.id]; break; } }
+  if (!lesson) for (const c of ready) { const l = coreLessons(c).find((x) => !lessonDone(x.id)); if (l) { lesson = lessonById[l.id]; break; } }
   if (lesson) items.push({ kind: "lesson", id: lesson.id });
   const start = Math.max(0, lesson ? ready.indexOf(courseById[lesson.course]) : 0);
   for (const c of [...ready.slice(start), ...ready.slice(0, start)]) {
@@ -756,7 +758,7 @@ function viewCourse(c) {
   const nextC = list.slice(i + 1).find(isReady);
   const probs = courseProblems(c);
   const s = courseStats(c);
-  const firstLesson = c.lessons.find((l) => !lessonDone(l.id)) || c.lessons[0];
+  const firstLesson = coreLessons(c).find((l) => !lessonDone(l.id)) || c.lessons[0];
   const nextP = firstUnsolved(probs);
   $app.innerHTML = `${topbar()}<main class="page unit-page" ${trackStyle(t)}>
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><span class="muted">${esc(c.title)}</span></nav>
@@ -769,7 +771,7 @@ function viewCourse(c) {
         ${firstLesson && s.lessonsDone < s.lessons ? `<a class="btn primary" href="#/l/${firstLesson.id}">${s.lessonsDone ? "레슨 이어서" : "레슨 시작"} →</a>` : nextP ? `<a class="btn primary" href="#/p/${nextP.id}">문제 풀기 →</a>` : ""}</div>
     </header>
     <section class="part"><h2 class="part-title">레슨</h2>
-      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span><span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
+      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span>${l.optional ? '<span class="pmark" title="셋 중 하나만 골라 보면 됩니다">선택</span>' : ""}<span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
     ${c.intro && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
       ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>`}
     <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="${courseHref(prevC)}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="${courseHref(nextC)}">${esc(nextC.title)} →</a>` : ""}</nav>

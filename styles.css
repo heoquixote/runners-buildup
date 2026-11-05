@@ -985,3 +985,33 @@ kbd {
 .fig .t-ico { fill: var(--ink); font: 800 17px var(--font-en); }
 .run-note { margin: 0; padding: 10px 14px; font-size: 14px; line-height: 1.6; color: var(--ink-2); background: var(--surface); border-bottom: 1px solid var(--line); }
 .run-note code { font-family: var(--font-mono); font-size: 13px; color: var(--cyan); }
+/* 설치 가이드 화면 지도 */
+.fig .m-win { fill: var(--surface); stroke: var(--line-strong); }
+.fig .m-bar { fill: var(--surface-3); }
+.fig .m-side { fill: var(--surface-2); }
+.fig .m-term { fill: var(--code-bg); stroke: var(--line); }
+.fig .m-status { fill: color-mix(in srgb, var(--track) 35%, var(--surface)); }
+.fig .m-tab { fill: var(--surface); }
+.fig .m-icon { fill: none; stroke: var(--muted); stroke-width: 1.4; }
+.fig .m-btn { fill: var(--surface-2); stroke: var(--line-strong); }
+.fig .m-btn-p { fill: var(--accent); }
+.fig .m-btn-hl { fill: var(--surface-2); stroke: var(--accent); stroke-width: 1.5; }
+.fig .m-cell { fill: var(--code-bg); stroke: var(--line-strong); }
+.fig .m-field { fill: var(--code-bg); stroke: var(--line-strong); }
+.fig .m-chk { fill: none; stroke: var(--ink-2); stroke-width: 1.4; }
+.fig .m-chk-on { fill: var(--track); }
+.fig .m-tick-w { fill: none; stroke: var(--bg); stroke-width: 2; }
+.fig .m-radio { fill: none; stroke: var(--ink-2); stroke-width: 1.4; }
+.fig .m-radio-on { fill: var(--bg); stroke: var(--track); stroke-width: 5; }
+.fig .hl { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 3; }
+.fig .m-play { fill: var(--surface-3); stroke: var(--line-strong); }
+.fig .m-play-t { fill: var(--ink); }
+.fig .num { fill: var(--accent); }
+.fig .num-t { fill: var(--accent-ink); font: 700 12px var(--font-en); }
+.fig .code { fill: var(--cyan); font-family: var(--font-mono); font-size: 13px; }
+.fig .t-out { fill: var(--ink-2); font-family: var(--font-mono); font-size: 13px; }
+.fig .t-sm { fill: var(--ink-2); font-size: 13px; }
+.fig .t-big { fill: var(--ink); font-size: 19px; font-weight: 700; }
+.fig .t-btn { fill: var(--accent-ink); font-size: 13px; font-weight: 700; }
+.fig .t-cap { fill: var(--muted); font: 600 10.5px var(--font-en); letter-spacing: .08em; }
+.fig .t-status { fill: var(--ink); font-size: 12px; }
