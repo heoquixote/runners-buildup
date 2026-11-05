@@ -1,0 +1,12 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="sqlbody" x1="14" y1="16" x2="82" y2="84" gradientUnits="userSpaceOnUse">
+<stop stop-color="#66DBFF"/>
+<stop offset="1" stop-color="#3B82F6"/>
+</linearGradient>
+</defs>
+<path d="M14 20 V72 C14 80 82 80 82 72 V20" fill="url(#sqlbody)" fill-opacity="0.22" stroke="url(#sqlbody)" stroke-width="3"/>
+<path d="M14 36 C14 44 82 44 82 36" stroke="url(#sqlbody)" stroke-width="2.4" opacity="0.7"/>
+<ellipse cx="48" cy="20" rx="34" ry="9" fill="#66DBFF" fill-opacity="0.35" stroke="url(#sqlbody)" stroke-width="3"/>
+<text x="48" y="66" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-weight="700" font-size="22" fill="#2F9BD6">SQL</text>
+</svg>
