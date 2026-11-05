@@ -617,6 +617,88 @@ def _():
     return svg(720, 236, b, "부분 의존도 계산 과정")
 
 
+# ---------------- 2026-11-05 세분화 추가 ----------------
+@fig("ml02-gd")
+def _():
+    b = []
+    x0, y0, w, h = 60, 30, 600, 210
+    def curve(t):  # t in [-1,1] -> loss 0..1
+        return t * t
+    pts = [(-1 + 2 * i / 60) for i in range(61)]
+    d = "M" + " L".join(f"{x0 + w * (t + 1) / 2:.1f},{y0 + h - h * curve(t):.1f}" for t in pts)
+    b.append(path(d, MUTED, 2.4))
+    b.append(line(x0, y0 + h, x0 + w, y0 + h, LINE2, 1.2))
+    steps = [-0.92, -0.62, -0.38, -0.2, -0.08]
+    for i, t in enumerate(steps):
+        cx, cy = x0 + w * (t + 1) / 2, y0 + h - h * curve(t)
+        b.append(circle(cx, cy - 9, 9, ACC if i == len(steps) - 1 else CYAN, op=1 if i == len(steps) - 1 else 0.35 + 0.15 * i))
+        b.append(text(cx, cy - 30, f"{i + 1}", 13, INK2, weight=700))
+        if i < len(steps) - 1:
+            t2 = steps[i + 1]
+            b.append(arrow(cx + 10, cy - 14, x0 + w * (t2 + 1) / 2 - 10, y0 + h - h * curve(t2) - 14, ACC, 1.8, accent=True))
+    b.append(text(x0 + w / 2, y0 + h + 22, "기울기 w (또는 절편 b)", 13, MUTED))
+    b.append(text(x0 - 10, y0 + 10, "오차\n(MSE)", 13, MUTED, "end"))
+    b.append(text(x0 + w / 2 + 20, y0 + h - 55, "↙ 가장 낮은 곳", 13, ACC, "start", 700))
+    b.append(text(x0 + w / 2, y0 + 20, "한 걸음 = 학습률 × 기울기\n기울기의 반대 방향으로 이동", 13, INK2))
+    return svg(720, 280, b, "경사하강법: 오차 그릇을 따라 내려가기")
+
+
+@fig("ml04-gini")
+def _():
+    b = []
+    def jar(x, label, n_s, n_d, g, col):
+        out = [rect(x, 30, 180, 150, SURF, LINE2, 12)]
+        tot = n_s + n_d
+        for k in range(tot):
+            cx, cy = x + 22 + (k % 8) * 20, 52 + (k // 8) * 20
+            out.append(circle(cx, cy, 7, PASS if k < n_s else FAIL, op=0.9))
+        out.append(text(x + 90, 200, label, 14, INK, weight=700))
+        out.append(text(x + 90, 222, f"지니 {g}", 14, col, weight=700))
+        return out
+    b += jar(20, "섞여 있음 (반반)", 16, 16, "0.5", FAIL)
+    b += jar(270, "조금 섞임", 24, 8, "0.375", WARN)
+    b += jar(520, "한쪽만 (전부 생존)", 32, 0, "0", ACC)
+    b.append(text(360, 252, "초록 = 생존, 빨강 = 사망. 섞임이 적을수록 지니가 0에 가깝습니다.", 13, MUTED))
+    return svg(720, 270, b, "지니 불순도: 상자 안이 얼마나 섞였나")
+
+
+@fig("ml10-knn")
+def _():
+    b = [rect(10, 10, 700, 270, SURF, LINE2, 10)]
+    r = pseudo(80, 33)
+    for k in range(18):
+        b.append(circle(120 + (r[k] - 0.5) * 180, 140 + (r[k + 18] - 0.5) * 180, 7, PASS, op=0.9))
+        b.append(circle(560 + (r[k + 36] - 0.5) * 180, 140 + (r[k + 54] - 0.5) * 170, 7, FAIL, op=0.9))
+    near = [(300, 120, PASS), (330, 175, PASS), (285, 165, PASS), (390, 110, FAIL), (395, 185, FAIL)]
+    for x, y, c in near:
+        b.append(circle(x, y, 7, c, op=0.95))
+    b.append(f'<circle cx="340" cy="148" r="72" fill="none" stroke="{CYAN}" stroke-width="1.6" stroke-dasharray="5 4"/>')
+    b.append(circle(340, 148, 9, ACC, INK, 2))
+    b.append(text(340, 236, "새 승객(노란 점)의 가장 가까운 5명: 생존 3, 사망 2 → 생존으로 예측", 14, INK, weight=700))
+    b.append(text(120, 34, "생존", 14, PASS, weight=700))
+    b.append(text(560, 34, "사망", 14, FAIL, weight=700))
+    return svg(720, 290, b, "KNN: 가까운 이웃 k명의 투표")
+
+
+@fig("ml10-svm")
+def _():
+    b = [rect(10, 10, 700, 270, SURF, LINE2, 10)]
+    r = pseudo(60, 47)
+    for k in range(14):
+        b.append(circle(110 + r[k] * 150, 60 + r[k + 14] * 120 + r[k] * 60, 7, PASS, op=0.85))
+        b.append(circle(440 + r[k + 28] * 180, 120 + r[k + 42] * 120 - r[k + 28] * 40, 7, FAIL, op=0.85))
+    # margin lines (diagonal)
+    b.append(line(250, 270, 430, 20, ACC, 2.4))
+    b.append(line(195, 270, 375, 20, CYAN, 1.4, "6 5"))
+    b.append(line(305, 270, 485, 20, CYAN, 1.4, "6 5"))
+    for x, y, c in [(281, 150, PASS), (245, 200, PASS), (399, 140, FAIL), (363, 190, FAIL)]:
+        b.append(circle(x, y, 9, c, INK, 2.2))
+    b.append(text(560, 50, "경계선: 복도 한가운데", 14, ACC, "start", 700))
+    b.append(text(560, 74, "점선 사이 = 마진(복도 폭)", 13, CYAN, "start"))
+    b.append(text(560, 98, "테두리 점 = 서포트 벡터", 13, INK, "start"))
+    return svg(720, 290, b, "SVM: 가장 넓은 복도를 내는 경계선")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for name, f in FIGS.items():
