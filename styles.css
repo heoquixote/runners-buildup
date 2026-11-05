@@ -979,3 +979,7 @@ kbd {
 .lesson-logo span { color: var(--ink-2); font-size: 15px; }
 .lesson-logo small { color: var(--subtle); font-size: 12px; }
 @media (max-width: 560px) { .lesson-logo { gap: 14px; padding: 14px; } .lesson-logo img { width: 64px; height: 64px; } .lesson-logo b { font-size: 24px; } }
+.fig .ico { fill: none; stroke: var(--ink-2); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.fig .ico .ico-fill { fill: var(--surface-3); }
+.fig .ico .ico-bold { stroke-width: 2.4; }
+.fig .t-ico { fill: var(--ink); font: 800 17px var(--font-en); }
