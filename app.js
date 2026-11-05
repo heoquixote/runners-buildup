@@ -47,8 +47,8 @@ const problemList = (p) => { const c = courseOf(p); const list = courseProblems(
 // 코스 안 번호: Q(개념 퀴즈), 1, 2, …
 const cno = (p) => { const i = problemList(p).filter((x) => x.type !== "quiz").indexOf(p); return p.type === "quiz" ? "Q" : String(i + 1); };
 const isReady = (c) => c.status !== "planned";
-// 트랙 안 몇 번째 날인지. 맨 앞 소개 코스(intro)는 Day 00, 나머지는 1부터.
-const dayNo = (c) => (c.intro ? 0 : coursesOf(c.track).filter((x) => !x.intro).indexOf(c) + 1);
+// 트랙 안 몇 번째 날인지(화면 표시용). 코스 id · 진도 기록과는 무관하다.
+const dayNo = (c) => coursesOf(c.track).indexOf(c) + 1;
 const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
 const solved = (pid) => !!state.progress[pid]?.solved;
 const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)" };
