@@ -5,7 +5,8 @@ importScripts(PYODIDE_URL + "pyodide.js");
 
 const ready = (async () => {
   const py = await loadPyodide({ indexURL: PYODIDE_URL });
-  const harness = await (await fetch(new URL("harness.py", self.location.href))).text();
+  // 배포 직후 옛 하네스가 캐시에서 읽히지 않도록 매번 서버에 재검증한다(ETag라 변경 없으면 가볍다)
+  const harness = await (await fetch(new URL("harness.py", self.location.href), { cache: "no-cache" })).text();
   py.runPython(harness);
   return py;
 })();

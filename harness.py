@@ -14,7 +14,9 @@ import traceback
 
 FILENAME = "<내 코드>"
 # 그래프는 화면(DOM) 없이 그림 파일로만 그린다. 실행 결과에 PNG로 붙여 보여 준다.
-os.environ.setdefault("MPLBACKEND", "Agg")
+# Pyodide는 시작할 때 MPLBACKEND를 브라우저용 백엔드(js.document 사용)로 미리 채워 두는데,
+# Web Worker에는 document가 없어 ImportError가 난다. 그래서 setdefault가 아니라 덮어쓴다.
+os.environ["MPLBACKEND"] = "Agg"
 
 HINTS = {
     "NameError": "변수나 함수 이름의 철자, 그리고 사용하기 전에 정의했는지 확인하세요.",
