@@ -946,3 +946,28 @@ kbd {
 .run-imgs { display: grid; gap: 10px; padding: 10px 14px 14px; background: var(--surface); }
 .run-imgs[hidden] { display: none; }
 .run-img { max-width: 100%; height: auto; border-radius: 6px; background: #fff; justify-self: start; }
+
+/* 레슨 그림 (인라인 SVG) */
+.lesson-fig { margin: 4px 0; display: grid; gap: 8px; }
+.lesson-fig svg { width: 100%; height: auto; display: block; background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px; box-sizing: border-box; }
+.lesson-fig figcaption { font-size: 13px; color: var(--muted); text-align: center; }
+.fig text { fill: var(--ink-2); font-family: var(--font-body); font-size: 14px; }
+.fig .t-strong { fill: var(--ink); font-weight: 700; font-size: 15px; }
+.fig .t-muted { fill: var(--muted); font-size: 12.5px; font-weight: 400; }
+.fig .t-en { font-family: var(--font-en); }
+.fig .t-accent { fill: var(--accent); font-size: 13px; font-weight: 600; }
+.fig .t-year { fill: var(--ink); font: 700 14px var(--font-en); }
+.fig .box { fill: var(--surface-2); stroke: var(--line-strong); }
+.fig .box-track { fill: var(--track-soft); stroke: var(--track); }
+.fig .box-accent { fill: var(--accent-soft); stroke: var(--accent); }
+.fig .box-cyan { fill: rgba(102,219,255,.08); stroke: var(--cyan); }
+.fig .line, .fig .tick { stroke: var(--line-strong); stroke-width: 1.5; fill: none; }
+.fig .arrow { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+.fig .arrow.loop { stroke: var(--accent); stroke-dasharray: 5 4; }
+.fig .ah { fill: var(--muted); }
+.fig .axis-a { stroke: var(--track); stroke-width: 4; stroke-linecap: round; }
+.fig .axis-b { stroke: var(--accent); stroke-width: 4; stroke-linecap: round; }
+.fig .dot { fill: var(--bg); stroke: var(--track); stroke-width: 2.5; }
+.fig .dot-b { fill: var(--bg); stroke: var(--accent); stroke-width: 2.5; }
+.fig .leg-a { fill: var(--track); }
+.fig .leg-b { fill: var(--accent); }

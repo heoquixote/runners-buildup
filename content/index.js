@@ -34,7 +34,7 @@ export const programById = Object.fromEntries(PROGRAMS.map((p) => [p.id, p]));
 // status: "ready"(레슨·문제 있음) | "planned"(제목만, 준비 중)
 export const COURSES = [
   // ── 파이썬 기초 ─────────────────────────────────────────
-  // intro: 트랙 맨 앞 소개 코스(Day 00). 연습문제 · 퀴즈 없이 읽고 넘어간다.
+  // intro: 트랙 맨 앞 소개 코스(Day 01). 연습문제 · 퀴즈 없이 읽고 넘어간다.
   { id: "pb-00", track: "python-basic", intro: true, title: "파이썬 시작하기", summary: "파이썬이란, 설치 방법, 역사, 엑셀 · SQL · R과 비교한 장점", level: "입문",
     concepts: ["py.intro"],
     lessons: [{ id: "pb-00-1", title: "파이썬은 무엇이고, 왜 파이썬인가", minutes: 10, concepts: ["py.intro"] }] },
