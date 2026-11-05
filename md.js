@@ -1,7 +1,7 @@
 // 레슨 본문용 작은 Markdown 렌더러. 외부 라이브러리 없이 레슨에 필요한 문법만 지원한다.
 //  - 제목(#~####), 문단, 목록(-, 1.), 인용(>), 표(| a | b |), 구분선(---)
 //  - 강조 **굵게** *기울임*, `코드`, [링크](url)
-//  - 코드 펜스 ```python (읽기 전용) / ```run (실행 셀: 화면에서 돌려볼 수 있다)
+//  - 코드 펜스 ```python (읽기 전용) / ```run (파이썬 실행 셀) / ```sqlrun (SQL 실행 셀, sql.js)
 //  - 영상 블록 ::video{ref="dl-m03" start="312" end="540"}
 //  - 그림 블록 ::figure{src="content/img/ml/split.svg" alt="..." caption="..."}
 //  - 한 줄이 <로 시작하면 HTML 블록으로 그대로 둔다 (표 등 저작자가 쓴 HTML)
@@ -33,7 +33,7 @@ export function figureHtml(a) {
   return `<figure class="md-fig"><img src="${esc(a.src)}" alt="${esc(a.alt || a.caption || "")}" loading="lazy">${cap}</figure>`;
 }
 
-// renderers: { run(code, index) -> html, video(attrs, index) -> html }
+// renderers: { run(code, index, lang) -> html, video(attrs, index) -> html }  lang: "python" | "sql"
 export function render(md, renderers = {}) {
   const lines = md.replace(/\r\n/g, "\n").split("\n");
   const out = [];
@@ -54,7 +54,7 @@ export function render(md, renderers = {}) {
       while (i < lines.length && !/^```\s*$/.test(lines[i])) buf.push(lines[i++]);
       i++;
       const code = buf.join("\n");
-      if (lang === "run" && renderers.run) out.push(renderers.run(code, runIdx++));
+      if ((lang === "run" || lang === "sqlrun") && renderers.run) out.push(renderers.run(code, runIdx++, lang === "sqlrun" ? "sql" : "python"));
       else out.push(`<pre class="md-code"><code>${esc(code)}</code></pre>`);
       continue;
     }
@@ -115,10 +115,10 @@ export function render(md, renderers = {}) {
   return out.join("\n");
 }
 
-// 레슨 본문에서 실행 셀과 영상 참조만 뽑는다 (검증 스크립트용)
+// 레슨 본문에서 실행 셀(파이썬 runs · SQL sqlRuns)과 영상 참조만 뽑는다 (검증 스크립트용)
 export function extract(md) {
-  const runs = [], videos = [], figures = [];
+  const runs = [], sqlRuns = [], videos = [], figures = [];
   for (const line of md.split("\n")) { const d = parseDirective(line); if (d && d.name === "figure") figures.push(d.attrs); }
-  render(md, { run: (code) => { runs.push(code); return ""; }, video: (attrs) => { videos.push(attrs); return ""; } });
-  return { runs, videos, figures };
+  render(md, { run: (code, i, lang) => { (lang === "sql" ? sqlRuns : runs).push(code); return ""; }, video: (attrs) => { videos.push(attrs); return ""; } });
+  return { runs, sqlRuns, videos, figures };
 }

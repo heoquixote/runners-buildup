@@ -9,6 +9,7 @@ import { TRACKS, COURSES, LESSONS, lessonPath } from "../content/index.js";
 import { VIDEOS } from "../content/videos.js";
 import { CONCEPTS } from "../content/concepts.js";
 import { extract } from "../md.js";
+import { sqlProgram, parseSqlOutput, sameSqlResult, sqlOrdered } from "../sql.js";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // 예제 데이터셋(titanic.csv 등): 하네스가 작업 폴더에 연결한다 (브라우저에서는 worker.js 가 받아 둔다)
@@ -34,7 +35,8 @@ const badQuestions = (questions) => questions.filter((x) =>
   (x.kind === "ox" && typeof x.answer !== "boolean") ||
   (x.kind === "choice" && !(Number.isInteger(x.answer) && x.options?.[x.answer] !== undefined)) ||
   (x.kind === "short" && !(typeof x.answer === "string" || (Array.isArray(x.answer) && x.answer.length))) ||
-  (x.kind === "write" && !(x.solution && (typeof x.expect === "string" || (Array.isArray(x.expect) && x.expect.length)))) ||
+  (x.kind === "write" && x.lang !== "sql" && !(x.solution && (typeof x.expect === "string" || (Array.isArray(x.expect) && x.expect.length)))) ||
+  (x.kind === "write" && x.lang === "sql" && !x.solution) ||
   !["ox", "choice", "short", "write"].includes(x.kind));
 const quizzes = PROBLEMS.filter((p) => p.type === "quiz");
 for (const q of quizzes) {
@@ -47,7 +49,7 @@ const normAnswer = (v) => String(v ?? "").trim().replace(/^(['"])(.*)\1$/s, "$2"
 const writeQs = [
   ...quizzes.flatMap((p) => p.questions.map((q, i) => ({ where: `${p.id} Q${i + 1}`, q }))),
   ...LESSONS.flatMap((l) => (l.quiz || []).map((q, i) => ({ where: `${l.id} Q${i + 1}`, q }))),
-].filter((x) => x.q.kind === "write");
+].filter((x) => x.q.kind === "write" && x.q.lang !== "sql");
 const pyRun = `
 import json, sys, io, contextlib
 out = []
@@ -108,13 +110,19 @@ for (const l of LESSONS) {
   const badQ = badQuestions(l.quiz || []);
   if (badQ.length) { failed++; console.log(`FAIL  ${l.id}  체크 퀴즈 형식 오류: ${badQ.map((x) => x.q).join(" / ")}`); }
   if (!fs.existsSync(file)) { failed++; console.log(`FAIL  ${l.id}  레슨 파일 없음: ${lessonPath(l)}`); continue; }
-  const { runs, videos, figures } = extract(fs.readFileSync(file, "utf8"));
+  const { runs, sqlRuns, videos, figures } = extract(fs.readFileSync(file, "utf8"));
   const badV = videos.filter((v) => !videoIds.has(v.ref));
   if (badV.length) { failed++; console.log(`FAIL  ${l.id}  모르는 영상 참조: ${badV.map((v) => v.ref).join(", ")}`); }
   const badF = figures.filter((f) => !f.src || !fs.existsSync(path.join(root, f.src)) || !f.alt);
   if (badF.length) { failed++; console.log(`FAIL  ${l.id}  그림 파일 없음 또는 alt 없음: ${badF.map((f) => f.src).join(", ")}`); }
   runs.forEach((code, i) => runCells.push({ id: `${l.id}#${i + 1}`, code }));
-  console.log(`PASS  ${l.id}  레슨 (실행 셀 ${runs.length}, 영상 ${videos.length}, 그림 ${figures.length}, 퀴즈 ${(l.quiz || []).length}문항)`);
+  sqlRuns.forEach((sql, i) => runCells.push({ id: `${l.id}#sql${i + 1}`, code: sqlProgram(sql), sql }));
+  (l.quiz || []).forEach((q, i) => {
+    if (q.kind !== "write" || q.lang !== "sql") return;
+    runCells.push({ id: `${l.id} Q${i + 1} 예시 답안`, code: sqlProgram(q.solution), sql: q.solution, quiz: q, role: "solution" });
+    runCells.push({ id: `${l.id} Q${i + 1} 처음 코드`, code: sqlProgram(q.given || ""), sql: q.given || "", quiz: q, role: "given" });
+  });
+  console.log(`PASS  ${l.id}  레슨 (실행 셀 ${runs.length}${sqlRuns.length ? ` + SQL ${sqlRuns.length}` : ""}, 영상 ${videos.length}, 그림 ${figures.length}, 퀴즈 ${(l.quiz || []).length}문항)`);
 }
 // 레슨 실행 셀은 그 자체로 돌아가고 무언가 출력해야 한다 (학생이 ▶ 실행을 눌렀을 때 빈 화면이 나오지 않도록)
 if (runCells.length) {
@@ -140,11 +148,31 @@ for c in cells:
 print(json.dumps(out, ensure_ascii=False))
 `;
   const cellRes = JSON.parse(execFileSync("python3", ["-c", cellPy], { input: JSON.stringify(runCells), encoding: "utf8", env: pyEnv }));
-  for (const r of cellRes) {
-    const ok = !r.error && r.stdout.trim();
-    if (!ok) { failed++; console.log(`FAIL  실행 셀 ${r.id}  ${r.error || "출력이 없음"}`); }
-  }
-  console.log(`${cellRes.some((r) => r.error || !r.stdout.trim()) ? "FAIL" : "PASS"}  레슨 실행 셀 ${cellRes.length}개 실행`);
+  // 브라우저(Pyodide 0.27)의 SQLite 는 3.39 라서 그 뒤에 생긴 함수는 쓰지 않는다 (로컬 python3 의 SQLite 는 더 새것일 수 있음)
+  const NEWER_SQLITE = /\b(concat|concat_ws|string_agg|timediff|octet_length|unhex|median|percentile)\s*\(/i;
+  let cellFail = 0;
+  const bySolution = {};
+  cellRes.forEach((r, k) => {
+    const c = runCells[k];
+    let why = r.error || (r.stdout.trim() ? "" : "출력이 없음");
+    if (!why && c.sql !== undefined) {
+      const res = parseSqlOutput(r.stdout);
+      if (c.role === "given") {
+        const want = bySolution[c.quiz.solution];
+        if (want && res && !res.error && sameSqlResult(res, want, sqlOrdered(c.quiz.solution))) why = "처음 코드가 그대로 정답 처리됨";
+      } else if (!res) why = "SQL 결과를 읽지 못함";
+      else if (/--\s*오류 예시/.test(c.sql)) why = res.error ? "" : "'-- 오류 예시' 셀인데 오류가 나지 않음";
+      else if (res.error) why = "SQL 오류: " + res.error.message;
+      else if (!res.sets.length) why = "SQL 결과가 없음";
+      else if (NEWER_SQLITE.test(c.sql)) why = "브라우저 SQLite(3.39)에 없는 함수를 씀: " + c.sql.match(NEWER_SQLITE)[1];
+      else if (c.role === "solution") {
+        bySolution[c.quiz.solution] = res;
+        if (c.quiz.must && !c.quiz.must.every((re) => new RegExp(re, "i").test(c.sql))) why = "예시 답안이 must 조건을 지키지 않음";
+      }
+    }
+    if (why) { cellFail++; failed++; console.log(`FAIL  실행 셀 ${r.id}  ${why}`); }
+  });
+  console.log(`${cellFail ? "FAIL" : "PASS"}  레슨 실행 셀 ${cellRes.length}개 실행`);
 }
 // import · from 문은 코드 맨 위에만 (시작 코드 · 모범답안 · 레슨 예제)
 const lateImport = (code) => { let seen = false; for (const l of String(code || "").split("\n")) { if (/^(import |from \S+ import )/.test(l)) { if (seen) return true; } else if (l.trim() && !l.startsWith("#")) seen = true; } return false; };
