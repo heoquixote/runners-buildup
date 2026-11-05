@@ -815,6 +815,12 @@ kbd {
 .run-out::before { content: "실행 결과"; display: block; margin-bottom: 6px; font-weight: 600; font-size: 11px; line-height: 1; letter-spacing: .04em; color: var(--muted); }
 .run-out.err { color: var(--fail); background: var(--fail-soft); }
 .run-out.err::before { content: "오류"; color: var(--fail); }
+/* 레슨 본문 안의 코드: 설명 글과 한눈에 구분되도록 트랙색 왼쪽 띠 · 틴트 머리 · 더 어두운 코드 면 · 위아래 여백 */
+.lesson-body .run-cell { margin: 6px 0 10px; border-color: color-mix(in srgb, var(--tc, var(--track)) 28%, var(--line-strong)); border-left: 3px solid var(--tc, var(--track)); background: var(--bg); box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.lesson-body .run-cell .run-head { background: color-mix(in srgb, var(--tc, var(--track)) 10%, var(--surface-2)); border-bottom-color: color-mix(in srgb, var(--tc, var(--track)) 22%, var(--line)); }
+.lesson-body .run-cell .CodeMirror, .lesson-body .run-cell .CodeMirror-gutters { background: var(--bg); }
+.lesson-body .run-cell .run-out { background: var(--surface-2); }
+.lesson-body pre.md-code, .lesson-body > pre:not(.console) { margin: 6px 0 10px; border-left: 3px solid color-mix(in srgb, var(--tc, var(--track)) 60%, transparent); background: var(--bg); }
 @media (max-width: 560px) { .run-tip, .run-key { display: none; } }
 
 .video-block { border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
