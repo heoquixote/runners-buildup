@@ -273,9 +273,17 @@ export const COURSES = [
       ] }] },
 
   // ── 머신러닝 ─────────────────────────────────────────────
+  { id: "ml-00", track: "ml", intro: true, title: "머신러닝 시작하기", summary: "기계가 배운다는 것, 학습과 예측, 회귀 · 분류 · 비지도", level: "입문",
+    concepts: ["ml.intro"],
+    lessons: [{ id: "ml-00-1", title: "기계는 어떻게 배울까", minutes: 20, concepts: ["ml.intro"],
+      quiz: [
+        { kind: "choice", q: "'내일 가게 매출액(원)을 예측하기'는 어떤 문제일까?", options: ["회귀", "분류", "군집", "차원 축소"], answer: 0, explain: "맞히려는 답이 연속된 숫자(매출액)이므로 회귀입니다." },
+        { kind: "choice", q: "'정답 없이, 구매 행동이 비슷한 고객끼리 무리로 나누기'는 어떤 문제일까?", options: ["회귀", "분류", "군집 (비지도 학습)", "기준 모델"], answer: 2, explain: "정답(y)이 없고 비슷한 것끼리 묶으므로 비지도 학습의 군집입니다." },
+        { kind: "ox", q: "생존 여부 기록(정답)이 하나도 없어도, 승객 정보만으로 생존 예측 모델을 학습시킬 수 있다.", answer: false, explain: "생존을 맞히는 지도 학습은 예전 정답 기록이 있어야 '무엇을 맞히는지' 배울 수 있습니다." },
+      ] }] },
   { id: "ml-01", track: "ml", title: "ML 워크플로와 데이터 분할", summary: "train/test, stratify, 기준 모델, 누수", unit: 17, level: "입문",
     concepts: ["ml.workflow"],
-    lessons: [{ id: "ml-01-1", title: "모델보다 먼저: 나누고, 기준을 세우고, 새지 않게", minutes: 25, concepts: ["ml.workflow"],
+    lessons: [{ id: "ml-01-1", title: "모델보다 먼저: 손질하고, 나누고, 새지 않게", minutes: 35, concepts: ["ml.workflow"],
       quiz: [
         { kind: "choice", q: "train_test_split에서 클래스 비율을 유지하는 인자는?", options: ["shuffle", "stratify", "random_state", "test_size"], answer: 1, explain: "stratify=y." },
         { kind: "ox", q: "스케일러는 전체 데이터로 fit 한 뒤 나누는 것이 정석이다.", answer: false, explain: "분할 후 학습 데이터로만 fit 해야 누수가 없습니다." },
