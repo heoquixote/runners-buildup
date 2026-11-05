@@ -700,20 +700,24 @@ function trackRun(t) {
 const RUNNER_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="15.2" cy="4.2" r="2.3" fill="currentColor" stroke="none"/><path d="M13.6 7.6 11 13.2M13 9.2l3.6 1 2.4-2.4M13 9.2l-3.8-.4-2.4 2.6M11 13.2l4 1.8.2 5.2M11 13.2l-2.2 4-4.2.8"/></svg>`;
 const FLAG_SVG = `<svg viewBox="0 0 16 20" aria-hidden="true"><path d="M2 19V2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2.8 2.5h11l-2.6 3.6 2.6 3.6h-11z" fill="currentColor"/></svg>`;
 
+// 카드 아래 트랙 줄을 누르면 그 트랙으로 바뀐다. 기본은 가장 최근에 학습한 트랙.
+let runPick = null;
+const RUN_ROWS = 4;
 function runCard() {
   const runs = TRACKS.filter((t) => t.ready).map(trackRun).filter((r) => r.courses > 0);
   if (!runs.length) return "";
-  // 진행 중 = 하나라도 끝낸 것이 있거나 최근 기록이 있는 트랙. 가장 최근에 학습한 트랙을 크게 보여준다.
+  // 진행 중 = 하나라도 끝낸 것이 있거나 최근 기록이 있는 트랙 (최근 학습 순)
   const active = runs.filter((r) => r.done > 0 || r.last).sort((a, b) => String(b.last).localeCompare(String(a.last)) || b.p - a.p);
-  const main = active[0] || runs[0];
-  const others = active.filter((r) => r !== main).slice(0, 3);
+  const rows = active.slice(0, RUN_ROWS);
+  const main = rows.find((r) => r.t.id === runPick) || active[0] || runs[0];
+  const recent = main === active[0];
   const { t, s, p } = main;
   const msg = p >= 100 ? "완주했어요! 다른 트랙에서 다음 레이스를 시작해 보세요."
     : main.done === 0 ? "출발선에 섰어요. 첫 레슨부터 가볍게 달려 볼까요?"
     : `DAY ${String(main.day).padStart(2, "0")} · ${esc(main.current.title)} 구간을 달리는 중`;
   return `<section class="panel run-card${p >= 100 ? " complete" : ""}" ${trackStyle(t)} aria-label="내 트랙 진행률">
     <div class="run-top">
-      <div><span class="eyebrow">My Track${active.length > 1 ? " · 최근 학습" : ""}</span><h2><a href="#/t/${t.id}">${esc(t.label)}</a></h2><p class="muted">${msg}</p></div>
+      <div><span class="eyebrow">My Track${rows.length > 1 ? (recent ? " · 최근 학습" : " · 선택한 트랙") : ""}</span><h2><a href="#/t/${t.id}">${esc(t.label)}</a></h2><p class="muted">${msg}</p></div>
       <div class="run-pct"><b>${p}</b>%</div>
     </div>
     <div class="run-lane" role="progressbar" aria-label="${esc(t.label)} 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}">
@@ -723,7 +727,7 @@ function runCard() {
     </div>
     <div class="run-meta"><span class="run-end">Start</span><span>코스 <b>${main.finished}</b>/${main.courses} 완주 · 레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span><span class="run-end">Finish</span></div>
     <div class="run-foot"><a class="btn small${p >= 100 ? " ghost" : ""}" href="${main.href}">${p >= 100 ? "트랙 돌아보기" : main.done ? "이어서 달리기" : "출발하기"} →</a></div>
-    ${others.length ? `<ul class="run-others" aria-label="다른 진행 중 트랙">${others.map((r) => `<li ${trackStyle(r.t)}><a href="#/t/${r.t.id}"><span class="ro-name">${esc(r.t.label)}</span><span class="ro-lane"><span style="width:${r.p}%"></span><i style="left:${r.p}%"></i></span><b>${r.p}%</b></a></li>`).join("")}</ul>` : ""}
+    ${rows.length > 1 ? `<ul class="run-others" aria-label="진행 중 트랙 (누르면 위 카드가 바뀝니다)">${rows.map((r) => `<li ${trackStyle(r.t)}><button type="button" class="ro-row${r === main ? " on" : ""}" data-run="${r.t.id}" aria-pressed="${r === main}"><span class="ro-name">${esc(r.t.label)}</span><span class="ro-lane"><span style="width:${r.p}%"></span><i style="left:${r.p}%"></i></span><b>${r.p}%</b></button></li>`).join("")}</ul>` : ""}
   </section>`;
 }
 
@@ -773,6 +777,14 @@ function viewHome() {
   </main>`;
   bindTopbar();
   $app.querySelectorAll('main [data-act="login"]').forEach((b) => b.addEventListener("click", () => loginModal()));
+  $app.querySelector(".daily-grid")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-run]");
+    const card = btn?.closest(".run-card");
+    if (!card) return;
+    runPick = btn.dataset.run;
+    card.outerHTML = runCard();
+    $app.querySelector(`.run-card [data-run="${runPick}"]`)?.focus();
+  });
   preload();
 }
 
