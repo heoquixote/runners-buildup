@@ -5,8 +5,10 @@
 export const TRACKS = [
   { id: "python-basic", label: "파이썬 기초", en: "Python Basics", color: "violet", ready: true,
     blurb: "변수부터 파일 입출력까지. QA/QC 현장 예제로 문법을 익힙니다." },
-  { id: "python-da", label: "파이썬 데이터분석", en: "Data Analysis", color: "cyan", ready: true,
-    blurb: "NumPy · pandas · matplotlib · seaborn으로 데이터를 다루고 그립니다." },
+  { id: "python-da", label: "데이터 분석", en: "Data Analysis", color: "cyan", ready: true,
+    blurb: "NumPy · pandas로 데이터를 불러오고, 고르고, 묶고, 합칩니다." },
+  { id: "python-viz", label: "데이터 시각화", en: "Visualization", color: "rose", ready: true,
+    blurb: "matplotlib · seaborn으로 데이터를 그리고 읽습니다." },
   { id: "sql", label: "SQL", en: "SQL", color: "lime", ready: false,
     blurb: "SELECT부터 윈도우 함수까지. 브라우저 안의 SQLite로 바로 실행합니다." },
   { id: "stats", label: "통계", en: "Statistics", color: "amber", ready: true,
@@ -123,7 +125,7 @@ export const COURSES = [
         { kind: "ox", q: "except: 처럼 에러 이름을 비워 두는 것이 가장 안전한 습관이다.", answer: false, explain: "이름 없는 except는 오타(NameError)까지 숨깁니다. 잡을 에러를 이름으로 적으세요." },
       ] }] },
 
-  // ── 파이썬 데이터분석 ────────────────────────────────────
+  // ── 데이터 분석 (NumPy · pandas) ──────────────────────────
   { id: "da-01", track: "python-da", title: "NumPy 배열과 연산", summary: "배열 연산, 통계량, 불리언 인덱싱, axis, 이상치", unit: 10, level: "기본",
     concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
     lessons: [{ id: "da-01-1", title: "반복문 없이 배열을 한 번에 계산하기", minutes: 15, concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
@@ -180,14 +182,15 @@ export const COURSES = [
         { kind: "write", q: "pd.to_datetime으로 '2026-11-04 21:30'의 시(hour)를 출력하는 코드를 작성하세요.", expect: "21", must: ["to_datetime\\("], solution: "import pandas as pd\nprint(pd.to_datetime('2026-11-04 21:30').hour)", explain: "Timestamp의 .hour" },
         { kind: "choice", q: "1시간 단위 데이터를 하루 평균으로 바꾸는 코드는?", options: ["s.rolling(24).mean()", "s.resample('D').mean()", "s.shift(24)", "s.groupby(24).mean()"], answer: 1, explain: "resample('D')는 날짜 단위로 묶습니다." },
       ] }] },
-  { id: "da-09", track: "python-da", title: "matplotlib 기본", summary: "fig/ax, 선 · 막대 · 산점도, 축과 제목, 서브플롯", unit: 30, level: "기본",
+  // ── 데이터 시각화 (matplotlib · seaborn) ─ 코스 id · 레슨 파일 위치는 그대로 ──
+  { id: "da-09", track: "python-viz", dir: "python-da", title: "matplotlib 기본", summary: "fig/ax, 선 · 막대 · 산점도, 축과 제목, 서브플롯", unit: 30, level: "기본",
     concepts: ["mpl.basic"],
     lessons: [{ id: "da-09-1", title: "fig와 ax로 그래프 그리기", minutes: 15, concepts: ["mpl.basic"],
       quiz: [
         { kind: "write", q: "fig, ax를 만들고 ax.plot으로 [1, 4, 9]를 그린 뒤, 그려진 선의 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt", expect: "1", must: ["\\.plot\\("], solution: "import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.plot([1, 4, 9])\nprint(len(ax.lines))", explain: "ax.plot을 한 번 부르면 ax.lines에 선 하나가 생깁니다." },
         { kind: "choice", q: "시간에 따른 매출 변화를 보여 줄 때 가장 알맞은 그래프는?", options: ["선 그래프", "원 그래프", "산점도", "히스토그램"], answer: 0, explain: "추이는 선, 범주 비교는 막대, 관계는 산점도입니다." },
       ] }] },
-  { id: "da-10", track: "python-da", title: "seaborn 통계 시각화", summary: "분포, 범주 비교, 관계, 상관 히트맵", unit: 31, level: "실무",
+  { id: "da-10", track: "python-viz", dir: "python-da", title: "seaborn 통계 시각화", summary: "분포, 범주 비교, 관계, 상관 히트맵", unit: 31, level: "실무",
     concepts: ["sns.stat"],
     lessons: [{ id: "da-10-1", title: "DataFrame을 그대로 넣는 통계 그래프", minutes: 15, concepts: ["sns.stat"],
       quiz: [
@@ -380,10 +383,11 @@ export const COURSES = [
       ] }] },
 ];
 
-export const LESSONS = COURSES.flatMap((c) => c.lessons.map((l) => ({ ...l, course: c.id, track: c.track })));
+export const LESSONS = COURSES.flatMap((c) => c.lessons.map((l) => ({ ...l, course: c.id, track: c.track, dir: c.dir || c.track })));
 export const courseById = Object.fromEntries(COURSES.map((c) => [c.id, c]));
 export const lessonById = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
 export const trackById = Object.fromEntries(TRACKS.map((t) => [t.id, t]));
 export const coursesOf = (trackId) => COURSES.filter((c) => c.track === trackId);
 export const courseOfUnit = (unitId) => COURSES.find((c) => c.unit === unitId);
-export const lessonPath = (l) => `content/${l.track}/${l.id}.md`;
+// dir: 레슨 md 폴더. 트랙을 옮긴 코스(da-09·da-10 → python-viz)는 파일을 원래 폴더에 둔다.
+export const lessonPath = (l) => `content/${l.dir || l.track}/${l.id}.md`;

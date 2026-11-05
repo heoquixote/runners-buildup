@@ -28,7 +28,7 @@ export const CONCEPTS = {
   "py.file": { name: "파일 열기 open · with", track: "python-basic" },
   "py.csv": { name: "csv 모듈", track: "python-basic" },
   "py.json": { name: "json 모듈", track: "python-basic" },
-  // 파이썬 데이터분석
+  // 데이터 분석 · 데이터 시각화
   "np.array": { name: "NumPy 배열과 벡터 연산", track: "python-da" },
   "np.stats": { name: "기본 통계량 (sum · mean · std)", track: "python-da" },
   "np.bool-index": { name: "불리언 인덱싱", track: "python-da" },
@@ -41,8 +41,8 @@ export const CONCEPTS = {
   "pd.pivot": { name: "pivot_table과 melt", track: "python-da" },
   "pd.merge": { name: "merge와 concat", track: "python-da" },
   "pd.time": { name: "시계열 (datetime · resample · rolling)", track: "python-da" },
-  "mpl.basic": { name: "matplotlib 기본", track: "python-da" },
-  "sns.stat": { name: "seaborn 통계 시각화", track: "python-da" },
+  "mpl.basic": { name: "matplotlib 기본", track: "python-viz" },
+  "sns.stat": { name: "seaborn 통계 시각화", track: "python-viz" },
   // SQL
   "sql.select": { name: "SELECT · WHERE", track: "sql" },
   "sql.order": { name: "정렬 · LIMIT · 내장 함수", track: "sql" },

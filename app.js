@@ -51,7 +51,7 @@ const isReady = (c) => c.status !== "planned";
 const dayNo = (c) => (c.intro ? 0 : coursesOf(c.track).filter((x) => !x.intro).indexOf(c) + 1);
 const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
 const solved = (pid) => !!state.progress[pid]?.solved;
-const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)" };
+const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)" };
 const trackStyle = (t) => `style="--tc:${TRACK_COLOR[t.color] || "var(--track)"}"`;
 
 const store = {
@@ -659,7 +659,7 @@ function trackCard(t) {
 // 홈 '학습 트랙'을 카테고리별로 묶어 보여준다. 여기 없는 트랙은 '기타' 묶음으로 뒤에 붙는다.
 const TRACK_GROUPS = [
   { id: "code", label: "프로그래밍 기초", en: "Programming", blurb: "데이터를 코드로 읽고 다루는 기본기", tracks: ["python-basic", "sql"] },
-  { id: "analytics", label: "데이터 분석", en: "Analytics", blurb: "데이터를 정리하고 해석하는 힘", tracks: ["python-da", "stats"] },
+  { id: "analytics", label: "분석 · 시각화", en: "Analytics", blurb: "데이터를 정리하고, 그리고, 해석하는 힘", tracks: ["python-da", "python-viz", "stats"] },
   { id: "ai", label: "AI", en: "Machine Learning · AI", blurb: "데이터로 예측하는 모델 만들기", tracks: ["ml", "dl"] },
 ];
 
@@ -672,7 +672,7 @@ function trackGroupsHtml() {
     if (!list.length) return "";
     return `<div class="tgroup">
       <header class="tgroup-head"><span class="tgroup-en">${esc(g.en)}</span><h3>${esc(g.label)}</h3>${g.blurb ? `<p class="muted">${esc(g.blurb)}</p>` : ""}</header>
-      <div class="tcards">${list.map(trackCard).join("")}</div>
+      <div class="tcards" style="--n:${Math.max(2, list.length)}">${list.map(trackCard).join("")}</div>
     </div>`;
   }).join("");
 }
