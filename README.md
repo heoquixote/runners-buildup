@@ -27,6 +27,7 @@
 | `problems-pb-more.js` | 파이썬 기초 추가 코스 문제: 컴프리헨션과 람다(유닛 21) · 예외 처리(유닛 22) |
 | `problems-pb-general.js` | 파이썬 기초 1~11회차의 데이터 과정(일반 소재) 문제, 회차마다 N-6 · N-7 |
 | `problems-da.js` | 파이썬 데이터분석 문제 (유닛 23~31: 브로드캐스팅 · pandas · 시계열 · matplotlib · seaborn). 그래프는 실행 결과에 이미지로 표시되고, seaborn은 처음 import 할 때 브라우저가 설치합니다 |
+| `problems-stats-ml2.js` | 통계(유닛 32~34: 카이제곱 · ANOVA, 상관과 회귀, A/B 테스트) · 머신러닝(35~39: 교차검증, Pipeline, 비지도, 불균형, 모델 해석) 문제와 딥러닝(40~46) 개념 퀴즈. 딥러닝은 실습 문제 없이 개념 퀴즈만 있습니다 |
 | `harness.py` | 채점기 (입출력형 / 함수형 / 단계 실습형) |
 | `worker.js`, `runner.js` | Pyodide를 Web Worker에서 실행, 6초 넘으면 중단 |
 | `api.js` | Supabase RPC 호출, 설정이 없으면 데모 모드(이 브라우저에만 저장) |
