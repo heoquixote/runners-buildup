@@ -1,6 +1,7 @@
 // 개념 사전. 레슨·영상·문제를 잇는 공통 키. id 는 "트랙접두.이름" 형식.
 export const CONCEPTS = {
   // 파이썬 기초
+  "py.intro": { name: "파이썬 소개와 설치", track: "python-basic" },
   "py.variable": { name: "변수와 대입", track: "python-basic" },
   "py.arith": { name: "사칙연산 · 몫 · 나머지", track: "python-basic" },
   "py.object-ref": { name: "변수와 객체 참조", track: "python-basic" },
