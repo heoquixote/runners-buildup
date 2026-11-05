@@ -14,7 +14,7 @@ import { sqlProgram, parseSqlOutput, sameSqlResult, sqlOrdered } from "../sql.js
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // 예제 데이터셋(titanic.csv 등): 하네스가 작업 폴더에 연결한다 (브라우저에서는 worker.js 가 받아 둔다)
 const DATASETS = path.join(root, "datasets");
-const pyEnv = { ...process.env, RB_DATASETS: DATASETS, MPLBACKEND: "Agg" };
+const pyEnv = { ...process.env, RB_DATASETS: DATASETS, RB_HARNESS: path.join(root, "harness.py"), MPLBACKEND: "Agg" };
 const py = `
 import json, sys
 sys.path.insert(0, ${JSON.stringify(root)})
@@ -129,13 +129,15 @@ if (runCells.length) {
   const cellPy = `
 import json, sys, io, os, tempfile, contextlib
 cells = json.load(sys.stdin)
+H = {"__name__": "rb_harness"}
+exec(open(os.environ["RB_HARNESS"], encoding="utf-8").read(), H)
 out = []
 for c in cells:
     buf = io.StringIO()
     err = None
     d = tempfile.mkdtemp()
-    for name in os.listdir(os.environ["RB_DATASETS"]):
-        os.symlink(os.path.join(os.environ["RB_DATASETS"], name), os.path.join(d, name))
+    # 브라우저와 같은 규칙으로 데이터셋을 연결한다 (하네스가 연결하지 않는 파일은 여기서도 없다)
+    H["_link_datasets"](d, {})
     cwd = os.getcwd(); os.chdir(d)
     try:
         with contextlib.redirect_stdout(buf):
