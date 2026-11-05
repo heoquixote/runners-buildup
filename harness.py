@@ -209,11 +209,11 @@ def _call_solution(ns, args):
 
 
 def _link_datasets(path, files):
-    """예제 데이터셋을 작업 폴더에서 pd.read_csv('titanic.csv') 처럼 이름만으로 열 수 있게 한다."""
+    """예제 데이터셋(.csv, SQL 실습 DB .sql)을 작업 폴더에서 pd.read_csv('titanic.csv') 처럼 이름만으로 열 수 있게 한다."""
     if not os.path.isdir(DATASET_DIR):
         return
     for name in os.listdir(DATASET_DIR):
-        if name in files or not name.endswith(".csv"):
+        if name in files or not name.endswith((".csv", ".sql")):
             continue
         src, dst = os.path.join(DATASET_DIR, name), os.path.join(path, name)
         try:
