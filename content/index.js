@@ -428,7 +428,7 @@ export const COURSES = [
           { kind: "ox", q: "왜도가 0에 가까우면 이상치가 하나도 없다.", answer: false, explain: "왜도는 좌우 균형만 봅니다. 양쪽에 이상치가 비슷하게 있으면 왜도는 0에 가까워도 첨도가 커집니다." },
         ] },
     ] },
-  { id: "st-09", track: "stats", title: "확률 기초", summary: "사건과 확률, 큰 수의 법칙, 시뮬레이션, 조건부확률과 베이즈 정리", level: "입문",
+  { id: "st-09", track: "stats", title: "확률 기초", summary: "사건과 확률, 큰 수의 법칙, 시뮬레이션, 조건부확률과 베이즈 정리", unit: 47, level: "입문",
     concepts: ["st.probability"],
     lessons: [
       { id: "st-09-1", title: "사건과 확률, 큰 수의 법칙", minutes: 15, concepts: ["st.probability"],
@@ -557,7 +557,7 @@ export const COURSES = [
           { kind: "ox", q: "검정력 80%는 실제 차이가 있을 때 10번 중 8번은 유의한 결과를 얻는다는 뜻이다.", answer: true, explain: "1 − β = 0.8." },
         ] },
     ] },
-  { id: "st-10", track: "stats", title: "통계 해석 실수 피하기", summary: "상관과 인과, 교란변수, 심슨의 역설, 결과를 정직하게 보고하는 법", level: "실무",
+  { id: "st-10", track: "stats", title: "통계 해석 실수 피하기", summary: "상관과 인과, 교란변수, 심슨의 역설, 결과를 정직하게 보고하는 법", unit: 48, level: "실무",
     concepts: ["st.causal"],
     lessons: [
       { id: "st-10-1", title: "상관과 인과, 심슨의 역설", minutes: 20, concepts: ["st.causal"],
