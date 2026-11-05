@@ -1,4 +1,4 @@
-"""통계 트랙 유닛 47(확률) · 48(통계 해석) 문제 생성기.
+"""통계 트랙 유닛 48(확률) · 49(통계 해석) 문제 생성기.
 
 python3 scripts/build_stats3.py  ->  problems-stats3.js
 모범답안을 실제로 실행해 정답 값을 채우고, 모범답안의 `# N. 설명` 다음 줄 `변수 = 식`에서 식을 비워 시작 코드를 만든다.
@@ -11,7 +11,7 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 UNITS = [
     {
-        "id": 47,
+        "id": 48,
         "title": "확률 기초",
         "summary": "교차표로 구하는 조건부확률, 베이즈 정리, 시뮬레이션으로 확률 확인",
         "note": "<h4>조건부확률은 분모를 바꾸는 계산</h4><p>P(A | B) = P(A 그리고 B) ÷ P(B). 교차표에서는 조건에 해당하는 <b>행(또는 열) 합계</b>를 분모로 씁니다. "
@@ -21,7 +21,7 @@ UNITS = [
                 "<h4>시뮬레이션</h4><p><code>rng = np.random.default_rng(시드)</code>, <code>rng.random(n) &lt; p</code>로 확률 p인 사건을 n번 흉내 냅니다. 많이 반복할수록 비율이 참 확률에 가까워집니다(큰 수의 법칙).</p>",
     },
     {
-        "id": 48,
+        "id": 49,
         "title": "통계 해석 실수 피하기",
         "summary": "심슨의 역설과 층별 비교, 교란변수 통제, 다중비교 보정",
         "note": "<h4>합친 결과와 나눈 결과가 다를 때</h4><p>그룹 구성이 다르면 전체 비율 비교가 뒤집힐 수 있습니다(심슨의 역설). 의심되는 변수로 나눠 <code>groupby([층, 그룹])</code>으로 비교하고, 같은 구성으로 맞춘 <b>표준화 비율</b>을 함께 봅니다.</p>"
@@ -60,7 +60,7 @@ def steps(pid, domain, title, level, uses, intro, setup, items, printline, extra
 F = "abs({var} - {v}) < 1e-6"
 
 # ───────────── 유닛 47 확률 기초 ─────────────
-steps("47-1", "mfg", "라인별 불량률: 교차표로 조건부확률 구하기", 1,
+steps("48-1", "mfg", "라인별 불량률: 교차표로 조건부확률 구하기", 1,
       [["pd.crosstab(행, 열)", "두 범주의 교차표"], ["P(A | B)", "B에 해당하는 것만 분모로"], ["P(B | A)", "방향을 바꾸면 분모도 바뀜"]],
       "A·B 두 라인에서 나온 제품 1,000개의 불량 여부입니다. 교차표를 만들고, 전체 불량률과 라인별 불량률, 그리고 불량품이 B라인에서 나왔을 확률을 구합니다.",
       "import pandas as pd\n\ndf = pd.DataFrame({\n    'line': ['A'] * 400 + ['B'] * 600,\n    'defect': ['불량'] * 12 + ['양품'] * 388 + ['불량'] * 36 + ['양품'] * 564,\n})",
@@ -71,7 +71,7 @@ steps("47-1", "mfg", "라인별 불량률: 교차표로 조건부확률 구하�
        ("ratio", "B라인 불량률 ÷ A라인 불량률", "p_def_B / (table.loc['A', '불량'] / table.loc['A'].sum())", F)],
       "print(table)\nprint(round(p_def, 3), round(p_def_B, 3), round(p_B_def, 3), round(ratio, 2))")
 
-steps("47-2", "mfg", "비전 검사기 알람을 믿어도 될까 (베이즈 정리)", 2,
+steps("48-2", "mfg", "비전 검사기 알람을 믿어도 될까 (베이즈 정리)", 2,
       [["P(알람) = P(알람|불량)P(불량) + P(알람|양품)P(양품)", "전확률"], ["P(불량|알람) = P(알람|불량)P(불량) ÷ P(알람)", "베이즈 정리"]],
       "불량률은 2%입니다. 비전 검사기는 불량품의 95%에서 알람을 울리고(검출률), 양품에서도 3%는 잘못 알람을 울립니다. 알람이 울린 제품이 정말 불량일 확률을 구합니다.",
       "prior = 0.02    # P(불량)\nsens = 0.95     # P(알람 | 불량)\nfalse_alarm = 0.03   # P(알람 | 양품)",
@@ -82,7 +82,7 @@ steps("47-2", "mfg", "비전 검사기 알람을 믿어도 될까 (베이즈 정
        ("post2", "독립인 두 번째 검사기도 알람을 울렸을 때 P(불량 | 알람 두 번)", "sens * post / (sens * post + false_alarm * (1 - post))", F)],
       "print(round(p_alarm, 4), round(post, 3), true_alarms, false_alarms, round(post2, 3))")
 
-steps("47-3", "general", "운영체제별 구독률: 교차표로 조건부확률 구하기", 1,
+steps("48-3", "general", "운영체제별 구독률: 교차표로 조건부확률 구하기", 1,
       [["pd.crosstab(행, 열)", "두 범주의 교차표"], ["P(A | B)", "B에 해당하는 것만 분모로"], ["향상도(lift) = P(A | B) ÷ P(A)", "조건이 확률을 몇 배로 바꾸나"]],
       "앱 사용자 500명의 운영체제(<code>os</code>)와 유료 구독 여부(<code>sub</code>)입니다. 전체 구독률, iOS 사용자의 구독률, 구독자 중 iOS 비율을 구합니다.",
       "import pandas as pd\n\ndf = pd.DataFrame({\n    'os': ['iOS'] * 200 + ['Android'] * 300,\n    'sub': ['구독'] * 50 + ['무료'] * 150 + ['구독'] * 30 + ['무료'] * 270,\n})",
@@ -93,7 +93,7 @@ steps("47-3", "general", "운영체제별 구독률: 교차표로 조건부확�
        ("lift", "향상도 P(구독 | iOS) ÷ P(구독)", "p_sub_ios / p_sub", F)],
       "print(table)\nprint(round(p_sub, 3), round(p_sub_ios, 3), round(p_ios_sub, 3), round(lift, 3))")
 
-steps("47-4", "general", "'무료'가 들어간 메일은 스팸일까 (베이즈 + 시뮬레이션)", 2,
+steps("48-4", "general", "'무료'가 들어간 메일은 스팸일까 (베이즈 + 시뮬레이션)", 2,
       [["P(스팸|단어) = P(단어|스팸)P(스팸) ÷ P(단어)", "베이즈 정리"], ["rng.random(n) < p", "확률 p인 사건을 n번 흉내"], ["배열[조건].mean()", "조건에 맞는 것만 골라 비율"]],
       "메일의 20%가 스팸입니다. '무료'라는 단어는 스팸의 40%, 정상 메일의 5%에 들어 있습니다. 베이즈 정리로 계산하고, 메일 100,000통을 시뮬레이션해서 같은 값이 나오는지 확인합니다.",
       "import numpy as np\n\nprior, p_word_spam, p_word_ham = 0.2, 0.4, 0.05\nrng = np.random.default_rng(0)",
@@ -114,7 +114,7 @@ df = pd.concat([
     make('A', '소형', 800, 24), make('A', '대형', 200, 24),
     make('B', '소형', 200, 4), make('B', '대형', 800, 80),
 ], ignore_index=True)"""
-steps("48-1", "mfg", "어느 라인이 더 나은가: 심슨의 역설", 2,
+steps("49-1", "mfg", "어느 라인이 더 나은가: 심슨의 역설", 2,
       [["groupby(열)[값].mean()", "그룹별 비율"], ["groupby([층, 그룹])[값].mean().unstack()", "층별로 나눈 비율 표"], ["pd.crosstab(..., normalize='index')", "그룹별 구성비"]],
       "A·B 라인에서 소형·대형 제품을 1,000개씩 만들었습니다(<code>defect</code> 1 = 불량). 전체 불량률로 보면 A가 낫지만, 크기별로 나눠 보면 결론이 바뀝니다. 그 이유를 숫자로 확인합니다.",
       SIMPSON_SETUP,
@@ -125,7 +125,7 @@ steps("48-1", "mfg", "어느 라인이 더 나은가: 심슨의 역설", 2,
        ("better", "표준화 불량률이 더 낮은 라인 이름", "std_rate.idxmin()", "{var} == 'B'")],
       "print(overall.round(3).to_dict())\nprint(by_size.round(3))\nprint(mix.round(2))\nprint(std_rate.round(3).to_dict(), better)")
 
-steps("48-2", "mfg", "개선 전후 결과를 보고 문장으로 만들기", 2,
+steps("49-2", "mfg", "개선 전후 결과를 보고 문장으로 만들기", 2,
       [["stats.ttest_ind(a, b, equal_var=False)", "Welch t검정"], ["결과.confidence_interval(0.95)", "평균 차이의 95% 신뢰구간 (.low, .high)"], ["Cohen's d = 차이 ÷ 합동 표준편차", "효과 크기"]],
       "도금 두께 편차(μm)를 개선 전 12개 로트, 개선 후 12개 로트에서 쟀습니다. 보고에 필요한 네 가지(차이 · 신뢰구간 · p-value · 효과 크기)를 계산합니다.",
       "import numpy as np\nfrom scipy import stats\n\nbefore = np.array([2.9, 3.4, 3.1, 2.7, 3.6, 3.2, 3.0, 3.5, 2.8, 3.3, 3.1, 3.4])\nafter = np.array([2.6, 2.9, 2.7, 3.0, 2.5, 2.8, 3.1, 2.6, 2.9, 2.7, 3.0, 2.8])",
@@ -136,7 +136,7 @@ steps("48-2", "mfg", "개선 전후 결과를 보고 문장으로 만들기", 2,
        ("d", "Cohen's d (차이 ÷ 두 그룹 표준편차(ddof=1)의 제곱평균 제곱근)", "diff / np.sqrt((before.std(ddof=1) ** 2 + after.std(ddof=1) ** 2) / 2)", F)],
       "print(f'편차가 {diff:.2f}μm 바뀜 (95% CI {ci.low:.2f} ~ {ci.high:.2f}, p = {p:.4f}, d = {d:.2f})')")
 
-steps("48-3", "general", "아이스크림과 물놀이 사고: 기온의 영향 빼기", 2,
+steps("49-3", "general", "아이스크림과 물놀이 사고: 기온의 영향 빼기", 2,
       [["np.corrcoef(x, y)[0, 1]", "상관계수"], ["np.polyfit(z, x, 1) / np.polyval", "z로 x를 예측하는 직선"], ["잔차 = 실제 − 예측", "z로 설명되지 않고 남은 부분"]],
       "어느 해 여름 60일의 기온(℃), 아이스크림 판매량, 물놀이 사고 건수입니다. 판매량과 사고는 강하게 함께 움직이지만, 기온의 영향을 빼면(편상관) 관계가 거의 사라지는 것과, 30℃ 이상만 골라내는 식으로 거칠게 나누면 기온 차이가 남아 상관도 남는 것을 확인합니다.",
       "import numpy as np\n\nrng = np.random.default_rng(1)\ntemp = rng.uniform(22, 36, 60).round(1)\nice = (temp * 30 + rng.normal(0, 25, 60)).round()\nacc = (temp * 0.5 + rng.normal(0, 1.2, 60)).round(1)",
@@ -147,7 +147,7 @@ steps("48-3", "general", "아이스크림과 물놀이 사고: 기온의 영향 
        ("r_hot", "기온 30℃ 이상인 날만 골라 구한 판매량 · 사고 상관계수", "np.corrcoef(ice[temp >= 30], acc[temp >= 30])[0, 1]", F)],
       "print(round(r_all, 3), round(r_partial, 3), round(r_hot, 3))")
 
-steps("48-4", "general", "지표 20개 중 '유의한' 것은 몇 개일까: 다중비교", 1,
+steps("49-4", "general", "지표 20개 중 '유의한' 것은 몇 개일까: 다중비교", 1,
       [["(배열 < 기준).sum()", "기준보다 작은 개수"], ["1 − (1 − α)^m", "하나라도 헛경보가 날 확률"], ["α ÷ m", "본페로니 보정 기준"]],
       "A/B 테스트에서 지표 20개를 각각 검정해 얻은 p-value입니다. 보정 없이 볼 때와 본페로니 보정을 했을 때 유의한 지표 수를 비교합니다.",
       "import numpy as np\n\nnames = [f'지표{i:02d}' for i in range(1, 21)]\npvals = np.array([0.41, 0.032, 0.77, 0.0012, 0.25, 0.048, 0.66, 0.12, 0.91, 0.019,\n                  0.53, 0.35, 0.0021, 0.84, 0.072, 0.29, 0.61, 0.044, 0.18, 0.97])\nalpha = 0.05",
@@ -158,9 +158,9 @@ steps("48-4", "general", "지표 20개 중 '유의한' 것은 몇 개일까: 다
        ("sig_names", "보정 후에도 유의한 지표 이름 리스트", "[n for n, p in zip(names, pvals) if p < bonf]", "list({var}) == {v}")],
       "print(n_sig, round(fwer, 3), bonf, n_sig_bonf, sig_names)")
 
-# 48-2 ci 템플릿은 low/high 값을 따로 채운다
+# 49-2 ci 템플릿은 low/high 값을 따로 채운다
 for p in PROBLEMS:
-    if p["id"] == "48-2":
+    if p["id"] == "49-2":
         ns = {}
         exec(p["solution"], ns)
         for c in p["checks"]:
@@ -168,7 +168,7 @@ for p in PROBLEMS:
 
 QUIZZES = [
     {
-        "id": "47-Q", "unit": 47, "title": "확률 기초 개념 퀴즈", "type": "quiz", "level": 1, "origin": "코드 작성 · 객관식 · OX",
+        "id": "48-Q", "unit": 48, "title": "확률 기초 개념 퀴즈", "type": "quiz", "level": 1, "origin": "코드 작성 · 객관식 · OX",
         "questions": [
             {"kind": "write", "q": "교차표 t에서 '여성일 때 생존할 확률' P(생존 | 여성)을 소수 셋째 자리까지 출력하는 코드를 작성하세요.",
              "given": "import pandas as pd\nt = pd.DataFrame({'사망': [81, 468], '생존': [233, 109]}, index=['여성', '남성'])",
@@ -187,7 +187,7 @@ QUIZZES = [
         ],
     },
     {
-        "id": "48-Q", "unit": 48, "title": "통계 해석 개념 퀴즈", "type": "quiz", "level": 1, "origin": "코드 작성 · 객관식 · OX",
+        "id": "49-Q", "unit": 49, "title": "통계 해석 개념 퀴즈", "type": "quiz", "level": 1, "origin": "코드 작성 · 객관식 · OX",
         "questions": [
             {"kind": "write", "q": "지표 5개를 함께 판단할 때 본페로니 보정 기준(α = 0.05)을 출력하는 코드를 작성하세요.",
              "given": "alpha, m = 0.05, 5", "expect": ["0.01"], "must": ["alpha"],
@@ -213,7 +213,7 @@ def js(name, obj):
 
 
 if __name__ == "__main__":
-    head = ("// 통계 트랙 유닛 47(확률 기초) · 48(통계 해석 실수 피하기) 문제. scripts/build_stats3.py 로 생성.\n"
+    head = ("// 통계 트랙 유닛 48(확률 기초) · 49(통계 해석 실수 피하기) 문제. scripts/build_stats3.py 로 생성.\n"
             "// domain: \"mfg\" = QAQC 과정(제조), \"general\" = 데이터 과정(일반). 개념 퀴즈(N-Q)는 두 과정이 함께 쓴다.\n")
     out = head + js("ST3_UNITS", UNITS) + js("ST3_PROBLEMS", PROBLEMS) + js("ST3_QUIZZES", QUIZZES)
     with open(os.path.join(ROOT, "problems-stats3.js"), "w", encoding="utf-8") as f:

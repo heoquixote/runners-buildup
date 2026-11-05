@@ -1,14 +1,14 @@
-// 통계 트랙 유닛 47(확률 기초) · 48(통계 해석 실수 피하기) 문제. scripts/build_stats3.py 로 생성.
+// 통계 트랙 유닛 48(확률 기초) · 49(통계 해석 실수 피하기) 문제. scripts/build_stats3.py 로 생성.
 // domain: "mfg" = QAQC 과정(제조), "general" = 데이터 과정(일반). 개념 퀴즈(N-Q)는 두 과정이 함께 쓴다.
 export const ST3_UNITS = [
   {
-    "id": 47,
+    "id": 48,
     "title": "확률 기초",
     "summary": "교차표로 구하는 조건부확률, 베이즈 정리, 시뮬레이션으로 확률 확인",
     "note": "<h4>조건부확률은 분모를 바꾸는 계산</h4><p>P(A | B) = P(A 그리고 B) ÷ P(B). 교차표에서는 조건에 해당하는 <b>행(또는 열) 합계</b>를 분모로 씁니다. <code>pd.crosstab(df['행'], df['열'], normalize='index')</code>는 행마다 비율을 구해 줍니다.</p><h4>베이즈 정리</h4><p>P(원인 | 결과) = P(결과 | 원인) × P(원인) ÷ P(결과). 분모 P(결과)는 원인이 있을 때와 없을 때를 더해서 구합니다(전확률). 원인이 드물면(사전확률이 작으면) 검사가 정확해도 양성 중 진짜는 적을 수 있습니다.</p><h4>시뮬레이션</h4><p><code>rng = np.random.default_rng(시드)</code>, <code>rng.random(n) &lt; p</code>로 확률 p인 사건을 n번 흉내 냅니다. 많이 반복할수록 비율이 참 확률에 가까워집니다(큰 수의 법칙).</p>"
   },
   {
-    "id": 48,
+    "id": 49,
     "title": "통계 해석 실수 피하기",
     "summary": "심슨의 역설과 층별 비교, 교란변수 통제, 다중비교 보정",
     "note": "<h4>합친 결과와 나눈 결과가 다를 때</h4><p>그룹 구성이 다르면 전체 비율 비교가 뒤집힐 수 있습니다(심슨의 역설). 의심되는 변수로 나눠 <code>groupby([층, 그룹])</code>으로 비교하고, 같은 구성으로 맞춘 <b>표준화 비율</b>을 함께 봅니다.</p><h4>교란변수 걸러 내기</h4><p>X와 Y를 각각 교란변수 Z로 회귀한 뒤 남은 잔차끼리 상관을 구하면(편상관), Z의 영향을 뺀 X와 Y의 관계를 볼 수 있습니다.</p><h4>여러 번 검정하면</h4><p>검정 m개를 각각 α로 하면 하나라도 헛경보가 날 확률은 1 − (1 − α)<sup>m</sup>입니다. 본페로니 보정은 기준을 α ÷ m으로 낮춥니다.</p>"
@@ -16,8 +16,8 @@ export const ST3_UNITS = [
 ];
 export const ST3_PROBLEMS = [
   {
-    "id": "47-1",
-    "unit": 47,
+    "id": "48-1",
+    "unit": 48,
     "domain": "mfg",
     "title": "라인별 불량률: 교차표로 조건부확률 구하기",
     "type": "steps",
@@ -73,8 +73,8 @@ export const ST3_PROBLEMS = [
     ]
   },
   {
-    "id": "47-2",
-    "unit": 47,
+    "id": "48-2",
+    "unit": 48,
     "domain": "mfg",
     "title": "비전 검사기 알람을 믿어도 될까 (베이즈 정리)",
     "type": "steps",
@@ -126,8 +126,8 @@ export const ST3_PROBLEMS = [
     ]
   },
   {
-    "id": "47-3",
-    "unit": 47,
+    "id": "48-3",
+    "unit": 48,
     "domain": "general",
     "title": "운영체제별 구독률: 교차표로 조건부확률 구하기",
     "type": "steps",
@@ -183,8 +183,8 @@ export const ST3_PROBLEMS = [
     ]
   },
   {
-    "id": "47-4",
-    "unit": 47,
+    "id": "48-4",
+    "unit": 48,
     "domain": "general",
     "title": "'무료'가 들어간 메일은 스팸일까 (베이즈 + 시뮬레이션)",
     "type": "steps",
@@ -240,8 +240,8 @@ export const ST3_PROBLEMS = [
     ]
   },
   {
-    "id": "48-1",
-    "unit": 48,
+    "id": "49-1",
+    "unit": 49,
     "domain": "mfg",
     "title": "어느 라인이 더 나은가: 심슨의 역설",
     "type": "steps",
@@ -297,8 +297,8 @@ export const ST3_PROBLEMS = [
     ]
   },
   {
-    "id": "48-2",
-    "unit": 48,
+    "id": "49-2",
+    "unit": 49,
     "domain": "mfg",
     "title": "개선 전후 결과를 보고 문장으로 만들기",
     "type": "steps",
@@ -354,8 +354,8 @@ export const ST3_PROBLEMS = [
     ]
   },
   {
-    "id": "48-3",
-    "unit": 48,
+    "id": "49-3",
+    "unit": 49,
     "domain": "general",
     "title": "아이스크림과 물놀이 사고: 기온의 영향 빼기",
     "type": "steps",
@@ -411,8 +411,8 @@ export const ST3_PROBLEMS = [
     ]
   },
   {
-    "id": "48-4",
-    "unit": 48,
+    "id": "49-4",
+    "unit": 49,
     "domain": "general",
     "title": "지표 20개 중 '유의한' 것은 몇 개일까: 다중비교",
     "type": "steps",
@@ -470,8 +470,8 @@ export const ST3_PROBLEMS = [
 ];
 export const ST3_QUIZZES = [
   {
-    "id": "47-Q",
-    "unit": 47,
+    "id": "48-Q",
+    "unit": 48,
     "title": "확률 기초 개념 퀴즈",
     "type": "quiz",
     "level": 1,
@@ -528,8 +528,8 @@ export const ST3_QUIZZES = [
     ]
   },
   {
-    "id": "48-Q",
-    "unit": 48,
+    "id": "49-Q",
+    "unit": 49,
     "title": "통계 해석 개념 퀴즈",
     "type": "quiz",
     "level": 1,

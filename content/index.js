@@ -428,7 +428,7 @@ export const COURSES = [
           { kind: "ox", q: "왜도가 0에 가까우면 이상치가 하나도 없다.", answer: false, explain: "왜도는 좌우 균형만 봅니다. 양쪽에 이상치가 비슷하게 있으면 왜도는 0에 가까워도 첨도가 커집니다." },
         ] },
     ] },
-  { id: "st-09", track: "stats", title: "확률 기초", summary: "사건과 확률, 큰 수의 법칙, 시뮬레이션, 조건부확률과 베이즈 정리", unit: 47, level: "입문",
+  { id: "st-09", track: "stats", title: "확률 기초", summary: "사건과 확률, 큰 수의 법칙, 시뮬레이션, 조건부확률과 베이즈 정리", unit: 48, level: "입문",
     concepts: ["st.probability"],
     lessons: [
       { id: "st-09-1", title: "사건과 확률, 큰 수의 법칙", minutes: 20, concepts: ["st.probability"],
@@ -557,7 +557,7 @@ export const COURSES = [
           { kind: "ox", q: "검정력 80%는 실제 차이가 있을 때 10번 중 8번은 유의한 결과를 얻는다는 뜻이다.", answer: true, explain: "1 − β = 0.8." },
         ] },
     ] },
-  { id: "st-10", track: "stats", title: "통계 해석 실수 피하기", summary: "상관과 인과, 교란변수, 심슨의 역설, 결과를 정직하게 보고하는 법", unit: 48, level: "실무",
+  { id: "st-10", track: "stats", title: "통계 해석 실수 피하기", summary: "상관과 인과, 교란변수, 심슨의 역설, 결과를 정직하게 보고하는 법", unit: 49, level: "실무",
     concepts: ["st.causal"],
     lessons: [
       { id: "st-10-1", title: "상관과 인과, 심슨의 역설", minutes: 25, concepts: ["st.causal"],
@@ -747,7 +747,7 @@ export const COURSES = [
       quiz: [
         { kind: "ox", q: "부분 의존도에서 토크가 60을 넘을 때 고장 확률이 급히 오르면, 토크를 낮추면 반드시 고장이 줄어든다고 결론 내릴 수 있다.", answer: false, explain: "부분 의존도는 모델이 배운 관계(상관)를 보여 줄 뿐 인과를 증명하지 않습니다. 실제 조치는 현장 지식과 실험으로 확인합니다." },
       ] }] },
-  { id: "ml-10", track: "ml", title: "다른 모델 둘러보기", summary: "KNN, 나이브 베이즈와 라플라스 스무딩, SVM과 커널, 모델 고르기", level: "실무",
+  { id: "ml-10", track: "ml", title: "다른 모델 둘러보기", summary: "KNN, 나이브 베이즈와 라플라스 스무딩, SVM과 커널, 모델 고르기", level: "실무", unit: 47,
     concepts: ["ml.knn", "ml.nb", "ml.svm"],
     lessons: [
     { id: "ml-10-1", title: "KNN: 가까운 이웃에게 묻기", minutes: 15, concepts: ["ml.knn"],
