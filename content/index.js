@@ -39,7 +39,13 @@ export const COURSES = [
   // intro: 트랙 맨 앞 소개 코스(Day 01). 연습문제 · 퀴즈 없이 읽고 넘어간다.
   { id: "pb-00", track: "python-basic", intro: true, title: "파이썬 시작하기", summary: "파이썬이란, 설치 방법, 역사, 엑셀 · SQL · R과 비교한 장점", level: "입문",
     concepts: ["py.intro"],
-    lessons: [{ id: "pb-00-1", title: "파이썬은 무엇이고, 왜 파이썬인가", minutes: 10, concepts: ["py.intro"] }] },
+    lessons: [
+      { id: "pb-00-1", title: "파이썬은 무엇이고, 왜 파이썬인가", minutes: 10, concepts: ["py.intro"] },
+      // optional: 셋 중 하나만 골라 따라 하는 설치 가이드. 코스 진도 · 오늘의 학습 추천에서 뺀다.
+      { id: "pb-00-2", title: "설치 가이드 ① Google Colab으로 바로 시작하기", minutes: 10, concepts: ["py.intro"], optional: true },
+      { id: "pb-00-3", title: "설치 가이드 ② Anaconda 설치하고 Jupyter 열기", minutes: 20, concepts: ["py.intro"], optional: true },
+      { id: "pb-00-4", title: "설치 가이드 ③ python.org + VS Code", minutes: 25, concepts: ["py.intro"], optional: true },
+    ] },
   { id: "pb-01", track: "python-basic", title: "변수와 사칙연산", summary: "변수, 주석, + - * / // % **", unit: 1, level: "입문",
     concepts: ["py.variable", "py.arith"],
     lessons: [{ id: "pb-01-1", title: "변수는 값에 붙이는 이름표", minutes: 10, concepts: ["py.variable", "py.arith"],
