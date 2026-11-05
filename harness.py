@@ -13,6 +13,8 @@ import tempfile
 import traceback
 
 FILENAME = "<내 코드>"
+# 그래프는 화면(DOM) 없이 그림 파일로만 그린다. 실행 결과에 PNG로 붙여 보여 준다.
+os.environ.setdefault("MPLBACKEND", "Agg")
 
 HINTS = {
     "NameError": "변수나 함수 이름의 철자, 그리고 사용하기 전에 정의했는지 확인하세요.",
@@ -26,7 +28,7 @@ HINTS = {
     "KeyError": "딕셔너리에 없는 키입니다.",
     "AttributeError": "그 자료형에는 없는 메서드입니다. 철자를 확인하세요.",
     "EOFError": "더 읽을 입력이 없습니다. input()을 너무 많이 호출하거나 반복문이 끝나지 않는지 확인하세요.",
-    "ModuleNotFoundError": "이 사이트에서는 표준 라이브러리와 numpy · pandas · scipy · scikit-learn을 쓸 수 있습니다. 모듈 이름 철자를 확인하세요.",
+    "ModuleNotFoundError": "이 사이트에서는 표준 라이브러리와 numpy · pandas · matplotlib · seaborn · scipy · scikit-learn을 쓸 수 있습니다. 모듈 이름 철자를 확인하세요.",
     "RecursionError": "함수가 자기 자신을 끝없이 호출하고 있습니다.",
 }
 
@@ -105,6 +107,26 @@ def _exec(code, stdin="", ns=None, echo=False):
         sys.stdout = old_out
         builtins.input = old_input
     return out.getvalue(), error, ns
+
+
+def _figures(capture=True):
+    """학생 코드가 그린 matplotlib 그림을 PNG(base64)로 모으고 닫는다. 그림이 없으면 빈 리스트."""
+    plt = sys.modules.get("matplotlib.pyplot")
+    if plt is None:
+        return []
+    images = []
+    try:
+        if capture:
+            import base64
+            for num in plt.get_fignums()[:4]:
+                buf = io.BytesIO()
+                plt.figure(num).savefig(buf, format="png", dpi=80, bbox_inches="tight")
+                images.append(base64.b64encode(buf.getvalue()).decode("ascii"))
+    except Exception:
+        pass
+    finally:
+        plt.close("all")
+    return images
 
 
 def _norm_lines(text):
@@ -276,6 +298,7 @@ def _grade_steps_in_dir(problem, code):
             "error": None,
             "note": note,
         })
+    _figures(capture=False)
     return cases, out, error
 
 
@@ -323,7 +346,7 @@ def _run_in_dir(problem, code, stdin):
             })
             if call_error and call_error["type"] == "NameError":
                 break
-    return {"stdout": out, "error": error, "calls": calls}
+    return {"stdout": out, "error": error, "calls": calls, "images": _figures()}
 
 
 def grade_json(problem_json, code):

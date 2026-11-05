@@ -132,7 +132,7 @@ for c in cells:
     out.append({"id": c["id"], "stdout": buf.getvalue(), "error": err})
 print(json.dumps(out, ensure_ascii=False))
 `;
-  const cellRes = JSON.parse(execFileSync("python3", ["-c", cellPy], { input: JSON.stringify(runCells), encoding: "utf8" }));
+  const cellRes = JSON.parse(execFileSync("python3", ["-c", cellPy], { input: JSON.stringify(runCells), encoding: "utf8", env: { ...process.env, MPLBACKEND: "Agg" } }));
   for (const r of cellRes) {
     const ok = !r.error && r.stdout.trim();
     if (!ok) { failed++; console.log(`FAIL  실행 셀 ${r.id}  ${r.error || "출력이 없음"}`); }

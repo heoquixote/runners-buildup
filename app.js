@@ -669,6 +669,27 @@ function trackCard(t) {
   </a>`;
 }
 
+// 홈 '학습 트랙'을 카테고리별로 묶어 보여준다. 여기 없는 트랙은 '기타' 묶음으로 뒤에 붙는다.
+const TRACK_GROUPS = [
+  { id: "code", label: "프로그래밍 기초", en: "Programming", blurb: "데이터를 코드로 읽고 다루는 기본기", tracks: ["python-basic", "sql"] },
+  { id: "analytics", label: "데이터 분석", en: "Analytics", blurb: "데이터를 정리하고 해석하는 힘", tracks: ["python-da", "stats"] },
+  { id: "ai", label: "AI", en: "Machine Learning · AI", blurb: "데이터로 예측하는 모델 만들기", tracks: ["ml", "dl"] },
+];
+
+function trackGroupsHtml() {
+  const grouped = new Set(TRACK_GROUPS.flatMap((g) => g.tracks));
+  const rest = TRACKS.filter((t) => !grouped.has(t.id));
+  const groups = [...TRACK_GROUPS, ...(rest.length ? [{ id: "etc", label: "기타", en: "More", blurb: "", tracks: rest.map((t) => t.id) }] : [])];
+  return groups.map((g) => {
+    const list = g.tracks.map((id) => trackById[id]).filter(Boolean);
+    if (!list.length) return "";
+    return `<div class="tgroup">
+      <header class="tgroup-head"><span class="tgroup-en">${esc(g.en)}</span><h3>${esc(g.label)}</h3>${g.blurb ? `<p class="muted">${esc(g.blurb)}</p>` : ""}</header>
+      <div class="tcards">${list.map(trackCard).join("")}</div>
+    </div>`;
+  }).join("");
+}
+
 function viewHome() {
   const prog = program();
   const totals = TRACKS.map(trackStats).reduce((a, s) => ({ lessons: a.lessons + s.lessons, lessonsDone: a.lessonsDone + s.lessonsDone, problems: a.problems + s.problems, solved: a.solved + s.solved }), { lessons: 0, lessonsDone: 0, problems: 0, solved: 0 });
@@ -680,7 +701,7 @@ function viewHome() {
     <div class="daily-grid">${dailyCard()}${recordCard()}</div>
     ${prog.sessions ? todayHtml() : ""}
     <section class="part"><h2 class="part-title">학습 트랙</h2>
-      <div class="tcards">${TRACKS.map(trackCard).join("")}</div></section>
+      <div class="tgroups">${trackGroupsHtml()}</div></section>
     ${prog.sessions ? `<section class="part"><h2 class="part-title">우리 반 회차 과제 <span class="muted">${esc(state.session.student.org_label || prog.label)}</span></h2>
       <div class="ucards">${UNITS.map(unitCard).join("")}</div></section>` : ""}
   </main>`;
@@ -860,12 +881,14 @@ async function viewLesson(l) {
     btn.disabled = true;
     out.hidden = false;
     out.className = "console run-out";
+    showImages(out, []);
     out.textContent = state.runner === "ready" ? "실행 중…" : "파이썬을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…";
     try {
       const res = await runCode({ type: "io", tests: [] }, cells[i].cm.getValue(), "");
       if (res.timeout) { out.className += " err"; out.textContent = "실행이 너무 오래 걸려 멈췄습니다. 반복문이 끝나는지 확인하세요."; }
       else if (res.error) { out.className += " err"; out.textContent = (res.stdout ? res.stdout + "\n" : "") + `${res.error.type}: ${res.error.message}` + (res.error.hint ? `\n${res.error.hint}` : ""); }
-      else out.textContent = res.stdout || "(출력 없음 — print()로 값을 확인해 보세요)";
+      else out.textContent = res.stdout || (res.images?.length ? "(그래프만 그렸습니다)" : "(출력 없음 — print()로 값을 확인해 보세요)");
+      showImages(out, res.images);
     } catch (err) { out.className += " err"; out.textContent = "실행하지 못했습니다: " + err.message; }
     finally { btn.disabled = false; }
   }
@@ -1255,6 +1278,14 @@ function errorBox(e) {
     <div class="mono" style="font-size:13px">${esc(e.message)}</div>${e.hint ? `<div>${esc(e.hint)}</div>` : ""}</div>`;
 }
 
+// matplotlib 그림(PNG base64)을 실행 결과 아래에 붙인다
+const imagesHtml = (images) => (images || []).map((b64, k) => `<img class="run-img" alt="그래프 ${k + 1}" src="data:image/png;base64,${b64}">`).join("");
+function showImages(out, images) {
+  let box = out.nextElementSibling;
+  if (!box || !box.classList.contains("run-imgs")) { box = document.createElement("div"); box.className = "run-imgs"; out.after(box); }
+  box.innerHTML = imagesHtml(images);
+  box.hidden = !images?.length;
+}
 function renderRun(res) {
   if (res.timeout) return timeoutHtml();
   const calls = (res.calls || [])
@@ -1263,7 +1294,8 @@ function renderRun(res) {
   const out = res.stdout || "";
   return `<div class="result-head"><h3>실행 결과</h3><span class="muted" style="font-size:13px">채점 없이 실행만 했습니다</span></div>
     <div class="result-body">
-      <pre class="console ${out ? "" : "empty"}">${out ? esc(out) : "(출력 없음)"}</pre>
+      <pre class="console ${out ? "" : "empty"}">${out ? esc(out) : res.images?.length ? "(그래프만 그렸습니다)" : "(출력 없음)"}</pre>
+      ${res.images?.length ? `<div class="run-imgs">${imagesHtml(res.images)}</div>` : ""}
       ${calls ? `<div><div class="eyebrow" style="margin-bottom:4px">공개 예시로 solution 호출</div><pre class="console">${esc(calls)}</pre></div>` : ""}
       ${errorBox(res.error)}
     </div>`;
