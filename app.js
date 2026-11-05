@@ -6,6 +6,7 @@ import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
 import { render as renderMd } from "./md.js";
 import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
 import { runCode, gradeCode, preload, onRunnerState } from "./runner.js";
+import { sqlProgram, parseSqlOutput, sqlResultHtml, sqlResultText, sameSqlResult, sqlOrdered } from "./sql.js";
 
 // 두 가지 보기 방식이 있다.
 //  - 커리큘럼: 트랙 > 코스 > 레슨 + 연습문제 (content/index.js). 코스는 unit 번호로 문제와 이어진다.
@@ -810,12 +811,13 @@ function youtubeId(v) {
 const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 // 레슨 본문: 설명 → 실행 셀 → 설명 → 실행 셀 순서로, 셀은 마크다운에 놓인 자리에 그대로 들어간다.
-function runCellHtml(code, i, topic = "", note = "") {
-  return `<div class="run-cell" id="run-${i}" data-cell="${i}">
-    <div class="run-head"><span class="run-lang">PYTHON</span><span class="run-title">예제 ${i + 1}${topic ? ` · ${esc(topic)}` : ""}</span><span class="run-tip muted">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
+function runCellHtml(code, i, lang = "python", topic = "", note = "") {
+  const sql = lang === "sql";
+  return `<div class="run-cell${sql ? " sql" : ""}" id="run-${i}" data-cell="${i}" data-lang="${lang}">
+    <div class="run-head"><span class="run-lang">${sql ? "SQL" : "PYTHON"}</span><span class="run-title">예제 ${i + 1}${topic ? ` · ${esc(topic)}` : ""}</span><span class="run-tip muted">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
       <span class="run-key" title="코드 안에서 Ctrl+Enter 로도 실행됩니다">Ctrl ↵</span><button class="btn ghost small" data-reset="${i}">원래대로</button><button class="btn small run-btn" data-run="${i}">▶ 실행</button></div>
     ${note ? `<p class="run-note">${note}</p>` : ""}<textarea data-code="${i}">${esc(code)}</textarea>
-    <pre class="console run-out" data-out="${i}" hidden></pre></div>`;
+    ${sql ? `<div class="console run-out sql-out" data-out="${i}" hidden></div>` : `<pre class="console run-out" data-out="${i}" hidden></pre>`}</div>`;
 }
 
 async function viewLesson(l) {
@@ -850,7 +852,7 @@ async function viewLesson(l) {
   let md;
   try { md = await loadLesson(l); } catch (err) { body.innerHTML = `<p class="form-error">${esc(err.message)}</p>`; return; }
   if (location.hash !== `#/l/${l.id}`) return; // 그사이 다른 화면으로 이동
-  body.innerHTML = renderMd(md, { run: (code, i) => runCellHtml(code, i), video: videoBlock });
+  body.innerHTML = renderMd(md, { run: (code, i, lang) => runCellHtml(code, i, lang), video: videoBlock });
   // 각 예제가 놓인 소제목을 셀 제목에 붙인다
   const topicOf = (el) => { for (let n = el.previousElementSibling; n; n = n.previousElementSibling) if (/^H[234]$/.test(n.tagName)) return n.textContent.trim(); return ""; };
   body.querySelectorAll(".run-cell").forEach((cell) => { const t = topicOf(cell); if (t) cell.querySelector(".run-title").textContent += ` · ${t}`; });
@@ -861,9 +863,10 @@ async function viewLesson(l) {
   practice.querySelectorAll("textarea[data-code]").forEach((ta) => {
     const i = Number(ta.dataset.code);
     const starter = ta.value;
-    const cm = window.CodeMirror.fromTextArea(ta, { mode: "python", lineNumbers: true, indentUnit: 4, tabSize: 4, indentWithTabs: false, matchBrackets: true, viewportMargin: Infinity,
+    const lang = ta.closest(".run-cell").dataset.lang;
+    const cm = window.CodeMirror.fromTextArea(ta, { mode: lang === "sql" ? "text/x-sqlite" : "python", lineNumbers: true, indentUnit: 4, tabSize: 4, indentWithTabs: false, matchBrackets: true, viewportMargin: Infinity,
       extraKeys: { Tab: (x) => x.replaceSelection("    ", "end"), "Ctrl-Enter": () => run(i), "Cmd-Enter": () => run(i) } });
-    cells[i] = { cm, starter };
+    cells[i] = { cm, starter, lang };
   });
   async function run(i) {
     const btn = practice.querySelector(`[data-run="${i}"]`);
@@ -873,13 +876,25 @@ async function viewLesson(l) {
     out.hidden = false;
     out.className = "console run-out";
     showImages(out, []);
-    out.textContent = state.runner === "ready" ? "실행 중…" : "파이썬을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…";
+    out.textContent = state.runner === "ready" ? "실행 중…" : `${cells[i].lang === "sql" ? "SQL 엔진(브라우저 SQLite)" : "파이썬"}을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…`;
+    if (cells[i].lang === "sql") return runSql(i, btn, out);
     try {
       const res = await runCode({ type: "io", tests: [] }, cells[i].cm.getValue(), "");
       if (res.timeout) { out.className += " err"; out.textContent = "실행이 너무 오래 걸려 멈췄습니다. 반복문이 끝나는지 확인하세요."; }
       else if (res.error) { out.className += " err"; out.textContent = (res.stdout ? res.stdout + "\n" : "") + `${res.error.type}: ${res.error.message}` + (res.error.hint ? `\n${res.error.hint}` : ""); }
       else out.textContent = res.stdout || (res.images?.length ? "(그래프만 그렸습니다)" : "(출력 없음 — print()로 값을 확인해 보세요)");
       showImages(out, res.images);
+    } catch (err) { out.className += " err"; out.textContent = "실행하지 못했습니다: " + err.message; }
+    finally { btn.disabled = false; }
+  }
+  // SQL 셀: 결과를 표로 보여 준다
+  async function runSql(i, btn, out) {
+    try {
+      const res = await runCode({ type: "io", tests: [] }, sqlProgram(cells[i].cm.getValue()), "");
+      const parsed = res.timeout ? null : parseSqlOutput(res.stdout);
+      if (res.timeout) { out.className += " err"; out.textContent = "실행이 너무 오래 걸려 멈췄습니다."; }
+      else if (!parsed) { out.className += " err"; out.textContent = res.error ? `${res.error.type}: ${res.error.message}` : "결과를 읽지 못했습니다."; }
+      else { if (parsed.error) out.className += " has-err"; out.innerHTML = sqlResultHtml(parsed); }
     } catch (err) { out.className += " err"; out.textContent = "실행하지 못했습니다: " + err.message; }
     finally { btn.disabled = false; }
   }
@@ -965,10 +980,12 @@ function questionHtml(q, i, a, graded) {
       `<label class="choice${graded && k === q.answer ? " right" : ""}${graded && a === k && k !== q.answer ? " wrong" : ""}"><input type="radio" name="q${i}" value="${k}" data-i="${i}" ${a === k ? "checked" : ""} ${graded ? "disabled" : ""}><span class="choice-no">${k + 1}</span><span>${esc(o)}</span></label>`).join("")}</div>`;
   } else if (q.kind === "write") {
     const code = a ?? writeStarter(q);
-    const r = graded ? writeCache.get(code) : null;
-    input = `<div class="wq"><textarea class="wq-code" data-i="${i}" rows="${Math.max(3, code.split("\n").length + 1)}" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="print(...)" ${graded ? "disabled" : ""}>${esc(code)}</textarea>
-      <div class="wq-bar">${graded ? "" : `<button type="button" class="btn small run-btn" data-wrun="${i}">▶ 실행</button><span class="run-key">Ctrl ↵</span>`}<span class="muted">${graded ? "" : "실행해서 출력을 확인한 뒤 채점하세요."}</span></div>
-      <pre class="console run-out${r?.error ? " err" : ""}" data-wout="${i}" ${r ? "" : "hidden"}>${r ? esc(r.error || r.stdout || "(출력 없음)") : ""}</pre></div>`;
+    const sql = q.lang === "sql";
+    const r = graded ? writeCache.get(writeKey(q, code)) : null;
+    input = `<div class="wq"><textarea class="wq-code" data-i="${i}" rows="${Math.max(3, code.split("\n").length + 1)}" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="${sql ? "SELECT ..." : "print(...)"}" ${graded ? "disabled" : ""}>${esc(code)}</textarea>
+      <div class="wq-bar">${graded ? "" : `<button type="button" class="btn small run-btn" data-wrun="${i}" data-lang="${sql ? "sql" : "python"}">▶ 실행</button><span class="run-key">Ctrl ↵</span>`}<span class="muted">${graded ? "" : sql ? "실행해서 결과 표를 확인한 뒤 채점하세요." : "실행해서 출력을 확인한 뒤 채점하세요."}</span></div>
+      ${sql ? `<div class="console run-out sql-out${r?.error ? " err" : ""}" data-wout="${i}" ${r ? "" : "hidden"}>${r ? writeOutHtml(q, r) : ""}</div>`
+        : `<pre class="console run-out${r?.error ? " err" : ""}" data-wout="${i}" ${r ? "" : "hidden"}>${r ? esc(r.error || r.stdout || "(출력 없음)") : ""}</pre>`}</div>`;
   } else {
     input = `<input class="short" type="text" data-i="${i}" value="${esc(a ?? "")}" placeholder="답을 입력하세요 (공백 차이는 무시)" autocomplete="off" spellcheck="false" ${graded ? "disabled" : ""}>`;
   }
@@ -1002,11 +1019,14 @@ function bindQuestionInputs(root, answers, onChange, onEnter) {
     const i = b.dataset.wrun;
     const code = root.querySelector(`textarea.wq-code[data-i="${i}"]`).value;
     const out = root.querySelector(`[data-wout="${i}"]`);
-    b.disabled = true; out.hidden = false; out.className = "console run-out";
+    const lang = b.dataset.lang || "python";
+    const base = "console run-out" + (lang === "sql" ? " sql-out" : "");
+    b.disabled = true; out.hidden = false; out.className = base;
     out.textContent = state.runner === "ready" ? "실행 중…" : "파이썬을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…";
-    const r = await runWrite(code);
-    out.className = "console run-out" + (r.error ? " err" : "");
-    out.textContent = r.error || r.stdout || "(출력 없음 — print()로 값을 출력하세요)";
+    const r = await runWrite(code, lang);
+    out.className = base + (r.error ? " err" : "");
+    if (lang === "sql") out.innerHTML = writeOutHtml({ lang }, r);
+    else out.textContent = r.error || r.stdout || "(출력 없음 — print()로 값을 출력하세요)";
     b.disabled = false;
   }));
   root.querySelectorAll("input.short").forEach((t) => {
@@ -1048,33 +1068,55 @@ const normAnswer = (v) => String(v ?? "").trim().replace(/^(['"])(.*)\1$/s, "$2"
 // 코드 작성형: 학생 코드를 실행한 출력이 기대값과 같고, 요구한 문법(must)을 썼으면 정답
 const writeStarter = (q) => (q.given ? q.given + "\n" : "");
 const writeCache = new Map();
-async function runWrite(code) {
-  if (writeCache.has(code)) return writeCache.get(code);
+// SQL 문항(lang: "sql")은 SQL 실행 셀과 같은 방식으로 돌리고, 결과 표를 예시 답안의 결과 표와 비교한다
+const writeKey = (q, code) => (q.lang === "sql" ? "sql:" : "") + code;
+async function runWrite(code, lang = "python") {
+  const key = (lang === "sql" ? "sql:" : "") + code;
+  if (writeCache.has(key)) return writeCache.get(key);
   let r;
   try {
-    const res = await runCode({ type: "io", tests: [] }, code, "");
+    const res = await runCode({ type: "io", tests: [] }, lang === "sql" ? sqlProgram(code) : code, "");
     r = res.timeout ? { stdout: res.stdout || "", error: "실행이 너무 오래 걸려 멈췄습니다." }
       : res.error ? { stdout: res.stdout || "", error: `${res.error.type}: ${res.error.message}` }
       : { stdout: res.stdout || "" };
+    if (lang === "sql" && !r.error) {
+      r.result = parseSqlOutput(r.stdout);
+      r.stdout = sqlResultText(r.result);
+      if (!r.result) r.error = "결과를 읽지 못했습니다.";
+      else if (r.result.error) r.error = r.result.error.message;
+    }
   } catch (err) { return { stdout: "", error: "실행하지 못했습니다: " + err.message }; }
-  writeCache.set(code, r);
+  writeCache.set(key, r);
   return r;
 }
+const writeOutHtml = (q, r) => (r.result ? sqlResultHtml(r.result) : esc(r.error || "(결과 없음)"));
 // 다시 풀 때 작성한 코드는 남겨 둔다
 const keepWrites = (qs, answers) => Object.fromEntries(qs.map((q, i) => [i, answers[i]]).filter(([i, v]) => qs[i].kind === "write" && v !== undefined));
-const gradeWrites = (qs, answers) => Promise.all(qs.map((q, i) => (q.kind === "write" ? runWrite(answers[i] ?? writeStarter(q)) : null)));
-const writeMissing = (q, code) => (q.must || []).filter((re) => !new RegExp(re).test(code));
+const gradeWrites = (qs, answers) => Promise.all(qs.flatMap((q, i) => (q.kind !== "write" ? [] : q.lang === "sql"
+  ? [runWrite(answers[i] ?? writeStarter(q), "sql"), runWrite(q.solution, "sql")] : [runWrite(answers[i] ?? writeStarter(q))])));
+const writeMissing = (q, code) => (q.must || []).filter((re) => !new RegExp(re, q.lang === "sql" ? "i" : "").test(code));
 function writeWhy(q, code) {
-  const r = writeCache.get(code);
+  const r = writeCache.get(writeKey(q, code));
   if (!r) return "아직 실행하지 않았습니다.";
   if (r.error) return "실행 중 오류가 났습니다.";
+  if (q.lang === "sql") {
+    const want = writeCache.get(writeKey(q, q.solution));
+    if (!want?.result) return "예시 답안을 실행하지 못했습니다. 다시 확인을 눌러 주세요.";
+    if (!sameSqlResult(r.result, want.result, sqlOrdered(q.solution))) {
+      const a = [...r.result.sets].reverse().find((s) => s.columns), b = [...want.result.sets].reverse().find((s) => s.columns);
+      return !a ? "결과 표가 없습니다. SELECT 문으로 끝나야 합니다." : a.total !== b.total ? `결과 행 수가 다릅니다 (내 결과 ${a.total}행, 기대 ${b.total}행).`
+        : a.columns.length !== b.columns.length ? `열 개수가 다릅니다 (내 결과 ${a.columns.length}열, 기대 ${b.columns.length}열).` : "결과 값이나 순서가 예시 답안과 다릅니다.";
+    }
+    if (writeMissing(q, code).length) return "결과는 맞지만 문제에서 요구한 방법을 쓰지 않았습니다.";
+    return "";
+  }
   const expects = Array.isArray(q.expect) ? q.expect : [q.expect];
   if (!expects.some((x) => normAnswer(x) === normAnswer(r.stdout))) return `출력이 다릅니다. 기대한 출력: ${expects[0]}`;
   if (writeMissing(q, code).length) return "출력은 맞지만 문제에서 요구한 방법을 쓰지 않았습니다.";
   return "";
 }
 function quizCorrect(q, a) {
-  if (q.kind === "write") { const code = a ?? writeStarter(q); return writeCache.has(code) && writeWhy(q, code) === ""; }
+  if (q.kind === "write") { const code = a ?? writeStarter(q); return writeCache.has(writeKey(q, code)) && writeWhy(q, code) === ""; }
   if (a === undefined || a === null || a === "") return false;
   if (q.kind === "ox") return a === q.answer;
   if (q.kind === "choice") return a === q.answer;

@@ -1015,3 +1015,18 @@ kbd {
 .fig .t-btn { fill: var(--accent-ink); font-size: 13px; font-weight: 700; }
 .fig .t-cap { fill: var(--muted); font: 600 10.5px var(--font-en); letter-spacing: .08em; }
 .fig .t-status { fill: var(--ink); font-size: 12px; }
+
+/* SQL 실행 셀: 결과를 표로 보여 준다 (sql.js) */
+.sql-out { white-space: normal; max-height: 420px; display: grid; gap: 10px; align-content: start; }
+.sql-out[hidden] { display: none; }
+.sql-set { display: grid; gap: 4px; min-width: 0; }
+.sql-cap { font-size: 12px; color: var(--muted); }
+.sql-scroll { overflow-x: auto; }
+.sql-table { border-collapse: collapse; font-size: 13px; font-family: var(--font-mono); width: max-content; min-width: 40%; }
+.sql-table th, .sql-table td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; white-space: nowrap; }
+.sql-table th { background: var(--surface-2); color: var(--ink-2); font-weight: 600; position: sticky; top: 0; }
+.sql-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.sql-table td.null { color: var(--muted); font-style: italic; }
+.sql-msg { margin: 0; font-size: 13px; color: var(--ink-2); }
+.sql-err { display: grid; gap: 4px; padding: 8px 10px; border-radius: 6px; background: var(--fail-soft); color: var(--fail); font-size: 13px; }
+.sql-err span:not(.mono) { color: var(--ink-2); }

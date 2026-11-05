@@ -16,9 +16,9 @@ ready.then(
   (err) => postMessage({ type: "fatal", error: String(err) })
 );
 
-// 예제 데이터셋: 코드에 파일 이름이 보이면 사이트의 datasets/ 에서 한 번 받아 /datasets 에 둔다.
+// 예제 데이터셋(SQL 실습 DB 포함): 코드에 파일 이름이 보이면 사이트의 datasets/ 에서 한 번 받아 /datasets 에 둔다.
 // 하네스가 실행할 때마다 작업 폴더에 연결해 pd.read_csv('titanic.csv') 처럼 이름만으로 읽힌다.
-const DATASETS = ["titanic.csv", "ai4i2020.csv"];
+const DATASETS = ["titanic.csv", "ai4i2020.csv", "sql_company.sql", "sql_shop.sql"];
 async function loadDatasets(py, code) {
   const need = DATASETS.filter((name) => code.includes(name));
   if (!need.length) return;

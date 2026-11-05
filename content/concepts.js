@@ -44,6 +44,7 @@ export const CONCEPTS = {
   "mpl.basic": { name: "matplotlib 기본", track: "python-viz" },
   "sns.stat": { name: "seaborn 통계 시각화", track: "python-viz" },
   // SQL
+  "sql.intro": { name: "데이터베이스와 SQL", track: "sql" },
   "sql.select": { name: "SELECT · WHERE", track: "sql" },
   "sql.order": { name: "정렬 · LIMIT · 내장 함수", track: "sql" },
   "sql.group": { name: "집계 GROUP BY · HAVING", track: "sql" },

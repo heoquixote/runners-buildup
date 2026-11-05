@@ -95,3 +95,21 @@
 | dl-07 임베딩과 어텐션 | dl/embedding, dl/transformer, raw-2-2-5 (트랜스포머) | dl/deep-learning, figures/deeplearning.svg |
 
 딥러닝 원본은 자격증 교재 기준이라 설명이 압축돼 있습니다. 다른 트랙보다 비유·그림을 더 보태야 합니다.
+
+### SQL (sq)
+
+원본: Obsidian `raw/books/02-데이터 분석/SQL 기초` → `docs/sources/sql/` (예제 DB는 DDL2.sql의 emp·dept·salgrade). 쇼핑몰 데이터(users·orders·events)는 원본에 없어 `scripts/build_sql_data.py`로 만든 가상 데이터입니다.
+
+| 코스 | 주 원본 | 보조 |
+| --- | --- | --- |
+| sq-00 SQL 시작하기 | sql/01-1-why-learn-sql, 01-2-database-basic-structure, 01-database-and-table-understanding | 02-2-practice-data-introduction |
+| sq-01 SELECT · WHERE | sql/03-2-select-from, 03-3-where | 03-basic-sql |
+| sq-02 정렬 · LIMIT · 내장 함수 | sql/03-4-order-by-limit | 04-3-numeric-functions |
+| sq-03 집계 GROUP BY · HAVING | sql/03-5-group-by-having, 03-1-sql-query-order | 04-6-null-functions |
+| sq-06 CASE · 날짜 · 문자열 | sql/05-conditional-expressions, 04-2-string-functions, 04-4-date-functions | 04-1, 04-5, 04-6 |
+| sq-04 JOIN | sql/07-1-join | 07-2-union |
+| sq-05 서브쿼리와 CTE | sql/08-1-nested-subquery, 08-2-scalar-subquery, 08-3-inline-view, 08-4-with-clause-cte | 08-subquery-and-cte |
+| sq-07 윈도우 함수 | sql/06-window-functions | |
+| sq-08 실무 분석 쿼리 | (원본 없음, 쇼핑몰 데이터로 새로 작성) | 06-window-functions, 08-4-with-clause-cte |
+
+원본은 Oracle·MySQL 문법 기준입니다. 사이트는 브라우저 SQLite(3.39)로 실행하므로 `CONCAT`·`IF`·`NVL` 등은 `||`·`CASE`·`COALESCE`로 바꿔 설명했습니다.
