@@ -41,11 +41,11 @@ jobs:
           mkdir _site
           # 루트의 모든 .js 를 복사한다 (새 모듈을 추가해도 목록 누락으로 404 나지 않도록)
           cp index.html styles.css harness.py .nojekyll *.js _site/
+          cp -r assets content datasets _site/
           # app.js 가 import 하는 로컬 모듈이 모두 _site 에 있는지 확인
           for m in $(grep -oE 'from "\./[^"]+"' app.js | sed -E 's/from "\.\/(.*)"/\1/'); do
             test -f "_site/$m" || { echo "missing module: $m"; exit 1; }
           done
-          cp -r assets content datasets _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
