@@ -910,3 +910,8 @@ kbd {
 .wq-bar:empty, .wq-bar:not(:has(button)) { display: none; }
 .wq .run-out { max-height: 200px; }
 .quiz-feedback .guide-code { margin: 4px 0 0; }
+
+/* 실행 결과의 matplotlib 그림 */
+.run-imgs { display: grid; gap: 10px; padding: 10px 14px 14px; background: var(--surface); }
+.run-imgs[hidden] { display: none; }
+.run-img { max-width: 100%; height: auto; border-radius: 6px; background: #fff; justify-self: start; }

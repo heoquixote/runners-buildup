@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install numpy scipy scikit-learn pandas
+      - run: pip install numpy scipy scikit-learn pandas matplotlib seaborn
       - run: node scripts/verify.mjs
 
   deploy:
@@ -39,7 +39,7 @@ jobs:
       - name: Collect site files
         run: |
           mkdir _site
-          cp index.html styles.css app.js api.js md.js runner.js worker.js harness.py problems.js problems-day1.js problems-stats-ml.js problems-pb-more.js problems-pb-general.js config.js .nojekyll _site/
+          cp index.html styles.css app.js api.js md.js runner.js worker.js harness.py problems.js problems-day1.js problems-stats-ml.js problems-pb-more.js problems-pb-general.js problems-da.js problems-stats-ml2.js config.js .nojekyll _site/
           cp -r assets content _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
