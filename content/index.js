@@ -747,7 +747,7 @@ export const COURSES = [
       quiz: [
         { kind: "ox", q: "부분 의존도에서 토크가 60을 넘을 때 고장 확률이 급히 오르면, 토크를 낮추면 반드시 고장이 줄어든다고 결론 내릴 수 있다.", answer: false, explain: "부분 의존도는 모델이 배운 관계(상관)를 보여 줄 뿐 인과를 증명하지 않습니다. 실제 조치는 현장 지식과 실험으로 확인합니다." },
       ] }] },
-  { id: "ml-10", track: "ml", title: "다른 모델 둘러보기", summary: "KNN, 나이브 베이즈와 라플라스 스무딩, SVM과 커널, 모델 고르기", level: "실무",
+  { id: "ml-10", track: "ml", title: "다른 모델 둘러보기", summary: "KNN, 나이브 베이즈와 라플라스 스무딩, SVM과 커널, 모델 고르기", level: "실무", unit: 47,
     concepts: ["ml.knn", "ml.nb", "ml.svm"],
     lessons: [
     { id: "ml-10-1", title: "KNN: 가까운 이웃에게 묻기", minutes: 15, concepts: ["ml.knn"],

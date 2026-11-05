@@ -699,6 +699,188 @@ def _():
     return svg(720, 290, b, "SVM: 가장 넓은 복도를 내는 경계선")
 
 
+# ---------------- 2026-11-05 추가: 그림 없던 레슨 ----------------
+@fig("ml01-missing")
+def _():
+    b = []
+    # mini table
+    cols = ["age", "embarked", "deck"]
+    rows = [["22", "S", "NaN"], ["NaN", "C", "C"], ["26", "S", "NaN"], ["35", "NaN", "NaN"], ["NaN", "Q", "NaN"]]
+    x0, y0, cw, rh = 20, 40, 78, 34
+    b.append(text(x0 + cw * 1.5, 22, "빈칸(NaN)이 섞인 표", 14, MUTED, weight=600))
+    for j, c in enumerate(cols):
+        b.append(box(x0 + j * cw, y0, cw, rh, c, fill=SURF, size=13, rx=0))
+    for i, r in enumerate(rows):
+        for j, v in enumerate(r):
+            nan = v == "NaN"
+            b.append(rect(x0 + j * cw, y0 + (i + 1) * rh, cw, rh, FAIL if nan else SURF3, LINE2, 0, op=0.18 if nan else 1))
+            b.append(text(x0 + j * cw + cw / 2, y0 + (i + 1.5) * rh, v, 13, FAIL if nan else INK2, mono=True))
+    b.append(text(x0 + cw * 2.5, y0 + 6.6 * rh, "77% 빔", 12, FAIL, weight=700))
+    b.append(text(x0 + cw * 0.5, y0 + 6.6 * rh, "20% 빔", 12, WARN, weight=700))
+    b.append(text(x0 + cw * 1.5, y0 + 6.6 * rh, "0.2% 빔", 12, MUTED, weight=700))
+    # three choices
+    bx, bw, bh = 330, 370, 70
+    items = [
+        ("① 행 지우기  dropna()", "빈칸이 아주 적을 때 (embarked 2칸)", MUTED),
+        ("② 열 통째로 빼기  drop(columns=…)", "대부분 비어 쓸 수 없을 때 (deck)", FAIL),
+        ("③ 채우기  fillna(중앙값·최빈값)", "꽤 비었지만 중요한 열 (age)", ACC),
+    ]
+    for i, (t, s, c) in enumerate(items):
+        y = 34 + i * (bh + 16)
+        b.append(rect(bx, y, bw, bh, SURF3, c, 10, 1.6))
+        b.append(text(bx + 18, y + 24, t, 14, c, "start", 700))
+        b.append(text(bx + 18, y + 50, s, 13, INK2, "start"))
+        b.append(arrow(268, 150, bx - 6, y + bh / 2, MUTED, 1.4))
+    return svg(720, 300, b, "결측치를 다루는 세 가지 방법")
+
+
+@fig("ml01-encoding")
+def _():
+    b = []
+    b.append(rect(10, 10, 330, 250, SURF, LINE2, 10))
+    b.append(text(30, 36, "라벨 인코딩: S=0, C=1, Q=2", 15, FAIL, "start", 700))
+    y = 120
+    b.append(line(50, y, 310, y, LINE2, 2))
+    for i, (lab, x) in enumerate([("S", 70), ("C", 175), ("Q", 280)]):
+        b.append(line(x, y - 8, x, y + 8, MUTED, 2))
+        b.append(circle(x, y, 10, CYAN))
+        b.append(text(x, y - 30, lab, 16, INK, weight=700))
+        b.append(text(x, y + 28, str(i), 15, MUTED, mono=True))
+    b.append(text(175, 190, "모델은 숫자를 '크기'로 읽는다", 13, INK2))
+    b.append(text(175, 215, "Q는 C의 2배? S와 Q의 평균이 C?", 13, FAIL, weight=600))
+    b.append(text(175, 240, "→ 순서 없는 범주에는 맞지 않음", 13, MUTED))
+
+    b.append(rect(360, 10, 350, 250, SURF, LINE2, 10))
+    b.append(text(380, 36, "원-핫 인코딩: 범주마다 0/1 열", 15, ACC, "start", 700))
+    hdr = ["embarked", "is_S", "is_C", "is_Q"]
+    data = [["S", "1", "0", "0"], ["C", "0", "1", "0"], ["Q", "0", "0", "1"]]
+    x0, y0, cw, rh = 380, 60, 76, 34
+    for j, h in enumerate(hdr):
+        b.append(box(x0 + j * cw, y0, cw, rh, h, fill=SURF3, size=12, rx=0, color=INK if j == 0 else ACC))
+    for i, r in enumerate(data):
+        for j, v in enumerate(r):
+            on = v == "1"
+            b.append(rect(x0 + j * cw, y0 + (i + 1) * rh, cw, rh, ACC if on else SURF3, LINE2, 0, op=0.22 if on else 1))
+            b.append(text(x0 + j * cw + cw / 2, y0 + (i + 1.5) * rh, v, 14, ACC if on else INK2, mono=True, weight=700 if on else 500))
+    b.append(text(535, 225, "각 항구가 서로 같은 거리 → 가짜 크기 관계 없음", 13, INK2))
+    b.append(text(535, 247, "pd.get_dummies()", 13, MUTED, mono=True))
+    return svg(720, 270, b, "라벨 인코딩과 원-핫 인코딩 비교")
+
+
+R2_PTS = [(0.5, 2.2), (1.2, 2.6), (1.9, 3.9), (2.6, 3.5), (3.3, 5.0), (4.0, 4.6), (4.7, 6.1), (5.4, 6.3)]
+
+
+def _r2_panel(ox, title, color, fit):
+    b = [rect(ox, 10, 340, 250, SURF, LINE2, 10), text(ox + 20, 36, title, 15, color, "start", 700)]
+    px = lambda x: ox + 30 + x * 52
+    py = lambda y: 240 - y * 26
+    b.append(line(ox + 25, 240, ox + 325, 240, LINE2, 1.4))
+    b.append(line(ox + 25, 60, ox + 25, 240, LINE2, 1.4))
+    mean = sum(y for _, y in R2_PTS) / len(R2_PTS)
+    for x, y in R2_PTS:
+        yy = mean if not fit else 1.6 + 0.85 * x
+        b.append(line(px(x), py(y), px(x), py(yy), color, 2.4))
+    if fit:
+        b.append(line(px(0), py(1.6), px(5.8), py(1.6 + 0.85 * 5.8), color, 2.2))
+    else:
+        b.append(line(px(0), py(mean), px(5.8), py(mean), color, 2.2, "7 5"))
+    for x, y in R2_PTS:
+        b.append(circle(px(x), py(y), 6, INK))
+    return b
+
+
+@fig("ml02-r2")
+def _():
+    b = []
+    b += _r2_panel(10, "평균만 찍기: 오차가 길다", MUTED, False)
+    b += _r2_panel(370, "회귀 직선: 오차가 짧다", ACC, True)
+    b.append(text(360, 290, "R² = 1 − (오른쪽 세로 막대 길이² 합) / (왼쪽 세로 막대 길이² 합)", 14, INK, weight=600))
+    b.append(text(360, 314, "1에 가까울수록 '평균만 찍기'보다 훨씬 낫다 · 0이면 평균과 똑같다 · 음수면 평균보다 못하다", 12, MUTED))
+    return svg(720, 330, b, "R²: 평균선의 오차와 회귀 직선의 오차 비교")
+
+
+def _bump(cx, sd, amp, x0, x1, px, py):
+    pts = []
+    for i in range(61):
+        x = x0 + (x1 - x0) * i / 60
+        pts.append((px(x), py(amp * math.exp(-((x - cx) ** 2) / (2 * sd * sd)))))
+    return "M" + " L".join(f"{a:.1f},{c:.1f}" for a, c in pts)
+
+
+@fig("ml03-threshold")
+def _():
+    b = []
+    px = lambda p: 50 + p * 600
+    py = lambda v: 230 - v * 160
+    b.append(line(40, 230, 670, 230, LINE2, 1.4))
+    for t in [0, 0.25, 0.5, 0.75, 1.0]:
+        b.append(text(px(t), 248, f"{t:g}", 12, MUTED, mono=True))
+    b.append(text(360, 272, "모델이 낸 '고장 확률'", 13, MUTED))
+    b.append(path(_bump(0.22, 0.12, 1.0, 0, 1, px, py) + f" L{px(1)},{py(0)} L{px(0)},{py(0)} Z", PASS, 1.8, PASS + "33"))
+    b.append(path(_bump(0.68, 0.14, 0.55, 0, 1, px, py) + f" L{px(1)},{py(0)} L{px(0)},{py(0)} Z", FAIL, 1.8, FAIL + "33"))
+    b.append(text(px(0.06), 70, "정상 장비", 14, PASS, weight=700))
+    b.append(text(px(0.86), 110, "고장 장비", 14, FAIL, weight=700))
+    b.append(line(px(0.5), 40, px(0.5), 230, ACC, 2.4))
+    b.append(text(px(0.5), 28, "임계값 0.5", 13, ACC, weight=700))
+    b.append(line(px(0.3), 40, px(0.3), 230, CYAN, 2, "6 5"))
+    b.append(text(px(0.3), 28, "0.3으로 낮추면", 12, CYAN, weight=700))
+    b.append(text(690, 150, "선 오른쪽 = '고장'으로 경보", 13, INK, "start", 600))
+    b.append(text(690, 178, "낮추면: 놓치는 고장↓ (재현율↑)", 13, CYAN, "start"))
+    b.append(text(690, 200, "         헛경보↑ (정밀도↓)", 13, CYAN, "start"))
+    b.append(text(690, 228, "올리면: 그 반대", 13, MUTED, "start"))
+    return svg(920, 290, b, "임계값을 옮기면 재현율과 정밀도가 바뀐다")
+
+
+@fig("ml05-valcurve")
+def _():
+    b = []
+    px = lambda d: 70 + (d - 1) * 42
+    py = lambda s: 250 - (s - 0.6) * 520
+    b.append(rect(px(1), 40, px(3.5) - px(1), 210, CYAN, "none", 0, op=0.07))
+    b.append(rect(px(3.5), 40, px(6.5) - px(3.5), 210, ACC, "none", 0, op=0.09))
+    b.append(rect(px(6.5), 40, px(14) - px(6.5), 210, FAIL, "none", 0, op=0.07))
+    b.append(text((px(1) + px(3.5)) / 2, 236, "과소적합", 13, CYAN, weight=700))
+    b.append(text((px(3.5) + px(6.5)) / 2, 236, "알맞음", 13, ACC, weight=700))
+    b.append(text((px(6.5) + px(14)) / 2, 236, "과대적합 (외우기)", 13, FAIL, weight=700))
+    b.append(line(px(1), 250, px(14), 250, LINE2, 1.4))
+    b.append(line(px(1), 40, px(1), 250, LINE2, 1.4))
+    for d in [1, 3, 5, 7, 9, 11, 13]:
+        b.append(text(px(d), 266, str(d), 12, MUTED, mono=True))
+    b.append(text(px(7.5), 290, "max_depth (나무 깊이)", 13, MUTED))
+    tr = [0.79, 0.81, 0.83, 0.85, 0.87, 0.89, 0.91, 0.93, 0.95, 0.96, 0.97, 0.98, 0.985, 0.99]
+    va = [0.78, 0.79, 0.81, 0.82, 0.825, 0.82, 0.81, 0.80, 0.795, 0.79, 0.785, 0.78, 0.78, 0.775]
+    b.append(path("M" + " L".join(f"{px(i + 1):.1f},{py(s):.1f}" for i, s in enumerate(tr)), ORANGE, 2.6))
+    b.append(path("M" + " L".join(f"{px(i + 1):.1f},{py(s):.1f}" for i, s in enumerate(va)), CYAN, 2.6))
+    b.append(text(px(13.6), py(0.99) + 20, "학습 점수", 13, ORANGE, "end", 700))
+    b.append(text(px(13.6), py(0.775) + 18, "검증 점수", 13, CYAN, "end", 700))
+    b.append(circle(px(5), py(0.825), 7, ACC, INK, 2))
+    b.append(text(px(5), py(0.825) + 26, "검증 점수 최고", 12, ACC, weight=700))
+    b.append(line(px(12), py(0.98), px(12), py(0.78), INK2, 1.4, "4 4"))
+    b.append(text(px(12) - 8, py(0.88), "벌어진 틈\n= 외운 정도", 12, INK2, "end"))
+    return svg(680, 300, b, "검증 곡선의 세 구간: 과소적합, 알맞음, 과대적합")
+
+
+@fig("ml07-elbow")
+def _():
+    b = []
+    ks = [1, 2, 3, 4, 5, 6]
+    vals = [4000, 1699, 987, 760, 610, 520]
+    px = lambda k: 80 + (k - 1) * 100
+    py = lambda v: 250 - v / 4000 * 200
+    b.append(line(60, 250, 600, 250, LINE2, 1.4))
+    b.append(line(60, 40, 60, 250, LINE2, 1.4))
+    b.append(text(330, 286, "k (그룹 수)", 13, MUTED))
+    b.append(text(66, 28, "inertia", 13, MUTED, "start", mono=True))
+    b.append(path("M" + " L".join(f"{px(k)},{py(v):.1f}" for k, v in zip(ks, vals)), CYAN, 2.6))
+    for k, v in zip(ks, vals):
+        b.append(circle(px(k), py(v), 6, ACC if k == 3 else CYAN, INK if k == 3 else "none", 2))
+        b.append(text(px(k), 266, str(k), 12, MUTED, mono=True))
+    b.append(text(px(3) + 14, py(987) - 62, "엘보(팔꿈치): 여기부터\n줄어드는 폭이 확 작아짐", 13, ACC, "start", 700))
+    b.append(text(px(1.5) + 14, py(2800), "크게 줄어듦", 12, INK2, "start"))
+    b.append(text(px(5) - 10, py(700) - 26, "조금씩만 줄어듦", 12, INK2))
+    return svg(640, 300, b, "엘보 방법: inertia가 꺾이는 k 찾기")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for name, f in FIGS.items():
