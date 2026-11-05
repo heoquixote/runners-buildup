@@ -135,6 +135,9 @@ out = []
 for c in cells:
     buf = io.StringIO()
     err = None
+    # 브라우저 하네스처럼 셀마다 이전 그림을 닫는다 (앞 셀의 날짜 축이 남아 다음 셀을 망치지 않도록)
+    if "matplotlib.pyplot" in sys.modules:
+        sys.modules["matplotlib.pyplot"].close("all")
     d = tempfile.mkdtemp()
     # 브라우저와 같은 규칙으로 데이터셋을 연결한다 (하네스가 연결하지 않는 파일은 여기서도 없다)
     H["_link_datasets"](d, {})
