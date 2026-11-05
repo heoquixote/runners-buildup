@@ -89,6 +89,59 @@ def fig(name):
     return deco
 
 
+# ---------------- ml-00 ----------------
+@fig("ml00-ai-ml-dl")
+def _():
+    b = []
+    b.append(f'<ellipse cx="300" cy="170" rx="280" ry="150" fill="{TRACK}" fill-opacity="0.10" stroke="{TRACK}" stroke-width="1.6"/>')
+    b.append(f'<ellipse cx="340" cy="190" rx="190" ry="105" fill="{CYAN}" fill-opacity="0.12" stroke="{CYAN}" stroke-width="1.6"/>')
+    b.append(f'<ellipse cx="380" cy="212" rx="100" ry="56" fill="{ACC}" fill-opacity="0.16" stroke="{ACC}" stroke-width="1.6"/>')
+    b.append(text(130, 72, "인공지능 (AI)", 17, TRACK, weight=700))
+    b.append(text(250, 120, "머신러닝 (ML)", 16, CYAN, weight=700))
+    b.append(text(380, 212, "딥러닝 (DL)", 15, ACC, weight=700))
+    b.append(text(600, 70, "사람처럼 판단하는 프로그램 전부\n(규칙을 사람이 다 써 넣은 것도 포함)", 13, TRACK, "start", 600))
+    b.append(text(600, 160, "데이터를 보고 규칙을\n스스로 찾는 방법", 13, CYAN, "start", 600))
+    b.append(text(600, 240, "인공 신경망을 아주 깊게 쌓은\n머신러닝 (사진·음성·글)", 13, ACC, "start", 600))
+    b += [line(560, 80, 590, 74, TRACK, 1.2), line(520, 170, 590, 162, CYAN, 1.2), line(478, 226, 590, 240, ACC, 1.2)]
+    return svg(820, 330, b, "인공지능, 머신러닝, 딥러닝의 포함 관계")
+
+
+@fig("ml00-train-predict")
+def _():
+    b = []
+    b.append(rect(10, 10, 700, 130, SURF, LINE2, 10))
+    b.append(text(30, 34, "① 학습 (fit) — 예전 기록으로 규칙 찾기", 15, ACC, "start", 700))
+    b.append(box(30, 56, 150, 62, "승객 기록 X\n(등급·성별·나이)", size=13))
+    b.append(box(190, 56, 120, 62, "정답 y\n(생존 여부)", stroke=ACC, color=ACC, size=13))
+    b.append(arrow(316, 87, 380, 87, ACC, 2.2, accent=True))
+    b.append(box(386, 52, 150, 70, "모델\n(규칙이 담긴 상자)", fill=SURF3, stroke=CYAN, color=CYAN, size=14))
+    b.append(text(620, 87, "\"여성이면 생존 쪽\"\n\"3등실이면 위험\" …", 13, MUTED))
+    b.append(rect(10, 156, 700, 120, SURF, LINE2, 10))
+    b.append(text(30, 180, "② 예측 (predict) — 처음 보는 사람에게 적용", 15, CYAN, "start", 700))
+    b.append(box(30, 200, 200, 58, "새 승객 X\n(정답 모름)", size=13))
+    b.append(arrow(236, 229, 380, 229, CYAN, 2.2))
+    b.append(box(386, 196, 150, 66, "같은 모델", fill=SURF3, stroke=CYAN, color=CYAN, size=14))
+    b.append(arrow(542, 229, 596, 229, CYAN, 2.2))
+    b.append(box(600, 204, 96, 50, "생존 예측\n1 또는 0", stroke=ACC, color=ACC, size=13))
+    return svg(720, 286, b, "학습 단계와 예측 단계")
+
+
+@fig("ml00-problem-types")
+def _():
+    b = []
+    b.append(box(300, 14, 160, 44, "머신러닝 문제", fill=SURF, stroke=INK2, size=15))
+    b += [path("M340,58 L195,96", MUTED, 1.6), path("M420,58 L565,96", MUTED, 1.6)]
+    b.append(box(105, 96, 180, 50, "지도 학습\n정답(y)이 있다", stroke=ACC, color=ACC, size=14))
+    b.append(box(475, 96, 180, 50, "비지도 학습\n정답이 없다", stroke=CYAN, color=CYAN, size=14))
+    b += [path("M160,146 L100,184", MUTED, 1.4), path("M230,146 L290,184", MUTED, 1.4), path("M530,146 L470,184", MUTED, 1.4), path("M600,146 L660,184", MUTED, 1.4)]
+    leaves = [(100, "회귀: 숫자 맞히기", "내일 매출, 공정 온도,\n집값", ACC), (290, "분류: 종류 맞히기", "생존/사망, 고장/정상,\n스팸/정상", ACC),
+              (470, "군집: 비슷한 것 묶기", "고객 무리 나누기,\n운전 패턴 찾기", CYAN), (660, "차원 축소: 요약", "열 13개 → 2개로\n그림 그리기", CYAN)]
+    for x, t, ex, c in leaves:
+        b.append(box(x - 80, 184, 160, 40, t, stroke=c, color=c, size=13))
+        b.append(text(x, 252, ex, 12, MUTED))
+    return svg(760, 284, b, "머신러닝 문제의 종류")
+
+
 # ---------------- ml-01 ----------------
 @fig("ml01-program-vs-ml")
 def _():

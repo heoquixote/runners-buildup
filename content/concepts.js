@@ -65,6 +65,7 @@ export const CONCEPTS = {
   "st.regression": { name: "상관과 회귀", track: "stats" },
   "st.abtest": { name: "A/B 테스트", track: "stats" },
   // 머신러닝
+  "ml.intro": { name: "머신러닝이란", track: "ml" },
   "ml.workflow": { name: "ML 워크플로와 데이터 분할", track: "ml" },
   "ml.gd": { name: "경사하강법", track: "ml" },
   "ml.linear": { name: "선형 · 로지스틱 회귀", track: "ml" },
