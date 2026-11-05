@@ -666,8 +666,9 @@ function trackCard(t) {
 // 홈 '학습 트랙'을 카테고리별로 묶어 보여준다. 여기 없는 트랙은 '기타' 묶음으로 뒤에 붙는다.
 const TRACK_GROUPS = [
   { id: "code", label: "프로그래밍 기초", en: "Programming", blurb: "데이터를 코드로 읽고 다루는 기본기", tracks: ["python-basic", "sql"] },
-  { id: "analytics", label: "분석 · 시각화", en: "Analytics", blurb: "데이터를 정리하고, 그리고, 해석하는 힘", tracks: ["python-da", "python-viz", "stats"] },
-  { id: "ai", label: "AI", en: "Machine Learning · AI", blurb: "데이터로 예측하는 모델 만들기", tracks: ["ml", "dl"] },
+  { id: "analytics", label: "분석 · 시각화", en: "Analytics", blurb: "데이터를 정리하고, 그려서 읽는 힘", tracks: ["python-da", "python-viz"] },
+  { id: "ml", label: "통계 · 머신러닝", en: "Statistics · ML", blurb: "데이터로 판단하고 예측하는 모델", tracks: ["stats", "ml"] },
+  { id: "dl", label: "딥러닝", en: "Deep Learning", blurb: "신경망의 원리를 개념과 영상으로", tracks: ["dl"] },
 ];
 
 function trackGroupsHtml() {
