@@ -920,8 +920,18 @@ kbd {
 .run-end { font: 600 10px/1 var(--font-en); letter-spacing: .14em; text-transform: uppercase; }
 .run-foot { display: flex; }
 .run-others { list-style: none; margin: 0; padding: 12px 0 0; border-top: 1px solid var(--line); display: grid; gap: 8px; }
-.run-others a { display: grid; grid-template-columns: minmax(84px, auto) 1fr 38px; align-items: center; gap: 10px; text-decoration: none; color: var(--ink-2); font-size: 13px; }
-.run-others a:hover .ro-name { color: var(--tc, var(--track)); }
+.run-others { gap: 4px; }
+.ro-row {
+  width: 100%; display: grid; grid-template-columns: minmax(84px, auto) 1fr 38px; align-items: center; gap: 10px;
+  padding: 7px 8px; margin: 0 -8px; box-sizing: content-box; border: 0; border-radius: var(--radius); background: none;
+  color: var(--ink-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+}
+.ro-row:hover { background: var(--surface-2); }
+.ro-row:hover .ro-name { color: var(--tc, var(--track)); }
+.ro-row.on { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--tc, var(--track)); }
+.ro-row.on .ro-name { color: var(--ink); font-weight: 700; }
+.ro-row.on b { color: var(--ink); }
+.ro-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .run-others b { font: 600 12px/1 var(--font-en); color: var(--muted); text-align: right; }
 .ro-lane { position: relative; height: 6px; border-radius: 999px; background: var(--surface-3); }
 .ro-lane span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; background: var(--tc, var(--track)); }
