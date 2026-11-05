@@ -203,7 +203,7 @@ function topbar({ admin = false } = {}) {
     ? `<a class="btn ghost small" href="#/">수강생 화면</a><button class="btn small" data-act="admin-logout">어드민 로그아웃</button>`
     : state.session
       ? `<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
-      : `<a class="btn ghost small" href="#/guide">사용 방법</a>`;
+      : `<a class="btn ghost small" href="#/guide">사용 방법</a><button class="btn small" data-act="login">로그인</button><a class="btn small primary" href="#/signup">회원가입</a>`;
   return `<header class="topbar"><div class="topbar-inner">
     <div class="brand-block">
       <a class="brand" href="${admin ? "#/admin" : "#/"}"><img class="brand-mark" src="assets/dl-logo.png" alt="Data Learners" width="40" height="35">
@@ -225,6 +225,7 @@ function brandSub(admin) {
 function bindTopbar() {
   $app.querySelectorAll("[data-font]").forEach((b) => b.addEventListener("click", () => changeFont(Number(b.dataset.font))));
   $app.querySelector('[data-act="logout"]')?.addEventListener("click", () => logout(false));
+  $app.querySelector('[data-act="login"]')?.addEventListener("click", () => loginModal());
   $app.querySelector('[data-act="admin-logout"]')?.addEventListener("click", () => {
     state.adminToken = null;
     store.set(ADMIN_KEY, null);
@@ -233,7 +234,11 @@ function bindTopbar() {
 }
 
 // ── 라우팅 ───────────────────────────────────────────────
+// 로그인 없이도 홈·트랙·레슨(코드 실행 포함)은 볼 수 있다. 문제 풀이(#/p/…)만 로그인 창을 띄운다.
+let shownHash = null; // 지금 화면에 그려져 있는 주소
 async function route() {
+  const pm = (location.hash || "").match(/^#\/p\/([\w-]+)/);
+  if (!state.session && pm && byId[pm[1]]) return askLoginFor(byId[pm[1]]);
   if (cleanupView) { cleanupView(); cleanupView = null; }
   window.confetti?.reset?.();
   document.querySelector(".overlay, .drawer")?.remove();
@@ -242,9 +247,15 @@ async function route() {
   window.scrollTo(0, 0);
   if (hash.startsWith("#/admin")) return routeAdmin(hash);
   if (hash.startsWith("#/guide")) return viewGuide();
-  if (!state.session) return hash.startsWith("#/signup") ? viewSignup() : viewLogin();
-  if (!state.progressLoaded) await loadProgress();
-  if (!state.session) return;
+  shownHash = hash;
+  if (hash.startsWith("#/signup") || hash.startsWith("#/login")) {
+    if (state.session) { location.hash = "#/"; return; }
+    return hash.startsWith("#/signup") ? viewSignup() : viewLogin();
+  }
+  if (state.session && !state.progressLoaded) {
+    await loadProgress();
+    if (!state.session) return; // 로그인 만료: logout()이 다시 그렸다
+  }
   const m = hash.match(/^#\/p\/([\w-]+)/);
   if (m && byId[m[1]]) return byId[m[1]].type === "quiz" ? viewQuiz(byId[m[1]]) : viewProblem(byId[m[1]]);
   const l = hash.match(/^#\/l\/([\w-]+)/);
@@ -272,13 +283,20 @@ function viewLogin() {
   $app.innerHTML = `<main class="login-wrap"><form class="login panel lime" id="login-form" novalidate>
     ${authHead("login")}
     ${demo}
-    <div class="field"><label for="login-name">이름</label><input id="login-name" autocomplete="username" required maxlength="40"></div>
-    <div class="field"><label for="login-pin">4자리 번호</label><input id="login-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" required></div>
-    <p class="form-error" id="login-error"></p>
-    <button class="btn primary block" type="submit" id="login-btn">들어가기</button>
+    ${loginFields()}
+    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
     <div class="login-foot"><span>번호를 잊었다면 강사님께 재발급을 요청하세요.</span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
-  const form = $app.querySelector("#login-form");
+  bindLoginForm($app.querySelector("#login-form"), () => goAfterLogin("#/"));
+}
+
+const loginFields = () => `<div class="field"><label for="login-name">이름</label><input id="login-name" autocomplete="username" required maxlength="40"></div>
+    <div class="field"><label for="login-pin">4자리 번호</label><input id="login-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" required></div>
+    <p class="form-error" id="login-error"></p>
+    <button class="btn primary block" type="submit" id="login-btn">들어가기</button>`;
+
+// 로그인 페이지와 로그인 창이 같이 쓰는 폼 동작
+function bindLoginForm(form, onSuccess) {
   const pinInput = form.querySelector("#login-pin");
   pinInput.addEventListener("input", () => (pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 4)));
   form.addEventListener("submit", async (e) => {
@@ -297,7 +315,7 @@ function viewLogin() {
       store.set(SESSION_KEY, state.session);
       state.progressLoaded = false;
       preload();
-      route();
+      onSuccess();
     } catch (err) {
       errEl.textContent = errorMessage(err);
       btn.disabled = false;
@@ -306,11 +324,58 @@ function viewLogin() {
   form.querySelector("#login-name").focus();
 }
 
+// 로그인(또는 가입) 뒤에 갈 곳: 로그인 창을 띄운 문제가 있으면 그 문제로
+let afterLogin = null;
+function goAfterLogin(fallback) {
+  const to = afterLogin || fallback;
+  afterLogin = null;
+  if (location.hash === to) route(); else location.hash = to;
+}
+
+// 로그인 없이 문제를 열면: 보던 화면은 그대로 두고 로그인 창을 띄운다.
+// 주소로 바로 들어온 경우에는 그 문제가 있는 레슨을 먼저 그린다.
+function askLoginFor(p) {
+  const target = `#/p/${p.id}`;
+  if (shownHash && !shownHash.startsWith("#/p/") && !shownHash.startsWith("#/login") && !shownHash.startsWith("#/signup")) {
+    history.replaceState(null, "", shownHash);
+  } else {
+    const c = courseOf(p);
+    const l = c && c.lessons.length ? lessonById[c.lessons[c.lessons.length - 1].id] : null;
+    history.replaceState(null, "", l ? `#/l/${l.id}` : "#/");
+    route();
+  }
+  loginModal({ target, title: p.title });
+}
+
+function loginModal({ target = null, title = "" } = {}) {
+  document.querySelector(".overlay")?.remove();
+  afterLogin = target || location.hash || "#/";
+  const wrap = document.createElement("div");
+  wrap.className = "overlay";
+  wrap.innerHTML = `<form class="login login-modal panel lime" id="login-form" role="dialog" aria-modal="true" aria-labelledby="lm-title" novalidate>
+    <button type="button" class="lm-close" data-close aria-label="닫기">×</button>
+    <div><div class="eyebrow">Login</div><h2 id="lm-title">${target ? "문제 풀이는 로그인이 필요합니다" : "로그인"}</h2>
+      <p class="lead">${target ? `<b>${esc(title)}</b> 문제를 풀고 기록을 남기려면 로그인해 주세요. 레슨과 예제 실행은 로그인 없이도 볼 수 있습니다.` : "로그인하면 레슨 진도와 문제 풀이 기록이 저장됩니다."}</p></div>
+    ${api.mode === "demo" ? `<div class="demo-note"><b>데모 모드</b>입니다. 이름 <code>체험학생</code>, 번호 <code>1234</code>로 들어가 보세요.</div>` : ""}
+    ${loginFields()}
+    <div class="login-foot"><span>아직 계정이 없나요? <a href="#/signup" data-signup><b>회원가입</b></a></span><span>번호를 잊었다면 강사님께 문의하세요.</span></div>
+  </form>`;
+  document.body.appendChild(wrap);
+  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
+  function onKey(e) { if (e.key === "Escape") { close(); afterLogin = null; } }
+  document.addEventListener("keydown", onKey);
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap || e.target.closest("[data-close]")) { close(); afterLogin = null; }
+    else if (e.target.closest("[data-signup]")) close(); // 가입 뒤에도 같은 곳으로 간다
+  });
+  bindLoginForm(wrap.querySelector("form"), () => { close(); goAfterLogin("#/"); });
+}
+
 function authHead(active) {
   return `<div><img src="assets/dl-logo.png" alt="Data Learners" width="56" height="49" class="auth-mark"><div class="eyebrow">Data Learners · Python Track</div><h1>러너즈빌드업</h1>
     <p class="lead">개념을 읽고, 영상으로 보고, 바로 풀어 보는 데이터 학습 트랙.</p></div>
     <nav class="login-switch" aria-label="로그인 또는 회원가입">
-      <a href="#/" ${active === "login" ? 'aria-current="page"' : ""}>로그인</a>
+      <a href="#/login" ${active === "login" ? 'aria-current="page"' : ""}>로그인</a>
       <a href="#/signup" ${active === "signup" ? 'aria-current="page"' : ""}>회원가입</a>
     </nav>`;
 }
@@ -318,7 +383,7 @@ function authHead(active) {
 // ── 사용 방법 · 코드 작성법 ───────────────────────────────
 const codeBlock = (code) => `<pre class="guide-code"><code>${esc(code)}</code></pre>`;
 function viewGuide() {
-  const back = state.session ? `<a class="btn small" href="#/">홈으로</a>` : `<a class="btn small" href="#/">로그인하러 가기</a>`;
+  const back = `<a class="btn small" href="#/">홈으로</a>`;
   $app.innerHTML = `${topbar()}<main class="page guide">
     <div class="hero"><div><div class="eyebrow">Guide</div><h1>사용 방법과 코드 작성법</h1>
       <p>문제는 세 가지 유형이 있습니다. 유형마다 답을 내는 방법이 다르니 처음 한 번만 읽어 보세요.</p></div>${back}</div>
@@ -439,6 +504,7 @@ async function viewSignup() {
       ${api.mode === "demo" ? '<p class="hint-text">데모 모드의 가입 코드는 <code>QAQC8</code>입니다.</p>' : ""}</div>
     <p class="form-error" id="su-error"></p>
     <button class="btn primary block" type="submit" id="su-btn">가입하고 시작하기</button>
+    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
     <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요.</span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#signup-form");
@@ -471,8 +537,7 @@ async function viewSignup() {
       state.progressLoaded = false;
       preload();
       toast(`${res.student.name} 님, 가입을 환영합니다.`);
-      location.hash = "#/";
-      route();
+      goAfterLogin("#/");
     } catch (err) {
       errEl.textContent = errorMessage(err);
       btn.disabled = false;
@@ -572,6 +637,13 @@ function planRow(it) {
   return `<li class="plan-item${done ? " done" : ""}" ${t ? trackStyle(t) : ""}><a href="#/p/${p.id}"><span class="plan-check" aria-hidden="true">${done ? "✓" : ""}</span>
     <span class="plan-main"><span class="plan-kind">${p.type === "quiz" ? "개념 퀴즈" : "연습문제"}</span><b>${esc(p.title)}</b><span class="muted">${c ? `${esc(c.title)} · ` : ""}${p.type === "quiz" ? "5분" : "10분 내외"}</span></span><span class="sr-only">${done ? "완료" : "할 일"}</span></a></li>`;
 }
+// 로그인 전 홈: 오늘의 학습 대신 둘러보기 안내
+function guestCard() {
+  return `<section class="panel lime daily" aria-label="둘러보기 안내"><div class="daily-head"><div><span class="eyebrow">Welcome</span><h2>로그인 없이 둘러보는 중</h2>
+    <p class="muted">트랙과 레슨, 예제 코드 실행은 자유롭게 해 보세요. 연습문제 풀이와 진도 저장, 오늘의 학습은 로그인 뒤에 열립니다.</p></div></div>
+    <div class="daily-foot"><button class="btn primary small" data-act="login">로그인</button><a class="btn small" href="#/signup">회원가입</a></div></section>`;
+}
+
 function dailyCard() {
   const items = todayPlan();
   const dateLabel = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short" }).format(new Date());
@@ -692,14 +764,15 @@ function viewHome() {
   const totals = TRACKS.map(trackStats).reduce((a, s) => ({ lessons: a.lessons + s.lessons, lessonsDone: a.lessonsDone + s.lessonsDone, problems: a.problems + s.problems, solved: a.solved + s.solved }), { lessons: 0, lessonsDone: 0, problems: 0, solved: 0 });
   $app.innerHTML = `${topbar()}<main class="page home">
     <div class="home-head">
-      <div><h1>${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?</h1>
+      <div><h1>${state.session ? `${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?` : "개념을 읽고, 바로 실행해 보는 데이터 학습 트랙"}</h1>
         <div class="home-progress"><span>레슨 <b>${totals.lessonsDone} / ${totals.lessons}</b></span><span>문제 <b>${totals.solved} / ${totals.problems}</b></span><span class="meter-bar"><span style="width:${pct(totals.lessonsDone + totals.solved, totals.lessons + totals.problems)}%"></span></span></div></div>
     </div>
-    <div class="daily-grid">${dailyCard()}${runCard()}</div>
+    <div class="daily-grid">${state.session ? dailyCard() : guestCard()}${runCard()}</div>
     <section class="part"><h2 class="part-title">학습 트랙</h2>
       <div class="tgroups">${trackGroupsHtml()}</div></section>
   </main>`;
   bindTopbar();
+  $app.querySelectorAll('main [data-act="login"]').forEach((b) => b.addEventListener("click", () => loginModal()));
   preload();
 }
 
@@ -833,7 +906,7 @@ async function viewLesson(l) {
   const prevCLesson = prevC?.lessons[prevC.lessons.length - 1];
   const cs = courseStats(c);
   const multi = c.lessons.length > 1;
-  const sid = state.session.student.id;
+  const sid = state.session?.student.id || "guest";
   $app.innerHTML = `${topbar()}<main class="page lesson-page" ${trackStyle(t)}>
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span>${multi ? `<span>${esc(c.title)}</span><span class="sep">/</span><span class="muted">레슨 ${idx + 1}</span>` : `<span class="muted">${esc(c.title)}</span>`}
       <span class="nav">${prev ? `<a class="btn small" href="#/l/${prev.id}">← 이전</a>` : ""}${next ? `<a class="btn small" href="#/l/${next.id}">다음 →</a>` : ""}</span></nav>
@@ -906,7 +979,7 @@ async function viewLesson(l) {
   if (!state.lessons[l.id]) {
     state.lessons[l.id] = { status: "viewed", updated_at: new Date().toISOString() };
     bumpActivity();
-    api.lessonSet(state.session.token, l.id, "viewed").catch(() => {});
+    if (state.session) api.lessonSet(state.session.token, l.id, "viewed").catch(() => {});
   }
 
   // 체크 퀴즈
@@ -924,6 +997,7 @@ async function viewLesson(l) {
       state.lessons[l.id] = { status: "passed", quiz_score: null, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
       bumpActivity();
       doneRead();
+      if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
       try { await api.lessonSet(state.session.token, l.id, "passed"); toast(planToast(l.id) || "레슨을 완료했습니다."); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     });
@@ -957,10 +1031,11 @@ async function viewLesson(l) {
       const now = new Date().toISOString();
       state.lessons[l.id] = { status: "passed", quiz_score: ok, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
       bumpActivity();
+      if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
       try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!was) toast(planToast(l.id) || "레슨을 완료했습니다."); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     } else {
-      api.lessonSet(state.session.token, l.id, "viewed", ok).catch(() => {});
+      if (state.session) api.lessonSet(state.session.token, l.id, "viewed", ok).catch(() => {});
       quizEl.querySelector(".quiz-q.no")?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }
