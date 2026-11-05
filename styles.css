@@ -1038,3 +1038,10 @@ kbd {
 .fig .ico .dot-i { fill: var(--ink-2); stroke: none; }
 .fig .ico .thin { stroke-width: 1; opacity: .7; }
 .fig .ico-lg { stroke-width: 1.5; }
+
+/* ── 로그인 창 (로그인 없이 문제를 열 때) ── */
+.login-modal { position: relative; box-shadow: var(--shadow-modal); animation: pop 220ms ease-out; max-height: calc(100vh - 32px); overflow-y: auto; }
+.login-modal h2 { font-size: 22px; margin-top: 6px; }
+.login-modal .lead b { color: var(--ink); }
+.lm-close { position: absolute; top: 12px; right: 14px; width: 32px; height: 32px; border: 0; background: none; color: var(--muted); font-size: 24px; line-height: 1; cursor: pointer; border-radius: var(--radius); }
+.lm-close:hover { color: var(--ink); background: var(--code-bg); }
