@@ -47,6 +47,8 @@ const problemList = (p) => { const c = courseOf(p); const list = courseProblems(
 // 코스 안 번호: Q(개념 퀴즈), 1, 2, …
 const cno = (p) => { const i = problemList(p).filter((x) => x.type !== "quiz").indexOf(p); return p.type === "quiz" ? "Q" : String(i + 1); };
 const isReady = (c) => c.status !== "planned";
+// 트랙 안 몇 번째 날인지. 맨 앞 소개 코스(intro)는 Day 00, 나머지는 1부터.
+const dayNo = (c) => (c.intro ? 0 : coursesOf(c.track).filter((x) => !x.intro).indexOf(c) + 1);
 const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
 const solved = (pid) => !!state.progress[pid]?.solved;
 const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)" };
@@ -692,7 +694,7 @@ function courseRow(c, i) {
   const next = ready ? (c.lessons.find((l) => !lessonDone(l.id)) ? `#/l/${c.lessons.find((l) => !lessonDone(l.id)).id}` : `#/c/${c.id}`) : null;
   const done = ready && s.lessonsDone === s.lessons && s.solved === s.problems && s.lessons + s.problems > 0;
   return `<li class="crow${ready ? "" : " planned"}${done ? " complete" : ""}">
-    <span class="cno"><small>DAY</small>${String(i + 1).padStart(2, "0")}</span>
+    <span class="cno"><small>DAY</small>${String(dayNo(c)).padStart(2, "0")}</span>
     <div class="crow-main">${ready ? `<a href="#/c/${c.id}"><b>${esc(c.title)}</b></a>` : `<b>${esc(c.title)}</b>`}<span class="muted">${esc(c.summary)}</span>
       <div class="crow-meta"><span class="lvl">${esc(c.level)}</span>${ready ? `<span>레슨 ${s.lessonsDone}/${s.lessons}</span><span>문제 ${s.solved}/${s.problems}</span>` : '<span class="soon">준비 중</span>'}</div></div>
     ${ready ? `<a class="btn small${done ? " ghost" : ""}" href="${next}">${done ? "복습" : s.lessonsDone || s.solved ? "이어서" : "시작"} →</a>` : ""}
@@ -747,7 +749,7 @@ function viewCourse(c) {
   $app.innerHTML = `${topbar()}<main class="page unit-page" ${trackStyle(t)}>
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><span class="muted">${esc(c.title)}</span></nav>
     <header class="unit-hero">
-      <span class="tchip">${esc(t.label)} · Day ${list.indexOf(c) + 1} · ${esc(c.level)}</span>
+      <span class="tchip">${esc(t.label)} · Day ${String(dayNo(c)).padStart(2, "0")} · ${esc(c.level)}</span>
       <h1>${esc(c.title)}</h1>
       <p class="muted">${esc(c.summary)}</p>
       <div class="concepts">${(c.concepts || []).map((k) => `<span class="concept">${esc(conceptName(k))}</span>`).join("")}</div>
@@ -756,8 +758,8 @@ function viewCourse(c) {
     </header>
     <section class="part"><h2 class="part-title">레슨</h2>
       ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span><span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
-    <section class="part"><h2 class="part-title">연습문제</h2>
-      ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>
+    ${c.intro && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
+      ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>`}
     <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="#/c/${prevC.id}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="#/c/${nextC.id}">${esc(nextC.title)} →</a>` : ""}</nav>
   </main>`;
   bindTopbar();
@@ -807,6 +809,9 @@ async function viewLesson(l) {
   const idx = c.lessons.findIndex((x) => x.id === l.id);
   const prev = c.lessons[idx - 1], next = c.lessons[idx + 1];
   const probs = courseProblems(c);
+  const tl = coursesOf(c.track);
+  const nextC = tl.slice(tl.indexOf(c) + 1).find(isReady);
+  const nextCLesson = nextC?.lessons[0];
   const sid = state.session.student.id;
   $app.innerHTML = `${topbar()}<main class="page lesson-page" ${trackStyle(t)}>
     <nav class="crumb"><a href="#/t/${t.id}">${esc(t.label)}</a><span class="sep">/</span><a href="#/c/${c.id}">${esc(c.title)}</a><span class="sep">/</span><span class="muted">레슨 ${idx + 1}</span>
@@ -817,7 +822,7 @@ async function viewLesson(l) {
     <article class="lesson-body panel" id="lesson-body"><p class="muted">불러오는 중…</p></article>
     <section class="lesson-practice panel" id="lesson-practice" hidden></section>
     <section class="lesson-quiz panel" id="lesson-quiz"></section>
-    <nav class="unit-nav">${prev ? `<a class="btn small ghost" href="#/l/${prev.id}">← ${esc(prev.title)}</a>` : `<a class="btn small ghost" href="#/c/${c.id}">← 코스로</a>`}${next ? `<a class="btn small ghost" href="#/l/${next.id}">${esc(next.title)} →</a>` : probs[0] ? `<a class="btn small ghost" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 →</a>` : ""}</nav>
+    <nav class="unit-nav">${prev ? `<a class="btn small ghost" href="#/l/${prev.id}">← ${esc(prev.title)}</a>` : `<a class="btn small ghost" href="#/c/${c.id}">← 코스로</a>`}${next ? `<a class="btn small ghost" href="#/l/${next.id}">${esc(next.title)} →</a>` : probs[0] ? `<a class="btn small ghost" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 →</a>` : nextCLesson ? `<a class="btn small ghost" href="#/l/${nextCLesson.id}">다음 코스: ${esc(nextC.title)} →</a>` : ""}</nav>
   </main>`;
   bindTopbar();
   renderEngine($app.querySelector(".engine"));
@@ -878,12 +883,26 @@ async function viewLesson(l) {
   // 체크 퀴즈
   const quizEl = $app.querySelector("#lesson-quiz");
   const qs = l.quiz || [];
-  if (!qs.length) { quizEl.remove(); return; }
+  const finishHtml = () => `<div class="lesson-done"><b>레슨 완료</b><span class="muted">다음 단계로 이어 가세요.</span>
+    <div class="btns">${next ? `<a class="btn primary" href="#/l/${next.id}">다음 레슨: ${esc(next.title)} →</a>` : ""}${probs.length ? `<a class="btn${next ? "" : " primary"}" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 풀기</a>` : ""}${!next && !probs.length && nextCLesson ? `<a class="btn primary" href="#/l/${nextCLesson.id}">다음 코스: ${esc(nextC.title)} →</a>` : ""}<a class="btn ghost" href="#/c/${c.id}">코스로</a></div></div>`;
+  // 퀴즈 없는 읽기 레슨: 다 읽었다고 누르면 완료
+  if (!qs.length) {
+    const doneRead = () => { quizEl.innerHTML = finishHtml(); };
+    if (lessonDone(l.id)) return doneRead();
+    quizEl.innerHTML = `<div class="quiz-actions"><span class="muted">퀴즈 없이 읽고 넘어가는 레슨입니다.</span><span class="spacer"></span><button class="btn primary" id="lq-read">다 읽었어요 · 레슨 완료</button></div>`;
+    quizEl.querySelector("#lq-read").addEventListener("click", async () => {
+      const now = new Date().toISOString();
+      state.lessons[l.id] = { status: "passed", quiz_score: null, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
+      bumpActivity();
+      doneRead();
+      try { await api.lessonSet(state.session.token, l.id, "passed"); toast(planToast(l.id) || "레슨을 완료했습니다."); }
+      catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
+    });
+    return;
+  }
   if (qs.some((q) => q.kind === "write")) preload();
   const key = `rb-lq:${sid}:${l.id}`;
   let answers = {}, graded = false;
-  const finishHtml = () => `<div class="lesson-done"><b>레슨 완료</b><span class="muted">다음 단계로 이어 가세요.</span>
-    <div class="btns">${next ? `<a class="btn primary" href="#/l/${next.id}">다음 레슨: ${esc(next.title)} →</a>` : ""}${probs.length ? `<a class="btn${next ? "" : " primary"}" href="#/p/${(firstUnsolved(probs) || probs[0]).id}">연습문제 풀기</a>` : ""}<a class="btn ghost" href="#/c/${c.id}">코스로</a></div></div>`;
   const render = () => {
     quizEl.innerHTML = `<div class="quiz-head"><div class="meta-line"><span class="tag">체크 퀴즈</span><span class="muted" style="font-size:13px">${qs.length}문항 · 모두 맞히면 레슨 완료</span></div></div>
       <ol class="quiz-list">${qs.map((q, i) => questionHtml(q, i, answers[i], graded)).join("")}</ol>
