@@ -194,7 +194,7 @@ function topbar({ admin = false } = {}) {
   const right = admin
     ? `<a class="btn ghost small" href="#/">수강생 화면</a><button class="btn small" data-act="admin-logout">어드민 로그아웃</button>`
     : state.session
-      ? `<a class="btn ghost small" href="#/videos">영상</a><a class="btn ghost small" href="#/guide">사용 방법</a>${streakChip()}<span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
+      ? `<a class="btn ghost small" href="#/videos">영상</a><a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
       : `<a class="btn ghost small" href="#/guide">사용 방법</a>`;
   return `<header class="topbar"><div class="topbar-inner">
     <div class="brand-block">
@@ -504,22 +504,10 @@ function trackStats(t) {
   return sum;
 }
 
-// ── 일일 학습: 오늘의 학습 플랜 · 연속 학습일 · 학습 잔디 ─────────────
+// ── 일일 학습: 오늘의 학습 플랜 ──────────────────────────────────────
 // 날짜는 한국 시간 기준 "YYYY-MM-DD". 서버의 activity(날짜별 학습 횟수)에 이 브라우저에서 한 학습을 더한다.
 const dayKey = (d = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(d);
-const addDays = (key, n) => { const d = new Date(key + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
-const weekdayOf = (key) => new Date(key + "T00:00:00Z").getUTCDay(); // 0 = 일요일
-const mondayOf = (key) => addDays(key, -((weekdayOf(key) + 6) % 7));
 function bumpActivity() { const k = dayKey(); state.activity[k] = (state.activity[k] || 0) + 1; }
-const activeOn = (k) => (state.activity[k] || 0) > 0;
-// 오늘 아직 안 했어도 어제까지 이어졌으면 연속 기록은 살아 있다
-function streak() {
-  let k = dayKey();
-  if (!activeOn(k)) k = addDays(k, -1);
-  let n = 0;
-  while (activeOn(k)) { n++; k = addDays(k, -1); }
-  return n;
-}
 
 // 오늘의 학습: 레슨 1개 + 연습문제로 3단계. 하루 동안은 같은 목록을 유지한다 (이 브라우저에 저장).
 const PLAN_SIZE = 3;
@@ -598,33 +586,64 @@ function dailyCard() {
   </section>`;
 }
 
-function recordCard() {
-  const today = dayKey();
-  const n = streak();
-  const week = Array.from({ length: 7 }, (_, i) => addDays(mondayOf(today), i));
-  const weekDays = week.filter(activeOn).length;
-  const WEEKS = 16;
-  const start = addDays(mondayOf(today), -7 * (WEEKS - 1));
-  const level = (c) => (c >= 10 ? 4 : c >= 6 ? 3 : c >= 3 ? 2 : c >= 1 ? 1 : 0);
-  const cells = [];
-  for (let w = 0; w < WEEKS; w++) for (let d = 0; d < 7; d++) {
-    const k = addDays(start, w * 7 + d);
-    const c = state.activity[k] || 0;
-    cells.push(k > today ? `<i class="future"></i>` : `<i class="l${level(c)}${k === today ? " today" : ""}" title="${k} · ${c ? `학습 ${c}회` : "기록 없음"}"></i>`);
+// ── 내 트랙 진행률: 최근 학습한 트랙의 진행 바 위를 러너가 달린다 ─────────
+// 진행률 = (완료 레슨 + 푼 문제) / (열린 코스의 레슨 + 문제). 트랙 카드와 같은 기준.
+function trackLastAt(t) {
+  let last = "";
+  for (const c of coursesOf(t.id)) {
+    for (const l of c.lessons) { const v = state.lessons[l.id]?.updated_at; if (v && v > last) last = v; }
+    for (const p of courseProblems(c)) { const v = state.progress[p.id]?.solved_at; if (v && v > last) last = v; }
   }
-  const msg = activeOn(today) ? "오늘도 학습했어요." : n ? `오늘 학습하면 ${n + 1}일 연속이 됩니다.` : "오늘 첫 학습으로 기록을 시작해 보세요.";
-  return `<section class="panel record" aria-label="학습 기록">
-    <div class="record-top">
-      <div><span class="eyebrow">Streak</span><div class="streak-num"><b>${n}</b>일 연속</div><p class="muted">${msg}</p></div>
-      <ol class="week" aria-label="이번 주 학습한 날 ${weekDays}일">${week.map((k, i) => `<li class="${activeOn(k) ? "on" : ""}${k === today ? " today" : ""}${k > today ? " future" : ""}"><span>${"월화수목금토일"[i]}</span><i aria-hidden="true">${activeOn(k) ? "✓" : ""}</i></li>`).join("")}</ol>
-    </div>
-    <div class="heat" role="img" aria-label="최근 ${WEEKS}주 학습 기록">${cells.join("")}</div>
-    <div class="heat-foot"><span class="muted">최근 ${WEEKS}주 · 이번 주 <b>${weekDays}</b>일 학습</span><span class="heat-legend" aria-hidden="true">적음<i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i>많음</span></div>
-  </section>`;
+  return last;
 }
-function streakChip() {
-  const n = streak();
-  return n ? `<span class="streak-chip" title="연속 학습일">${n}일 연속</span>` : "";
+function trackRun(t) {
+  const s = trackStats(t);
+  const total = s.lessons + s.problems, done = s.lessonsDone + s.solved;
+  const all = coursesOf(t.id);
+  const ready = all.filter(isReady);
+  // 코스 경계 눈금(누적 비율)과 지금 달리는 코스
+  let acc = 0, current = null, finished = 0;
+  const ticks = [];
+  ready.forEach((c, i) => {
+    const cs = courseStats(c), n = cs.lessons + cs.problems;
+    const complete = n > 0 && cs.lessonsDone === cs.lessons && cs.solved === cs.problems;
+    if (complete) finished++;
+    else if (!current) current = c;
+    acc += n;
+    if (i < ready.length - 1 && total) ticks.push((acc / total) * 100);
+  });
+  const nextLesson = current?.lessons.find((l) => !lessonDone(l.id));
+  const href = current ? (nextLesson ? `#/l/${nextLesson.id}` : `#/c/${current.id}`) : `#/t/${t.id}`;
+  return { t, s, total, done, p: pct(done, total), ticks, current, day: current ? all.indexOf(current) + 1 : 0, finished, courses: ready.length, href, last: trackLastAt(t) };
+}
+const RUNNER_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="15.2" cy="4.2" r="2.3" fill="currentColor" stroke="none"/><path d="M13.6 7.6 11 13.2M13 9.2l3.6 1 2.4-2.4M13 9.2l-3.8-.4-2.4 2.6M11 13.2l4 1.8.2 5.2M11 13.2l-2.2 4-4.2.8"/></svg>`;
+const FLAG_SVG = `<svg viewBox="0 0 16 20" aria-hidden="true"><path d="M2 19V2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2.8 2.5h11l-2.6 3.6 2.6 3.6h-11z" fill="currentColor"/></svg>`;
+
+function runCard() {
+  const runs = TRACKS.filter((t) => t.ready).map(trackRun).filter((r) => r.courses > 0);
+  if (!runs.length) return "";
+  // 진행 중 = 하나라도 끝낸 것이 있거나 최근 기록이 있는 트랙. 가장 최근에 학습한 트랙을 크게 보여준다.
+  const active = runs.filter((r) => r.done > 0 || r.last).sort((a, b) => String(b.last).localeCompare(String(a.last)) || b.p - a.p);
+  const main = active[0] || runs[0];
+  const others = active.filter((r) => r !== main).slice(0, 3);
+  const { t, s, p } = main;
+  const msg = p >= 100 ? "완주했어요! 다른 트랙에서 다음 레이스를 시작해 보세요."
+    : main.done === 0 ? "출발선에 섰어요. 첫 레슨부터 가볍게 달려 볼까요?"
+    : `DAY ${String(main.day).padStart(2, "0")} · ${esc(main.current.title)} 구간을 달리는 중`;
+  return `<section class="panel run-card${p >= 100 ? " complete" : ""}" ${trackStyle(t)} aria-label="내 트랙 진행률">
+    <div class="run-top">
+      <div><span class="eyebrow">My Track${active.length > 1 ? " · 최근 학습" : ""}</span><h2><a href="#/t/${t.id}">${esc(t.label)}</a></h2><p class="muted">${msg}</p></div>
+      <div class="run-pct"><b>${p}</b>%</div>
+    </div>
+    <div class="run-lane" role="progressbar" aria-label="${esc(t.label)} 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}">
+      <div class="lane"><span class="lane-fill" style="width:${p}%"></span>${main.ticks.map((x) => `<i class="lane-tick${x <= p ? " passed" : ""}" style="left:${x.toFixed(2)}%"></i>`).join("")}</div>
+      <span class="runner${p >= 100 ? " done" : ""}" style="left:${p}%">${RUNNER_SVG}</span>
+      <span class="finish">${FLAG_SVG}</span>
+    </div>
+    <div class="run-meta"><span class="run-end">Start</span><span>코스 <b>${main.finished}</b>/${main.courses} 완주 · 레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span><span class="run-end">Finish</span></div>
+    <div class="run-foot"><a class="btn small${p >= 100 ? " ghost" : ""}" href="${main.href}">${p >= 100 ? "트랙 돌아보기" : main.done ? "이어서 달리기" : "출발하기"} →</a></div>
+    ${others.length ? `<ul class="run-others" aria-label="다른 진행 중 트랙">${others.map((r) => `<li ${trackStyle(r.t)}><a href="#/t/${r.t.id}"><span class="ro-name">${esc(r.t.label)}</span><span class="ro-lane"><span style="width:${r.p}%"></span><i style="left:${r.p}%"></i></span><b>${r.p}%</b></a></li>`).join("")}</ul>` : ""}
+  </section>`;
 }
 
 // 오늘의 과제: 한 줄 요약 + 다음 문제 바로가기 (QAQC 과정)
@@ -696,7 +715,7 @@ function viewHome() {
       <div><h1>${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?</h1>
         <div class="home-progress"><span>레슨 <b>${totals.lessonsDone} / ${totals.lessons}</b></span><span>문제 <b>${totals.solved} / ${totals.problems}</b></span><span class="meter-bar"><span style="width:${pct(totals.lessonsDone + totals.solved, totals.lessons + totals.problems)}%"></span></span></div></div>
     </div>
-    <div class="daily-grid">${dailyCard()}${recordCard()}</div>
+    <div class="daily-grid">${dailyCard()}${runCard()}</div>
     ${prog.sessions ? todayHtml() : ""}
     <section class="part"><h2 class="part-title">학습 트랙</h2>
       <div class="tgroups">${trackGroupsHtml()}</div></section>
