@@ -983,3 +983,5 @@ kbd {
 .fig .ico .ico-fill { fill: var(--surface-3); }
 .fig .ico .ico-bold { stroke-width: 2.4; }
 .fig .t-ico { fill: var(--ink); font: 800 17px var(--font-en); }
+.run-note { margin: 0; padding: 10px 14px; font-size: 14px; line-height: 1.6; color: var(--ink-2); background: var(--surface); border-bottom: 1px solid var(--line); }
+.run-note code { font-family: var(--font-mono); font-size: 13px; color: var(--cyan); }

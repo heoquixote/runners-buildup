@@ -807,11 +807,11 @@ const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${Stri
 // 레슨 본문의 실행 셀 자리에는 안내 링크만 남기고, 셀은 개념 설명 아래 '직접 실행해 보기'로 모은다.
 const runRefHtml = (code, i) => `<a class="run-ref" href="#run-${i}" data-ref="${i}"><span class="run-lang">PYTHON</span>예제 ${i + 1} · 아래 실습에서 직접 실행해 보기 ↓</a>`;
 
-function runCellHtml(code, i, topic = "") {
+function runCellHtml(code, i, topic = "", note = "") {
   return `<div class="run-cell" id="run-${i}" data-cell="${i}">
     <div class="run-head"><span class="run-lang">PYTHON</span><span class="run-title">예제 ${i + 1}${topic ? ` · ${esc(topic)}` : ""}</span><span class="run-tip muted">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
       <span class="run-key" title="코드 안에서 Ctrl+Enter 로도 실행됩니다">Ctrl ↵</span><button class="btn ghost small" data-reset="${i}">원래대로</button><button class="btn small run-btn" data-run="${i}">▶ 실행</button></div>
-    <textarea data-code="${i}">${esc(code)}</textarea>
+    ${note ? `<p class="run-note">${note}</p>` : ""}<textarea data-code="${i}">${esc(code)}</textarea>
     <pre class="console run-out" data-out="${i}" hidden></pre></div>`;
 }
 
@@ -851,6 +851,8 @@ async function viewLesson(l) {
   const codes = [];
   body.innerHTML = renderMd(md, { run: (code, i) => { codes[i] = code; return runRefHtml(code, i); }, video: videoBlock });
   // 각 예제가 어느 소제목 아래 있었는지 찾아 실습 셀 제목으로 쓴다
+  // 예제 바로 앞 문단(그 예제를 소개하는 설명)을 실습 셀 위에 함께 보여 준다. 본문 렌더러가 만든 HTML이라 그대로 쓴다.
+  const noteOf = (el) => { const n = el.previousElementSibling; return n && (n.tagName === "P" || n.tagName === "BLOCKQUOTE") ? n.innerHTML : ""; };
   const topicOf = (el) => { for (let n = el.previousElementSibling; n; n = n.previousElementSibling) if (/^H[23]$/.test(n.tagName)) return n.textContent.trim(); return ""; };
   const practice = $app.querySelector("#lesson-practice");
   if (codes.length) {
@@ -858,7 +860,7 @@ async function viewLesson(l) {
     practice.hidden = false;
     practice.innerHTML = `<div class="practice-head"><span class="eyebrow">Practice · 직접 실행해 보기</span><h2>개념을 코드로 확인하기</h2>
       <p class="muted">위에서 읽은 내용을 그대로 실행해 봅니다. 숫자를 바꿔 다시 돌려 보면 개념이 더 잘 잡힙니다.</p></div>
-      ${codes.map((code, i) => runCellHtml(code, i, refs[i] ? topicOf(refs[i]) : "")).join("")}`;
+      ${codes.map((code, i) => runCellHtml(code, i, refs[i] ? topicOf(refs[i]) : "", refs[i] ? noteOf(refs[i]) : "")).join("")}`;
     refs.forEach((r) => r.addEventListener("click", (e) => { e.preventDefault(); const t = practice.querySelector(`#run-${r.dataset.ref}`); t?.scrollIntoView({ behavior: "smooth", block: "start" }); t?.classList.add("flash"); setTimeout(() => t?.classList.remove("flash"), 1200); }));
   }
 
