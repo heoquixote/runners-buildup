@@ -38,7 +38,7 @@
 
 교재에는 있지만 사이트에 코스가 없는 내용: 형변환·참/거짓(02-4), 참조와 복사(03-3), 모듈·클래스·가상환경(05장), pathlib·datetime·collections(06-4), requests API(07-2), 자동화 스크립트·프로젝트 구조(08-1, 08-3).
 
-### 데이터 분석 (python-da: da-01~08) · 데이터 시각화 (python-viz: da-09·da-10)
+### 데이터 분석 (python-da: da-01~08) · 데이터 시각화 (python-viz: da-09~da-11)
 
 | 코스 | 주 원본 | 보조 |
 | --- | --- | --- |
@@ -50,8 +50,9 @@
 | da-06 groupby와 pivot_table | python/07-5-pandas-practical (groupby, 실무 예제) | |
 | da-07 merge와 concat | python/07-5-pandas-practical (merge, concat, 사용자·주문 결합 예제) | |
 | da-08 시계열 | python/07-5-pandas-practical (날짜형 변환과 .dt) | python/06-4-pathlib-datetime-collections (datetime) |
-| da-09 matplotlib 기본 | python/07-6-matplotlib-basics | 07-4-visualization-libraries |
-| da-10 seaborn 통계 시각화 | python/07-7-seaborn-plotly | stats/02-3-shape-and-outlier |
+| da-09 matplotlib 기본 (레슨 4개) | python/07-6-matplotlib-basics | 07-4-visualization-libraries |
+| da-10 seaborn 통계 시각화 (레슨 4개) | python/07-7-seaborn-plotly | stats/02-3-shape-and-outlier |
+| da-11 차트 고르기 | python/07-6 "어떤 차트를 골라야 할까"·"자주 하는 실수", 07-7 "실무에서 자주 하는 실수"·"자동 EDA 도구" | |
 
 ### 통계 (stats)
 

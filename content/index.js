@@ -189,19 +189,45 @@ export const COURSES = [
         { kind: "choice", q: "1시간 단위 데이터를 하루 평균으로 바꾸는 코드는?", options: ["s.rolling(24).mean()", "s.resample('D').mean()", "s.shift(24)", "s.groupby(24).mean()"], answer: 1, explain: "resample('D')는 날짜 단위로 묶습니다." },
       ] }] },
   // ── 데이터 시각화 (matplotlib · seaborn) ─ 코스 id · 레슨 파일 위치는 그대로 ──
-  { id: "da-09", track: "python-viz", dir: "python-da", title: "matplotlib 기본", summary: "fig/ax, 선 · 막대 · 산점도, 축과 제목, 서브플롯", unit: 30, level: "기본",
-    concepts: ["mpl.basic"],
-    lessons: [{ id: "da-09-1", title: "fig와 ax로 그래프 그리기", minutes: 15, concepts: ["mpl.basic"],
+  { id: "da-09", track: "python-viz", dir: "python-da", title: "matplotlib 기본", summary: "그래프 뼈대(fig · ax), 선 · 막대 · 히스토그램 · 상자 · 산점도 · 파이, 서브플롯과 꾸미기", unit: 30, level: "기본",
+    concepts: ["mpl.basic", "mpl.charts", "mpl.layout"],
+    lessons: [
+      { id: "da-09-1", title: "그래프의 뼈대: fig와 ax", minutes: 15, concepts: ["mpl.basic"],
+        quiz: [
+          { kind: "write", q: "fig, ax를 만들고 ax.plot으로 [1, 4, 9]를 그린 뒤, 그려진 선의 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt", expect: "1", must: ["\\.plot\\("], solution: "import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.plot([1, 4, 9])\nprint(len(ax.lines))", explain: "ax.plot을 한 번 부르면 ax.lines에 선 하나가 생깁니다." },
+          { kind: "choice", q: "matplotlib에서 Axes(ax)가 뜻하는 것은?", options: ["x축 하나", "도화지 위에 놓인 그래프 한 칸 전체", "그림 파일 전체", "범례 상자"], answer: 1, explain: "Figure가 도화지, Axes는 그 위의 그래프 한 칸입니다. 제목·축·선이 모두 ax 안에 그려집니다." },
+        ] },
+      { id: "da-09-2", title: "추이와 비교: 선 · 막대 · 영역", minutes: 20, concepts: ["mpl.charts"] },
+      { id: "da-09-3", title: "분포와 관계: 히스토그램 · 상자 · 산점도 · 파이", minutes: 20, concepts: ["mpl.charts"],
+        quiz: [
+          { kind: "choice", q: "상자그림에서 상자 안의 가운데 선이 뜻하는 것은?", options: ["평균", "중앙값", "최빈값", "최댓값"], answer: 1, explain: "가운데 선은 중앙값, 상자의 아래·위 끝은 Q1·Q3(가운데 50%)입니다." },
+          { kind: "choice", q: "제품 12종의 판매 비율을 비교해 가장 많이 팔린 순서를 보여 주려면?", options: ["파이 그래프", "크기순으로 정렬한 막대 그래프", "선 그래프", "히스토그램"], answer: 1, explain: "조각이 많은 파이는 크기 비교가 어렵습니다. 정렬한 막대가 순위를 가장 정확히 보여 줍니다." },
+        ] },
+      { id: "da-09-4", title: "여러 그래프 배치와 다듬기", minutes: 18, concepts: ["mpl.layout"] },
+    ] },
+  { id: "da-10", track: "python-viz", dir: "python-da", title: "seaborn 통계 시각화", summary: "data · x · y · hue 구조, 분포 · 범주 비교 · 관계 · 상관 히트맵 · pairplot", unit: 31, level: "실무",
+    concepts: ["sns.stat", "sns.dist", "sns.cat", "sns.rel"],
+    lessons: [
+      { id: "da-10-1", title: "seaborn의 기본 구조: data · x · y · hue", minutes: 18, concepts: ["sns.stat"],
+        quiz: [
+          { kind: "write", q: "sns.countplot으로 df의 line별 개수를 그린 뒤, 막대 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})", expect: "3", must: ["countplot\\("], solution: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})\nax = sns.countplot(data=df, x='line')\nprint(len(ax.patches))", explain: "범주 A, B, C마다 막대 하나입니다." },
+          { kind: "choice", q: "새 도화지를 스스로 만들어서 ax=를 받지 않고, col=로 칸을 나누는 함수는?", options: ["histplot", "boxplot", "displot", "heatmap"], answer: 2, explain: "displot · catplot · relplot · pairplot 같은 그림 단위 함수는 새 도화지를 만듭니다. 칸 단위 함수(histplot 등)는 ax=로 자리를 정해 줍니다." },
+        ] },
+      { id: "da-10-2", title: "분포 그래프: hist · kde · ecdf · displot", minutes: 18, concepts: ["sns.dist"] },
+      { id: "da-10-3", title: "범주 비교: count · bar · box · violin · strip · point", minutes: 20, concepts: ["sns.cat"],
+        quiz: [
+          { kind: "ox", q: "sns.barplot의 막대 높이는 기본으로 그룹의 합계다.", answer: false, explain: "기본은 평균입니다. 합계를 그리려면 estimator=\"sum\"을 줍니다." },
+          { kind: "choice", q: "요일별 계산 금액에 유난히 큰 값(이상치)이 있는지 보려면?", options: ["barplot", "countplot", "boxplot", "pointplot"], answer: 2, explain: "boxplot은 수염 밖의 값을 점(이상치)으로 따로 보여 줍니다. barplot·pointplot은 평균만, countplot은 개수만 보여 줍니다." },
+        ] },
+      { id: "da-10-4", title: "관계와 상관: scatter · line · reg · heatmap · pairplot", minutes: 22, concepts: ["sns.rel"] },
+    ] },
+  { id: "da-11", track: "python-viz", dir: "python-da", title: "차트 고르기", summary: "질문 → 차트 → 도구, 차트 지도, 흔한 왜곡과 보고서 체크리스트", level: "기본",
+    concepts: ["viz.choose"],
+    lessons: [{ id: "da-11-1", title: "질문에 맞는 차트 고르기", minutes: 15, concepts: ["viz.choose"],
       quiz: [
-        { kind: "write", q: "fig, ax를 만들고 ax.plot으로 [1, 4, 9]를 그린 뒤, 그려진 선의 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt", expect: "1", must: ["\\.plot\\("], solution: "import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.plot([1, 4, 9])\nprint(len(ax.lines))", explain: "ax.plot을 한 번 부르면 ax.lines에 선 하나가 생깁니다." },
-        { kind: "choice", q: "시간에 따른 매출 변화를 보여 줄 때 가장 알맞은 그래프는?", options: ["선 그래프", "원 그래프", "산점도", "히스토그램"], answer: 0, explain: "추이는 선, 범주 비교는 막대, 관계는 산점도입니다." },
-      ] }] },
-  { id: "da-10", track: "python-viz", dir: "python-da", title: "seaborn 통계 시각화", summary: "분포, 범주 비교, 관계, 상관 히트맵", unit: 31, level: "실무",
-    concepts: ["sns.stat"],
-    lessons: [{ id: "da-10-1", title: "DataFrame을 그대로 넣는 통계 그래프", minutes: 15, concepts: ["sns.stat"],
-      quiz: [
-        { kind: "write", q: "sns.countplot으로 df의 line별 개수를 그린 뒤, 막대 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})", expect: "3", must: ["countplot\\("], solution: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})\nax = sns.countplot(data=df, x='line')\nprint(len(ax.patches))", explain: "범주 A, B, C마다 막대 하나입니다." },
-        { kind: "ox", q: "sns.boxplot은 범주별 평균만 막대로 보여 준다.", answer: false, explain: "boxplot은 중앙값, 사분위 범위, 이상치를 보여 줍니다. 평균 막대는 barplot입니다." },
+        { kind: "choice", q: "반 4개의 학생 키를 비교하면서, 유난히 크거나 작은 학생(이상치)도 함께 보고 싶다. 알맞은 차트는?", options: ["반별 평균 막대 그래프", "반별 상자그림", "반별 파이 그래프", "선 그래프"], answer: 1, explain: "분포와 이상치를 그룹별로 비교하는 질문이므로 상자그림입니다. 평균 막대는 이상치를 보여 주지 않습니다." },
+        { kind: "choice", q: "학생 100명의 하루 공부 시간과 시험 점수가 함께 움직이는지 보고 싶다. 알맞은 차트는?", options: ["산점도", "누적 막대", "파이 그래프", "히스토그램"], answer: 0, explain: "숫자 두 개의 관계는 산점도입니다. 점 하나가 학생 한 명입니다." },
+        { kind: "ox", q: "아이스크림 판매량과 물놀이 사고 건수의 상관계수가 0.9이므로, 아이스크림 판매가 사고의 원인이다.", answer: false, explain: "상관은 인과가 아닙니다. 둘 다 더운 날씨라는 제3의 원인 때문에 함께 늘었을 수 있습니다." },
       ] }] },
 
   // ── SQL ──────────────────────────────────────────────────
@@ -458,5 +484,5 @@ export const lessonById = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
 export const trackById = Object.fromEntries(TRACKS.map((t) => [t.id, t]));
 export const coursesOf = (trackId) => COURSES.filter((c) => c.track === trackId);
 export const courseOfUnit = (unitId) => COURSES.find((c) => c.unit === unitId);
-// dir: 레슨 md 폴더. 트랙을 옮긴 코스(da-09·da-10 → python-viz)는 파일을 원래 폴더에 둔다.
+// dir: 레슨 md 폴더. 트랙을 옮긴 코스(da-09~da-11 → python-viz)는 파일을 원래 폴더에 둔다.
 export const lessonPath = (l) => `content/${l.dir || l.track}/${l.id}.md`;

@@ -42,7 +42,13 @@ export const CONCEPTS = {
   "pd.merge": { name: "merge와 concat", track: "python-da" },
   "pd.time": { name: "시계열 (datetime · resample · rolling)", track: "python-da" },
   "mpl.basic": { name: "matplotlib 기본", track: "python-viz" },
+  "mpl.charts": { name: "matplotlib 차트 종류 (선 · 막대 · 히스토그램 · 상자 · 산점도 · 파이)", track: "python-viz" },
+  "mpl.layout": { name: "서브플롯 배치와 꾸미기", track: "python-viz" },
   "sns.stat": { name: "seaborn 통계 시각화", track: "python-viz" },
+  "sns.dist": { name: "seaborn 분포 그래프", track: "python-viz" },
+  "sns.cat": { name: "seaborn 범주형 그래프", track: "python-viz" },
+  "sns.rel": { name: "seaborn 관계 · 상관 그래프", track: "python-viz" },
+  "viz.choose": { name: "질문에 맞는 차트 고르기", track: "python-viz" },
   // SQL
   "sql.intro": { name: "데이터베이스와 SQL", track: "sql" },
   "sql.select": { name: "SELECT · WHERE", track: "sql" },
