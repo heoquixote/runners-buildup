@@ -966,3 +966,16 @@ kbd {
 .fig .dot-b { fill: var(--bg); stroke: var(--accent); stroke-width: 2.5; }
 .fig .leg-a { fill: var(--track); }
 .fig .leg-b { fill: var(--accent); }
+.lesson-logo { display: flex; align-items: center; gap: 20px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: radial-gradient(circle at 60px 50%, rgba(255,212,59,.10), transparent 160px), var(--code-bg); }
+.lesson-logo img { width: 96px; height: 96px; flex: none; border-radius: 0; }
+.lesson-logo div { display: grid; gap: 4px; }
+.lesson-logo b { font: 700 30px/1.1 var(--font-en); color: var(--ink); letter-spacing: -.01em; }
+.lesson-logo span { color: var(--ink-2); font-size: 15px; }
+.lesson-logo small { color: var(--subtle); font-size: 12px; }
+@media (max-width: 560px) { .lesson-logo { gap: 14px; padding: 14px; } .lesson-logo img { width: 64px; height: 64px; } .lesson-logo b { font-size: 24px; } }
+.fig .ico { fill: none; stroke: var(--ink-2); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.fig .ico .ico-fill { fill: var(--surface-3); }
+.fig .ico .ico-bold { stroke-width: 2.4; }
+.fig .t-ico { fill: var(--ink); font: 800 17px var(--font-en); }
+.run-note { margin: 0; padding: 10px 14px; font-size: 14px; line-height: 1.6; color: var(--ink-2); background: var(--surface); border-bottom: 1px solid var(--line); }
+.run-note code { font-family: var(--font-mono); font-size: 13px; color: var(--cyan); }

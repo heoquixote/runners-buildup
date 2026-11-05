@@ -808,11 +808,11 @@ function youtubeId(v) {
 const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 // 레슨 본문: 설명 → 실행 셀 → 설명 → 실행 셀 순서로, 셀은 마크다운에 놓인 자리에 그대로 들어간다.
-function runCellHtml(code, i, topic = "") {
+function runCellHtml(code, i, topic = "", note = "") {
   return `<div class="run-cell" id="run-${i}" data-cell="${i}">
     <div class="run-head"><span class="run-lang">PYTHON</span><span class="run-title">예제 ${i + 1}${topic ? ` · ${esc(topic)}` : ""}</span><span class="run-tip muted">값을 바꿔 돌려 보세요</span><span class="spacer"></span>
       <span class="run-key" title="코드 안에서 Ctrl+Enter 로도 실행됩니다">Ctrl ↵</span><button class="btn ghost small" data-reset="${i}">원래대로</button><button class="btn small run-btn" data-run="${i}">▶ 실행</button></div>
-    <textarea data-code="${i}">${esc(code)}</textarea>
+    ${note ? `<p class="run-note">${note}</p>` : ""}<textarea data-code="${i}">${esc(code)}</textarea>
     <pre class="console run-out" data-out="${i}" hidden></pre></div>`;
 }
 
