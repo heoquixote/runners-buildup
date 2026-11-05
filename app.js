@@ -571,7 +571,6 @@ function dailyCard() {
   const done = items.filter(planDone).length;
   const left = items.filter((it) => !planDone(it));
   const mins = left.reduce((a, it) => a + itemMinutes(it), 0);
-  const next = left[0];
   const extra = done === items.length ? pickPlan()[0] : null;
   const href = (it) => (it.kind === "lesson" ? `#/l/${it.id}` : `#/p/${it.id}`);
   const title = (it) => (it.kind === "lesson" ? lessonById[it.id].title : byId[it.id].title);
@@ -582,9 +581,7 @@ function dailyCard() {
       <div class="ring" style="--p:${pct(done, items.length)}" role="img" aria-label="${items.length}개 중 ${done}개 완료"><span><b>${done}</b>/${items.length}</span></div>
     </div>
     <ol class="plan-list">${items.map(planRow).join("")}</ol>
-    <div class="daily-foot">${next
-      ? `<a class="btn primary" href="${href(next)}">${done ? "이어서" : "시작"}: ${esc(title(next))} →</a>`
-      : `<span class="today-clear">오늘 목표 달성</span>${extra ? `<a class="btn small ghost" href="${href(extra)}">한 단계 더: ${esc(title(extra))} →</a>` : ""}`}</div>
+    ${done === items.length ? `<div class="daily-foot"><span class="today-clear">오늘 목표 달성</span>${extra ? `<a class="btn small ghost" href="${href(extra)}">한 단계 더: ${esc(title(extra))} →</a>` : ""}</div>` : ""}
   </section>`;
 }
 
@@ -648,35 +645,6 @@ function runCard() {
   </section>`;
 }
 
-// 오늘의 과제: 한 줄 요약 + 다음 문제 바로가기 (QAQC 과정)
-function todayHtml() {
-  const picked = (state.today || []).filter((id) => byId[id]);
-  // 강사가 정하지 않았으면 아직 안 푼 회차 문제 5개를 순서대로 추천
-  const ids = [...picked, ...PROBLEMS.filter((p) => !picked.includes(p.id) && !solved(p.id)).map((p) => p.id)].slice(0, Math.max(5, picked.length));
-  if (!ids.length) return "";
-  const done = ids.filter((id) => solved(id)).length;
-  const next = byId[ids.find((id) => !solved(id))];
-  return `<section class="today-line panel" aria-label="오늘의 과제">
-    <div class="today-meta"><span class="eyebrow">Class</span><b>우리 반 오늘의 과제 ${done} / ${ids.length}</b></div>
-    <ol class="today-chips">${ids.map((id) => `<li><a href="#/p/${id}" class="${solved(id) ? "done" : ""}" title="${esc(byId[id].title)}">${no(id)}</a></li>`).join("")}</ol>
-    ${next
-      ? `<a class="btn primary today-go" href="#/p/${next.id}"><span class="mono">${no(next.id)}</span> ${esc(next.title)} 풀기 →</a>`
-      : `<span class="today-clear">오늘 과제를 모두 끝냈어요</span>`}
-  </section>`;
-}
-
-function unitCard(u) {
-  const list = unitProblems(u);
-  const done = list.filter((p) => solved(p.id)).length;
-  const next = firstUnsolved(list);
-  return `<article class="ucard panel${done === list.length ? " complete" : ""}">
-    <a class="ucard-link" href="#/u/${u.id}"><span class="unit-num">${u.id}회차</span><h3>${esc(u.title)}</h3></a>
-    <div class="ucard-bar" aria-hidden="true"><span style="width:${pct(done, list.length)}%"></span></div>
-    <div class="ucard-foot"><span class="ucard-count">${done} / ${list.length}</span>
-      ${next ? `<a class="btn small" href="#/p/${next.id}">${done ? "이어 풀기" : "시작"} →</a>` : `<a class="btn small ghost" href="#/u/${u.id}">복습하기</a>`}</div>
-  </article>`;
-}
-
 function trackCard(t) {
   const s = trackStats(t);
   const open = t.ready && s.ready > 0;
@@ -710,7 +678,6 @@ function trackGroupsHtml() {
 }
 
 function viewHome() {
-  const prog = program();
   const totals = TRACKS.map(trackStats).reduce((a, s) => ({ lessons: a.lessons + s.lessons, lessonsDone: a.lessonsDone + s.lessonsDone, problems: a.problems + s.problems, solved: a.solved + s.solved }), { lessons: 0, lessonsDone: 0, problems: 0, solved: 0 });
   $app.innerHTML = `${topbar()}<main class="page home">
     <div class="home-head">
@@ -718,11 +685,8 @@ function viewHome() {
         <div class="home-progress"><span>레슨 <b>${totals.lessonsDone} / ${totals.lessons}</b></span><span>문제 <b>${totals.solved} / ${totals.problems}</b></span><span class="meter-bar"><span style="width:${pct(totals.lessonsDone + totals.solved, totals.lessons + totals.problems)}%"></span></span></div></div>
     </div>
     <div class="daily-grid">${dailyCard()}${runCard()}</div>
-    ${prog.sessions ? todayHtml() : ""}
     <section class="part"><h2 class="part-title">학습 트랙</h2>
       <div class="tgroups">${trackGroupsHtml()}</div></section>
-    ${prog.sessions ? `<section class="part"><h2 class="part-title">우리 반 회차 과제 <span class="muted">${esc(state.session.student.org_label || prog.label)}</span></h2>
-      <div class="ucards">${UNITS.map(unitCard).join("")}</div></section>` : ""}
   </main>`;
   bindTopbar();
   preload();
