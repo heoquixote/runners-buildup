@@ -52,7 +52,7 @@
 | | | pb-11-2 컴프리헨션 넓히기: 조건식 · 딕셔너리 · Set | 조건식과 딕셔너리 · Set 컴프리헨션을 쓰고, 언제 for문이 나은지 고른다 | py.comprehension | 퀴즈 2 |
 | | | pb-11-3 lambda와 key: 정렬 기준 고르기 | 여러 기준 정렬 · max의 key · map · filter를 쓴다 | py.lambda | 퀴즈 2 → 유닛 21 실습 |
 | 13 | 예외 처리 (pb-12, 22) | pb-12-1 에러가 나도 멈추지 않는 코드 (기존) | try · except로 에러를 잡는다 | py.exception | 퀴즈 2 (기존) |
-| | | pb-12-2 else · finally · raise | 실행 순서를 따라가고 잘못된 값에 직접 에러를 낸다 | py.exception | 퀴즈 2 |
+| | | pb-12-2 raise: 잘못된 값에 직접 에러 내기 | 업무 규칙에 맞지 않는 값에 직접 에러를 내고, 쓰는 쪽에서 처리한다 | py.exception | 퀴즈 2 |
 | | | pb-12-3 데이터 정제에서 예외 다루기 | 반복 안에서 불량 행을 건너뛰고 실패 목록을 모은다 | py.exception | 퀴즈 1 → 유닛 22 실습 |
 
 **새 개념 태그**: `py.types`(자료형과 형변환), `py.tuple`(튜플과 언패킹).
@@ -196,11 +196,11 @@
 - 퀴즈: choice(불량 많은 순, 같으면 이름순 key), ox(lambda 안에 여러 줄 가능)
 - 원본: 04-4 lambda, 04-3
 
-### pb-12-2 else · finally · raise
-- 개념: try → except → else → finally 실행 순서, 에러를 이름별로 나눠 잡기, `as e`로 메시지 보기, `raise ValueError("...")`로 직접 알리기
-- 배치: S(흐름 표) → C(정상 입력) → C(에러 입력) → C(as e) → C(raise) → C(raise를 잡기) → 정리
-- 퀴즈: choice(finally 실행 시점), ox(else는 에러가 났을 때 실행)
-- 원본: 06-2 예외 처리
+### pb-12-2 raise: 잘못된 값에 직접 에러 내기
+- 개념: 조용히 틀린 값을 돌려주는 위험, `raise ValueError("설명과 값")`, 내가 낸 에러를 쓰는 쪽에서 잡기(검사와 처리의 역할 분리), try → except → else → finally 순서 다시 보기, except 안의 `raise`로 다시 올려 보내기
+- 배치: C(검사 없는 함수) → R → raise 예시(읽기 전용) → C(잡기) → 흐름 표 → C(else/finally) → C(다시 올리기) → 정리
+- 퀴즈: choice(에러 없을 때 건너뛰는 블록), ox(조용히 돌려주기 vs raise)
+- 원본: 06-2 예외 처리. else · finally 기본은 pb-12-1에 이미 있어 이 레슨은 raise 중심으로 바꿨다.
 
 ### pb-12-3 데이터 정제에서 예외 다루기
 - 개념: 반복 안 try(한 행 실패해도 계속), 실패 행 목록 모으기, 미리 검사(if) vs 일단 시도(try) 선택, KeyError와 get, 실패 요약 보고
