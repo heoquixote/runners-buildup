@@ -4,6 +4,8 @@ export const CONCEPTS = {
   "py.intro": { name: "파이썬 소개와 설치", track: "python-basic" },
   "py.variable": { name: "변수와 대입", track: "python-basic" },
   "py.arith": { name: "사칙연산 · 몫 · 나머지", track: "python-basic" },
+  "py.types": { name: "자료형과 형변환", track: "python-basic" },
+  "py.tuple": { name: "튜플과 언패킹", track: "python-basic" },
   "py.object-ref": { name: "변수와 객체 참조", track: "python-basic" },
   "py.str": { name: "문자열 기초", track: "python-basic" },
   "py.index-slice": { name: "인덱싱과 슬라이싱", track: "python-basic" },
