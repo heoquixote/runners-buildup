@@ -33,7 +33,7 @@
 | | | da-05-2 문자열 열 깊게 정리하기 | strip · replace · split(expand) · extract · to_numeric(errors='coerce')로 지저분한 열을 숫자로 만든다 | 퀴즈 2 |
 | | | da-05-3 이상치 · 구간 · 중복 | IQR 규칙과 clip, cut · qcut 구간화, drop_duplicates(subset, keep)를 쓴다 | 퀴즈 2 → 유닛 26 실습 |
 | 06 | groupby와 pivot_table (da-06, 27) | da-06-1 (기존) | groupby · agg · transform · pivot_table | 퀴즈 2 (기존) |
-| | | da-06-2 agg 깊게와 그룹 고르기 | 이름 붙인 집계 · size · 그룹 필터 · 그룹별 상위 n개를 쓴다 | 퀴즈 2 |
+| | | da-06-2 그룹 안에서 고르고 순위 매기기 | 직접 만든 집계 함수 · 그룹 필터 · 그룹별 상위 n개 · 그룹 안 순위와 누적을 쓴다 | 퀴즈 2 |
 | | | da-06-3 넓은 표와 긴 표 | pivot_table(margins) · melt · stack · unstack으로 표 모양을 바꾼다 | 퀴즈 2 → 유닛 27 실습 |
 | 07 | merge와 concat (da-07, 28) | da-07-1 (기존) | how · 행 증가 함정 · concat | 퀴즈 2 (기존) |
 | | | da-07-2 여러 표 단계적으로 잇기 | 표 세 개를 차례로 잇고 validate · 행 수 확인 · 키 자료형 맞추기를 습관으로 만든다 | 퀴즈 2 |
@@ -96,9 +96,9 @@
 - C `pd.cut`(정한 경계) vs `pd.qcut`(같은 개수) 비교 → C 구간별 평균
 - C `duplicated(subset, keep)` · `drop_duplicates`로 마지막 측정만 남기기
 
-### da-06-2 agg 깊게와 그룹 고르기
-- C 이름 붙인 집계 `agg(평균=('col','mean'))` → C size vs count(결측 차이)
-- C `filter`로 표본이 적은 그룹 빼기 → C 정렬 후 `groupby().head(n)`으로 그룹별 상위 n개
+### da-06-2 그룹 안에서 고르고 순위 매기기
+- C lambda · def 집계 함수(폭, 상위 10% 경계)
+- C `filter`로 표본이 적은 그룹 빼기 → C 정렬 후 `groupby().head(n)` → C `rank` · `cumsum` · `cumcount`
 
 ### da-06-3 넓은 표와 긴 표
 - F 긴 표 ↔ 넓은 표 그림
