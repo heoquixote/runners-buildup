@@ -669,6 +669,594 @@ export const PB_PROBLEMS = [
         "hidden": true
       }
     ]
+  },
+  {
+    "id": "21-5",
+    "unit": 21,
+    "domain": "mfg",
+    "title": "측정값마다 판정 라벨 붙이기",
+    "type": "function",
+    "level": 2,
+    "uses": [
+      [
+        "조건식",
+        "A if 조건 else B"
+      ],
+      [
+        "리스트 컴프리헨션",
+        "모든 값 변환"
+      ]
+    ],
+    "origin": "조건식 컴프리헨션",
+    "desc": "<p>측정값 리스트 <code>values</code>와 규격 하한 <code>lo</code>, 상한 <code>hi</code>가 주어집니다. 각 값에 판정 라벨을 붙인 리스트를 <b>원래 순서대로</b> 반환하세요.</p><ul><li><code>lo</code> 미만이면 <code>\"LOW\"</code></li><li><code>hi</code> 초과이면 <code>\"HIGH\"</code></li><li>그 밖(경계값 포함)은 <code>\"OK\"</code></li></ul><pre>[10.1, 9.2, 10.8], 9.5, 10.5 → [\"OK\", \"LOW\", \"HIGH\"]</pre><p>값을 거르지 않고 <b>모두 바꾸는</b> 문제입니다. 결과 길이는 입력과 같아야 합니다.</p>",
+    "starter": "def solution(values, lo, hi):\n    answer = []\n    return answer\n",
+    "solution": "def solution(values, lo, hi):\n    return [\"LOW\" if v < lo else \"HIGH\" if v > hi else \"OK\" for v in values]\n",
+    "hints": [
+      "조건식은 컴프리헨션 맨 앞(식 자리)에 둡니다: [라벨 for v in values]",
+      "경우가 셋이면 \"LOW\" if v < lo else (\"HIGH\" if v > hi else \"OK\") 처럼 조건식을 이어 씁니다. 헷갈리면 for문으로 풀어도 됩니다."
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            10.1,
+            9.2,
+            10.8
+          ],
+          9.5,
+          10.5
+        ],
+        "expected": [
+          "OK",
+          "LOW",
+          "HIGH"
+        ]
+      },
+      {
+        "args": [
+          [
+            9.5,
+            10.5,
+            10
+          ],
+          9.5,
+          10.5
+        ],
+        "expected": [
+          "OK",
+          "OK",
+          "OK"
+        ]
+      },
+      {
+        "args": [
+          [
+            2.31,
+            2.05,
+            2.49,
+            2.6,
+            1.99
+          ],
+          2,
+          2.5
+        ],
+        "expected": [
+          "OK",
+          "OK",
+          "OK",
+          "HIGH",
+          "LOW"
+        ],
+        "hidden": true
+      },
+      {
+        "args": [
+          [],
+          1,
+          2
+        ],
+        "expected": [],
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "21-6",
+    "unit": 21,
+    "domain": "mfg",
+    "title": "로트별 불량률 딕셔너리 만들기",
+    "type": "function",
+    "level": 2,
+    "uses": [
+      [
+        "딕셔너리 컴프리헨션",
+        "{key: value for ...}"
+      ],
+      [
+        "zip",
+        "세 리스트 짝짓기"
+      ],
+      [
+        "round",
+        "소수 둘째 자리"
+      ]
+    ],
+    "origin": "딕셔너리 컴프리헨션",
+    "desc": "<p>같은 순서로 짝이 맞는 세 리스트 <code>lots</code>(로트 번호), <code>defects</code>(불량 수), <code>qty</code>(검사 수)가 주어집니다. <code>{로트: 불량률(%)}</code> 딕셔너리를 반환하세요.</p><ul><li>불량률(%) = 불량 수 / 검사 수 × 100, <code>round(값, 2)</code>로 소수 둘째 자리까지</li><li>검사 수가 0인 로트는 결과에서 <b>뺍니다</b></li></ul><pre>[\"A1\", \"A2\"], [18, 7], [1250, 0] → {\"A1\": 1.44}</pre>",
+    "starter": "def solution(lots, defects, qty):\n    answer = {}\n    return answer\n",
+    "solution": "def solution(lots, defects, qty):\n    return {lot: round(d / q * 100, 2) for lot, d, q in zip(lots, defects, qty) if q > 0}\n",
+    "hints": [
+      "zip(lots, defects, qty)로 세 값을 한 번에 꺼냅니다.",
+      "검사 수가 0인 로트를 빼는 조건은 맨 뒤에 if q > 0 으로 붙입니다."
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            "A1",
+            "A2"
+          ],
+          [
+            18,
+            7
+          ],
+          [
+            1250,
+            0
+          ]
+        ],
+        "expected": {
+          "A1": 1.44
+        }
+      },
+      {
+        "args": [
+          [
+            "A0915",
+            "A0916",
+            "A0917"
+          ],
+          [
+            18,
+            7,
+            25
+          ],
+          [
+            1250,
+            980,
+            1100
+          ]
+        ],
+        "expected": {
+          "A0915": 1.44,
+          "A0916": 0.71,
+          "A0917": 2.27
+        }
+      },
+      {
+        "args": [
+          [
+            "B1",
+            "B2",
+            "B3",
+            "B4"
+          ],
+          [
+            0,
+            3,
+            5,
+            1
+          ],
+          [
+            400,
+            0,
+            250,
+            300
+          ]
+        ],
+        "expected": {
+          "B1": 0,
+          "B3": 2,
+          "B4": 0.33
+        },
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "21-7",
+    "unit": 21,
+    "domain": "mfg",
+    "title": "불량 많은 순, 같으면 로트 번호 순",
+    "type": "function",
+    "level": 3,
+    "uses": [
+      [
+        "sorted",
+        "key=lambda"
+      ],
+      [
+        "튜플 key",
+        "(기준1, 기준2)"
+      ],
+      [
+        "마이너스",
+        "숫자 기준만 내림차순"
+      ]
+    ],
+    "origin": "lambda · 여러 기준 정렬",
+    "desc": "<p><code>records</code>는 <code>[로트 번호, 불량 수]</code> 쌍의 리스트입니다. <b>불량 수가 많은 순</b>으로, 불량 수가 같으면 <b>로트 번호 오름차순</b>으로 정렬해 로트 번호만 리스트로 반환하세요.</p><pre>[[\"A3\", 7], [\"A1\", 25], [\"A2\", 7]] → [\"A1\", \"A2\", \"A3\"]</pre><p><code>reverse=True</code>만 쓰면 로트 번호까지 거꾸로 정렬되니 주의하세요.</p>",
+    "starter": "def solution(records):\n    answer = []\n    return answer\n",
+    "solution": "def solution(records):\n    ranked = sorted(records, key=lambda r: (-r[1], r[0]))\n    return [r[0] for r in ranked]\n",
+    "hints": [
+      "key가 튜플을 돌려주면 첫 값으로 비교하고, 같으면 둘째 값으로 비교합니다.",
+      "숫자에 마이너스를 붙이면 그 기준만 내림차순이 됩니다: key=lambda r: (-r[1], r[0])"
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            [
+              "A3",
+              7
+            ],
+            [
+              "A1",
+              25
+            ],
+            [
+              "A2",
+              7
+            ]
+          ]
+        ],
+        "expected": [
+          "A1",
+          "A2",
+          "A3"
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              "L2-09",
+              0
+            ],
+            [
+              "L1-03",
+              4
+            ],
+            [
+              "L1-01",
+              4
+            ],
+            [
+              "L2-01",
+              9
+            ]
+          ]
+        ],
+        "expected": [
+          "L2-01",
+          "L1-01",
+          "L1-03",
+          "L2-09"
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              "C5",
+              3
+            ],
+            [
+              "C1",
+              3
+            ],
+            [
+              "C3",
+              3
+            ],
+            [
+              "C2",
+              8
+            ],
+            [
+              "C4",
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          "C2",
+          "C1",
+          "C3",
+          "C5",
+          "C4"
+        ],
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "22-5",
+    "unit": 22,
+    "domain": "mfg",
+    "title": "표기가 섞인 생산 수량 합계",
+    "type": "function",
+    "level": 2,
+    "uses": [
+      [
+        "try / except",
+        "변환 실패 잡기"
+      ],
+      [
+        "replace · strip",
+        "쉼표·공백 정리"
+      ],
+      [
+        "리스트 반환",
+        "[합계, 실패 수]"
+      ]
+    ],
+    "origin": "예외 처리 · 데이터 정제",
+    "desc": "<p>작업자가 입력한 생산 수량 문자열 리스트 <code>texts</code>가 주어집니다. <code>\"1,250\"</code>처럼 쉼표나 앞뒤 공백이 섞인 값은 정리해서 숫자로 바꾸고, <code>\"N/A\"</code>나 빈 문자열처럼 숫자로 바꿀 수 없는 값은 건너뜁니다.</p><p><code>[정수로 바꾼 값의 합계, 건너뛴 개수]</code>를 리스트로 반환하세요.</p><pre>[\"1,250\", \" 980 \", \"N/A\", \"\"] → [2230, 2]</pre>",
+    "starter": "def solution(texts):\n    total = 0\n    failed = 0\n    return [total, failed]\n",
+    "solution": "def solution(texts):\n    total = 0\n    failed = 0\n    for t in texts:\n        try:\n            total += int(t.replace(\",\", \"\").strip())\n        except ValueError:\n            failed += 1\n    return [total, failed]\n",
+    "hints": [
+      "t.replace(\",\", \"\").strip() 으로 쉼표와 공백을 지운 뒤 int()로 바꿉니다.",
+      "try를 for 안에 두어야 한 값이 실패해도 다음 값으로 넘어갑니다. int('')와 int('N/A')는 ValueError입니다."
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            "1,250",
+            " 980 ",
+            "N/A",
+            ""
+          ]
+        ],
+        "expected": [
+          2230,
+          2
+        ]
+      },
+      {
+        "args": [
+          [
+            "100",
+            "200",
+            "300"
+          ]
+        ],
+        "expected": [
+          600,
+          0
+        ]
+      },
+      {
+        "args": [
+          [
+            "12a",
+            "1,000,000",
+            " 5",
+            "-",
+            "3.5"
+          ]
+        ],
+        "expected": [
+          1000005,
+          3
+        ],
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "22-6",
+    "unit": 22,
+    "domain": "mfg",
+    "title": "계산할 수 없는 검사 기록 찾기",
+    "type": "function",
+    "level": 3,
+    "uses": [
+      [
+        "반복 안 try",
+        "한 행씩 따로 처리"
+      ],
+      [
+        "except (A, B, C)",
+        "여러 에러 한 번에"
+      ],
+      [
+        "실패 목록",
+        "로트 번호 모으기"
+      ]
+    ],
+    "origin": "예외 처리 · 실패 목록",
+    "desc": "<p><code>rows</code>는 검사 기록 딕셔너리의 리스트입니다. 각 행은 <code>\"lot\"</code>과 문자열 <code>\"qty\"</code>, <code>\"defects\"</code>를 갖지만, 일부 행은 값이 숫자가 아니거나(<code>\"ERR\"</code>), 검사 수가 <code>\"0\"</code>이거나, <code>\"defects\"</code> 칸이 아예 없습니다.</p><p>불량률(<code>int(defects) / int(qty)</code>)을 <b>계산할 수 없는</b> 행의 로트 번호를 원래 순서대로 리스트로 반환하세요.</p><pre>[{\"lot\": \"A1\", \"qty\": \"100\", \"defects\": \"2\"},\n {\"lot\": \"A2\", \"qty\": \"0\", \"defects\": \"0\"}] → [\"A2\"]</pre>",
+    "starter": "def solution(rows):\n    failed = []\n    return failed\n",
+    "solution": "def solution(rows):\n    failed = []\n    for row in rows:\n        try:\n            int(row[\"defects\"]) / int(row[\"qty\"])\n        except (ValueError, ZeroDivisionError, KeyError):\n            failed.append(row[\"lot\"])\n    return failed\n",
+    "hints": [
+      "숫자 아님은 ValueError, 0으로 나누기는 ZeroDivisionError, 칸 없음은 KeyError입니다.",
+      "except (ValueError, ZeroDivisionError, KeyError): 처럼 괄호로 묶어 한 번에 잡을 수 있습니다."
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            {
+              "lot": "A1",
+              "qty": "100",
+              "defects": "2"
+            },
+            {
+              "lot": "A2",
+              "qty": "0",
+              "defects": "0"
+            }
+          ]
+        ],
+        "expected": [
+          "A2"
+        ]
+      },
+      {
+        "args": [
+          [
+            {
+              "lot": "A0915",
+              "qty": "1250",
+              "defects": "18"
+            },
+            {
+              "lot": "A0916",
+              "qty": "980",
+              "defects": "ERR"
+            },
+            {
+              "lot": "A0919",
+              "qty": "1310"
+            },
+            {
+              "lot": "A0920",
+              "qty": "1200",
+              "defects": "9"
+            }
+          ]
+        ],
+        "expected": [
+          "A0916",
+          "A0919"
+        ]
+      },
+      {
+        "args": [
+          [
+            {
+              "lot": "B1",
+              "qty": "50",
+              "defects": "1"
+            },
+            {
+              "lot": "B2",
+              "qty": "",
+              "defects": "1"
+            },
+            {
+              "lot": "B3",
+              "qty": "0",
+              "defects": "x"
+            },
+            {
+              "lot": "B4",
+              "defects": "3"
+            }
+          ]
+        ],
+        "expected": [
+          "B2",
+          "B3",
+          "B4"
+        ],
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "22-7",
+    "unit": 22,
+    "domain": "mfg",
+    "title": "깨진 설정 파일이면 기본 규격으로 판정",
+    "type": "function",
+    "level": 3,
+    "uses": [
+      [
+        "json.loads",
+        "JSON 문자열 → 딕셔너리"
+      ],
+      [
+        "except (ValueError, KeyError)",
+        "깨진 JSON · 빠진 항목"
+      ],
+      [
+        "기본값",
+        "9.5 ~ 10.5"
+      ]
+    ],
+    "origin": "예외 처리 · JSON",
+    "desc": "<p>설비 설정 JSON 문자열 <code>config_text</code>와 측정값 리스트 <code>values</code>가 주어집니다. 설정은 보통 <code>{\"spec\": {\"low\": 9.5, \"high\": 10.5}}</code> 모양입니다.</p><p>설정에서 하한·상한을 읽어 <b>규격 밖</b>(하한 미만 또는 상한 초과) 값의 개수를 반환하세요. 다만 JSON이 깨져 있거나(<code>json.loads</code>가 ValueError) <code>spec</code>, <code>low</code>, <code>high</code> 중 하나라도 없으면(KeyError) <b>기본 규격 9.5 ~ 10.5</b>를 씁니다.</p><pre>'{\"spec\": {\"low\": 9.8, \"high\": 10.2}}', [10.1, 9.7, 10.3] → 2\n'{\"spec\": ', [10.1, 9.7, 10.3] → 0</pre>",
+    "starter": "import json\n\ndef solution(config_text, values):\n    low, high = 9.5, 10.5\n    return 0\n",
+    "solution": "import json\n\ndef solution(config_text, values):\n    try:\n        spec = json.loads(config_text)[\"spec\"]\n        low, high = spec[\"low\"], spec[\"high\"]\n    except (ValueError, KeyError):\n        low, high = 9.5, 10.5\n    return len([v for v in values if v < low or v > high])\n",
+    "hints": [
+      "json.loads가 깨진 문자열에서 내는 JSONDecodeError는 ValueError의 한 종류라 except ValueError로 잡힙니다.",
+      "설정 읽기만 try 안에 두고, 실패하면 except에서 기본값을 담습니다. 개수 세기는 try 밖에서 합니다."
+    ],
+    "tests": [
+      {
+        "args": [
+          "{\"spec\": {\"low\": 9.8, \"high\": 10.2}}",
+          [
+            10.1,
+            9.7,
+            10.3
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          "{\"spec\": ",
+          [
+            10.1,
+            9.7,
+            10.3
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "{\"spec\": {\"low\": 9.8}}",
+          [
+            9.4,
+            10.6,
+            10
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          "{\"line\": \"L2\"}",
+          [
+            9.49,
+            10.5,
+            9.5,
+            10.51
+          ]
+        ],
+        "expected": 2,
+        "hidden": true
+      },
+      {
+        "args": [
+          "{\"spec\": {\"low\": 2.0, \"high\": 2.5}}",
+          [
+            2.31,
+            2.05,
+            2.6,
+            1.99,
+            2.5
+          ]
+        ],
+        "expected": 2,
+        "hidden": true
+      }
+    ]
   }
 ];
 
