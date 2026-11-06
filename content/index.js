@@ -663,6 +663,12 @@ export const COURSES = [
           { kind: "choice", q: "P(A | B)와 P(B | A)의 관계로 옳은 것은?", options: ["항상 같다", "분자는 같지만 분모가 달라서 보통 다르다", "합이 항상 1이다", "곱이 항상 P(A)다"], answer: 1, explain: "둘 다 분자는 'A이면서 B'이지만, 분모가 B 전체냐 A 전체냐가 다릅니다." },
           { kind: "ox", q: "정확도 90%인 검사에서 양성이 나왔다면, 그 사람이 실제로 병이 있을 확률도 90%다.", answer: false, explain: "병이 드물면(기저율이 낮으면) 양성 중 진짜 환자의 비율은 훨씬 낮을 수 있습니다. 베이즈 정리로 계산해야 합니다." },
         ] },
+      { id: "st-09-3", title: "샘플링 검사의 확률과 OC 곡선", minutes: 22, concepts: ["st.probability", "st.distribution"],
+        quiz: [
+          { kind: "write", q: "로트 불량률이 2%일 때, 50개를 뽑아 불량 2개 이하면 합격하는 규칙의 합격 확률을 소수 셋째 자리로 출력하세요.", given: "from scipy import stats", expect: "0.922", must: ["binom\\.cdf"], solution: "from scipy import stats\nprint(round(stats.binom.cdf(2, 50, 0.02), 3))", explain: "c개 이하의 확률은 binom.cdf(c, n, p)입니다." },
+          { kind: "choice", q: "좋은 로트는 더 잘 받고 나쁜 로트는 더 잘 거르려면 검사 규칙을 어떻게 바꿔야 할까?", options: ["c를 0으로 줄인다", "뽑는 수 n을 늘리고 c를 그에 맞게 정한다", "로트 크기를 줄인다", "맨 위 상자에서만 뽑는다"], answer: 1, explain: "n이 클수록 OC 곡선이 가팔라집니다. c만 줄이면 좋은 로트도 많이 떨어집니다." },
+          { kind: "ox", q: "좋은 로트가 불합격되는 생산자 위험은 가설검정의 1종 오류와 같은 구조다.", answer: true, explain: "참인데 기각하는 것이 1종 오류, 나쁜 로트를 받는 소비자 위험이 2종 오류에 해당합니다." },
+        ] },
     ] },
   { id: "st-02", track: "stats", title: "확률분포", summary: "확률변수 · pmf · cdf · 기댓값, 이항 · 포아송, 정규분포와 표준화", unit: 13, level: "입문",
     concepts: ["st.distribution"],
@@ -698,7 +704,7 @@ export const COURSES = [
         ] },
       { id: "st-03-3", title: "중심극한정리", minutes: 23, concepts: ["st.clt"] },
     ] },
-  { id: "st-04", track: "stats", title: "신뢰구간", summary: "95%의 의미, 신뢰수준과 폭, t 분포, 평균 · 비율의 신뢰구간", unit: 15, level: "기본",
+  { id: "st-04", track: "stats", title: "신뢰구간", summary: "95%의 의미, 신뢰수준과 폭, t 분포, 평균 · 비율의 신뢰구간, 부트스트랩", unit: 15, level: "기본",
     concepts: ["st.ci"],
     lessons: [
       { id: "st-04-1", title: "95% 신뢰구간의 뜻", minutes: 23, concepts: ["st.ci"],
@@ -710,6 +716,11 @@ export const COURSES = [
         quiz: [
           { kind: "short", q: "표본 12개로 평균의 신뢰구간을 만들 때 t 분포의 자유도는?", answer: "11", explain: "n − 1 = 11." },
           { kind: "ox", q: "같은 데이터로 99% 신뢰구간을 만들면 95% 구간보다 넓다.", answer: true, explain: "더 높은 신뢰수준을 얻으려면 구간이 넓어집니다." },
+        ] },
+      { id: "st-04-3", title: "부트스트랩: 공식 없이 구하는 신뢰구간", minutes: 22, concepts: ["st.ci"],
+        quiz: [
+          { kind: "write", q: "x에서 복원추출로 다시 뽑아 중앙값을 구하는 일을 2000번 반복하고, 95% 부트스트랩 구간의 아래 끝을 소수 둘째 자리로 출력하세요. 시드는 0입니다.", given: "import numpy as np\nx = np.array([12, 15, 14, 10, 30, 13, 11, 16, 14, 12])\nrng = np.random.default_rng(0)", expect: "12.0", must: ["replace\\s*=\\s*True|rng\\.choice\\(\\s*x\\s*,\\s*(size\\s*=\\s*)?len"], solution: "import numpy as np\nx = np.array([12, 15, 14, 10, 30, 13, 11, 16, 14, 12])\nrng = np.random.default_rng(0)\nmeds = np.array([np.median(rng.choice(x, size=len(x), replace=True)) for _ in range(2000)])\nprint(round(np.percentile(meds, 2.5), 2))", explain: "복원추출로 다시 뽑아 중앙값을 모은 뒤, 2.5% 지점이 구간의 아래 끝입니다." },
+          { kind: "choice", q: "부트스트랩에서 다시 뽑을 때 복원추출을 쓰는 이유는?", options: ["계산이 빨라서", "비복원으로 n개를 뽑으면 매번 원래 표본과 같은 값들이 되기 때문에", "이상치를 지우기 위해", "표본을 늘리기 위해"], answer: 1, explain: "n개에서 n개를 비복원으로 뽑으면 순서만 바뀐 같은 표본입니다. 복원추출이어야 묶음마다 달라집니다." },
         ] },
     ] },
   { id: "st-05", track: "stats", title: "가설검정과 t검정", summary: "귀무가설 · p-value · 유의수준, 1종 · 2종 오류와 검정력, 1표본 · Welch · 대응 t검정, 단측", unit: 16, level: "기본",
@@ -743,6 +754,12 @@ export const COURSES = [
         quiz: [
           { kind: "choice", q: "세 설비의 평균 두께가 같은지 한 번에 검정하는 함수는?", options: ["stats.ttest_ind", "stats.f_oneway", "stats.chisquare", "stats.pearsonr"], answer: 1, explain: "세 집단 이상 평균 비교는 일원분산분석(f_oneway)입니다." },
           { kind: "ox", q: "ANOVA 결과가 유의하면 모든 그룹이 서로 다르다는 뜻이다.", answer: false, explain: "'적어도 한 그룹은 다르다'까지만 말해 줍니다. 어느 쌍이 다른지는 사후검정(Tukey HSD)으로 봅니다." },
+        ] },
+      { id: "st-06-3", title: "가정 확인과 비모수 검정", minutes: 22, concepts: ["st.chi-anova", "st.test"],
+        quiz: [
+          { kind: "choice", q: "설비 두 대에서 7개씩 잰 값이 치우쳐 있고 이상치도 있다. 두 그룹을 비교할 검정으로 알맞은 것은?", options: ["stats.ttest_ind (등분산)", "stats.mannwhitneyu", "stats.ttest_rel", "stats.chi2_contingency"], answer: 1, explain: "표본이 작고 정규성이 깨졌으면 순위로 비교하는 맨-휘트니 U 검정이 안전합니다." },
+          { kind: "ox", q: "샤피로 검정 p-value가 0.05보다 작으면, 표본이 수천 개여도 t검정을 쓰면 안 된다.", answer: false, explain: "표본이 크면 샤피로는 사소한 어긋남도 잡아내고, 평균 비교는 중심극한정리 덕분에 정규성에 크게 흔들리지 않습니다. 그림과 표본 크기를 함께 봅니다." },
+          { kind: "choice", q: "같은 설비 8대의 개선 전후 값을 순위로 비교하는 검정은?", options: ["stats.wilcoxon", "stats.kruskal", "stats.levene", "stats.shapiro"], answer: 0, explain: "대응 데이터의 비모수 검정은 윌콕슨 부호순위 검정입니다." },
         ] },
     ] },
   { id: "st-07", track: "stats", title: "상관과 회귀", summary: "공분산 · 상관계수와 그 함정, 최소제곱 회귀, R² · 잔차 진단 · 외삽", unit: 33, level: "실무",
