@@ -6,6 +6,7 @@ import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
 import { render as renderMd } from "./md.js";
 import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
 import { runCode, gradeCode, preload, onRunnerState } from "./runner.js";
+import { MEDALS, CATEGORIES, TIERS, COLOR_HEX, medalById, medalSvg, medalContext, qualifiedMedals } from "./medals.js";
 import { sqlProgram, parseSqlOutput, sqlResultHtml, sqlResultText, sameSqlResult, sqlOrdered } from "./sql.js";
 
 // 두 가지 보기 방식이 있다.
@@ -149,6 +150,8 @@ const state = {
   groups: [],
   today: [],
   runner: "idle",
+  medals: {}, // {medalId: earned_at}
+  medalsOn: false, // 메달 테이블을 불러왔을 때만 켠다 (마이그레이션 전이면 기능을 숨김)
 };
 let editor = null;
 let cleanupView = null;
@@ -177,7 +180,9 @@ async function loadProgress() {
       store.set(SESSION_KEY, state.session);
     }
     try { state.today = (await api.getToday(state.session.token)).ids || []; } catch { state.today = []; }
+    try { state.medals = (await api.medals(state.session.token)).medals || {}; state.medalsOn = true; } catch { state.medals = {}; state.medalsOn = false; }
     state.progressLoaded = true;
+    awardMedals({ silent: true });
   } catch (err) {
     if (err.code === "session") logout(true);
     else toast(errorMessage(err));
@@ -189,6 +194,8 @@ function logout(expired) {
   state.progress = {};
   state.lessons = {};
   state.activity = {};
+  state.medals = {};
+  state.medalsOn = false;
   state.progressLoaded = false;
   store.set(SESSION_KEY, null);
   if (expired) toast("로그인이 만료되었습니다. 다시 로그인해 주세요.");
@@ -202,7 +209,7 @@ function topbar({ admin = false } = {}) {
   const right = admin
     ? `<a class="btn ghost small" href="#/">수강생 화면</a><button class="btn small" data-act="admin-logout">어드민 로그아웃</button>`
     : state.session
-      ? `<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
+      ? `${state.medalsOn ? `<a class="btn small medal-link" href="#/medals" aria-label="내 메달함 (메달 ${Object.keys(state.medals).length}개)">${MEDAL_ICON}메달 <b>${Object.keys(state.medals).length}</b></a>` : ""}<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
       : `<a class="btn ghost small" href="#/guide">사용 방법</a><button class="btn small" data-act="login">로그인</button><a class="btn small primary" href="#/signup">회원가입</a>`;
   return `<header class="topbar"><div class="topbar-inner">
     <div class="brand-block">
@@ -269,6 +276,7 @@ async function route() {
   const t = hash.match(/^#\/t\/([\w-]+)/);
   if (t && trackById[t[1]]) return viewTrack(trackById[t[1]]);
   if (hash.startsWith("#/videos")) return viewVideos();
+  if (hash.startsWith("#/medals")) return state.session && state.medalsOn ? viewMedals() : (location.hash = "#/");
   const u = hash.match(/^#\/u\/(\d+)/);
   const unit = u && UNITS.find((x) => x.id === Number(u[1]));
   return unit ? viewUnit(unit) : viewHome();
@@ -863,6 +871,150 @@ function videoRow(v) {
     ${ready ? `<a class="btn small" href="https://www.youtube.com/watch?v=${esc(ready)}" target="_blank" rel="noopener">보기</a>` : lessons[0] ? `<a class="btn small ghost" href="#/l/${lessons[0].id}">레슨</a>` : ""}</li>`;
 }
 
+// ── 업적 · 메달 ──────────────────────────────────────────
+// 조건은 medals.js 가 진도 기록으로 계산하고, 새로 채운 메달만 서버에 저장한 뒤 배너로 알린다.
+// 정답 · DAY 완료 팝업(컨페티)이 떠 있으면 배너는 팝업이 닫힌 뒤 차례로 나온다.
+const MEDAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5h3.2l1.6 6M16 2.5h-3.2"/><circle cx="12" cy="15" r="6.5"/><path d="m12 11.8 1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z" fill="currentColor" stroke="none"/></svg>`;
+const medalHelpers = () => ({ TRACKS, coursesOf, isReady, coreLessons, courseProblems, lessonDone, solved, byId, lessonById, courseById });
+const medalColor = (m) => (m.track ? COLOR_HEX[trackById[m.track]?.color] || TIERS[m.tier].ink : TIERS[m.tier].ink);
+const medalArt = (m, opts = {}) => medalSvg(m, { trackColor: m.track ? medalColor(m) : null, ...opts });
+const medalDate = (iso, time = false) => {
+  const d = new Date(iso);
+  const f = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", ...(time ? { hour: "2-digit", minute: "2-digit", hourCycle: "h23" } : {}) }).formatToParts(d);
+  const v = Object.fromEntries(f.map((x) => [x.type, x.value]));
+  return `${v.year}.${v.month}.${v.day}${time ? ` ${v.hour}:${v.minute}` : ""}`;
+};
+
+let medalBusy = Promise.resolve();
+// ev: { silent } 로그인 직후 동기화(배너 대신 한 줄 안내) / { rank } 방금 처음 맞힌 문제의 순위
+function awardMedals(ev = {}) {
+  medalBusy = medalBusy.then(() => awardMedalsNow(ev)).catch(() => {});
+  return medalBusy;
+}
+async function awardMedalsNow(ev) {
+  if (!state.session || !state.medalsOn) return;
+  const ids = qualifiedMedals(medalContext(state, medalHelpers()));
+  if (ev.rank === 1) ids.push("first-runner");
+  const plan = todayPlan();
+  if (plan.length && plan.every(planDone)) ids.push("daily-clear");
+  const fresh = [...new Set(ids)].filter((id) => !state.medals[id]);
+  if (!fresh.length) return;
+  const res = await api.awardMedals(state.session.token, fresh);
+  state.medals = res.medals || state.medals;
+  refreshMedalLink();
+  if (ev.silent) {
+    toast(`지금까지의 학습으로 메달 ${fresh.length}개를 받았어요. 상단 '메달'에서 확인해 보세요.`);
+    return;
+  }
+  // 낮은 티어부터, 트랙 완주는 마지막에
+  const order = { bronze: 0, silver: 1, gold: 2, special: 3 };
+  fresh.map((id) => medalById[id]).sort((a, b) => order[a.tier] - order[b.tier]).forEach(queueMedalBanner);
+}
+function refreshMedalLink() {
+  const n = Object.keys(state.medals).length;
+  const a = document.querySelector(".medal-link");
+  if (a) { a.querySelector("b").textContent = n; a.setAttribute("aria-label", `내 메달함 (메달 ${n}개)`); }
+}
+
+const medalQueue = [];
+let medalTimer = null;
+function queueMedalBanner(m) {
+  medalQueue.push(m);
+  if (!medalTimer) medalTimer = setInterval(pumpMedalBanners, 400);
+  pumpMedalBanners();
+}
+function pumpMedalBanners() {
+  if (document.querySelector(".overlay")) return; // 정답 · DAY 완료 팝업을 닫을 때까지 기다린다
+  let stack = document.querySelector(".ach-stack");
+  if (!stack) { stack = document.createElement("div"); stack.className = "ach-stack"; stack.setAttribute("role", "status"); document.body.appendChild(stack); }
+  while (medalQueue.length && stack.children.length < 3) {
+    const m = medalQueue.shift();
+    const kicker = m.cat === "track" && m.track ? "Track Complete" : m.hidden ? "Secret Unlocked" : "Achievement Unlocked";
+    const el = document.createElement("div");
+    el.className = "ach";
+    el.style.setProperty("--mc", medalColor(m));
+    el.innerHTML = `${medalArt(m, { size: 52 })}<div class="ach-body"><span class="ach-kicker">${kicker} · ${TIERS[m.tier].label}</span><span class="ach-name">${esc(m.name)}</span><span class="ach-desc">${esc(m.desc)}</span></div><a href="#/medals">메달함 →</a>`;
+    stack.appendChild(el);
+    const out = () => { el.classList.add("out"); setTimeout(() => el.remove(), 320); };
+    const delay = 4500 + stack.children.length * 600;
+    setTimeout(out, delay);
+    el.querySelector("a").addEventListener("click", out);
+  }
+  if (!medalQueue.length) { clearInterval(medalTimer); medalTimer = null; }
+}
+
+function medalProgress(m, ctx) {
+  if (!m.stat || !m.goal) return null;
+  const v = Math.min(m.stat(ctx), m.goal);
+  return { v, goal: m.goal, p: pct(v, m.goal), label: `${v}${m.unit || ""}/${m.goal}${m.unit || ""}` };
+}
+function medalCard(m, ctx, seen) {
+  const at = state.medals[m.id];
+  const hid = m.hidden && !at;
+  const pr = !at && !hid && m.goal > 1 ? medalProgress(m, ctx) : null;
+  return `<button type="button" class="mcard ${at ? "earned" : "locked"}" data-medal="${m.id}" style="--mc:${medalColor(m)}" aria-label="${esc(hid ? "숨은 업적" : m.name)}${at ? " 획득" : " 미획득"}">${at && at > seen ? '<span class="mnew">NEW</span>' : ""}
+    ${medalArt(m, { locked: !at, size: 72 })}
+    <span class="mname">${hid ? "???" : esc(m.name)}</span>
+    <span class="mhow">${hid ? "숨은 업적" : esc(m.how)}</span>
+    ${at ? `<span class="mdate">${medalDate(at)} 획득</span>` : pr ? `<span class="mprog"><span class="bar"><span style="width:${pr.p}%"></span></span>${pr.label}</span>` : ""}
+  </button>`;
+}
+
+function viewMedals() {
+  const ctx = medalContext(state, medalHelpers());
+  const seenKey = `rb-medals-seen:${state.session.student.id}`;
+  const seen = store.get(seenKey) || "";
+  store.set(seenKey, new Date().toISOString());
+  const n = Object.keys(state.medals).filter((id) => medalById[id]).length;
+  const tierN = (t) => MEDALS.filter((m) => m.tier === t && state.medals[m.id]).length;
+  const next = MEDALS.filter((m) => !state.medals[m.id] && !m.hidden && !m.event && m.stat)
+    .map((m) => ({ m, pr: medalProgress(m, ctx) }))
+    .filter((x) => x.pr.v > 0)
+    .sort((a, b) => b.pr.p - a.pr.p || a.pr.goal - b.pr.goal)
+    .slice(0, 3);
+  $app.innerHTML = `${topbar()}<main class="page medals">
+    <div class="mhead"><div><span class="eyebrow">Achievements</span><h1>내 메달함</h1><p class="muted" style="margin:6px 0 0">학습을 이어 가며 메달을 모아 보세요. 숨은 업적은 받기 전까지 조건이 가려져 있어요.</p></div>
+      <div class="msum"><div class="mcount">${n}<small> / ${MEDALS.length}</small></div>
+        <div class="mtiers">${["gold", "silver", "bronze", "special"].map((t) => `<span><i style="background:${TIERS[t].ink}"></i>${TIERS[t].label} <b>${tierN(t)}</b></span>`).join("")}</div>
+        <div class="mtotal-bar"><span style="width:${pct(n, MEDALS.length)}%"></span></div></div></div>
+    ${next.length ? `<section class="panel lime mnext"><div class="mnext-title"><span class="eyebrow">Next</span><b>곧 받을 수 있는 메달</b></div>
+      <div class="mnext-list">${next.map(({ m, pr }) => `<button type="button" class="mnext-item" data-medal="${m.id}">${medalArt(m, { locked: true, size: 44 })}<span class="mi-body"><b>${esc(m.name)}</b><span class="muted">${esc(m.how)}</span><span class="mprog"><span class="bar"><span style="width:${pr.p}%;background:var(--accent)"></span></span>${pr.label}</span></span></button>`).join("")}</div></section>` : ""}
+    ${CATEGORIES.map((c) => {
+      const ms = MEDALS.filter((m) => m.cat === c.id);
+      return `<section class="mcat"><div class="mcat-head"><h2>${esc(c.label)}</h2><span class="en">${esc(c.en)}</span><span class="n">${ms.filter((m) => state.medals[m.id]).length} / ${ms.length}</span></div>
+        <div class="mgrid">${ms.map((m) => medalCard(m, ctx, seen)).join("")}</div></section>`;
+    }).join("")}
+  </main>`;
+  bindTopbar();
+  $app.querySelector("main").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-medal]");
+    if (b) medalDetail(medalById[b.dataset.medal], ctx);
+  });
+}
+
+function medalDetail(m, ctx) {
+  const at = state.medals[m.id];
+  const hid = m.hidden && !at;
+  const pr = !at && !hid ? medalProgress(m, ctx) : null;
+  const cat = CATEGORIES.find((c) => c.id === m.cat);
+  const wrap = document.createElement("div");
+  wrap.className = "overlay";
+  wrap.innerHTML = `<div class="mdetail" role="dialog" aria-modal="true" aria-labelledby="md-title" style="--mc:${medalColor(m)}">
+    ${medalArt(m, { locked: !at, size: 96 })}
+    <span class="mtier"${at ? "" : ' style="color:var(--muted)"'}>${TIERS[m.tier].label} · ${esc(cat?.label || "")}${at ? "" : " · 미획득"}</span>
+    <h2 id="md-title">${hid ? "숨은 업적" : esc(m.name)}</h2>
+    <p>${hid ? "조건을 채우면 이름과 설명이 공개돼요. 평소와 다른 방식으로 학습해 보세요." : esc(m.desc)}</p>
+    ${hid ? "" : `<div class="mcond"><span>달성 조건 <b>${esc(m.how)}</b></span>${at ? `<span>획득 <b>${medalDate(at, true)}</b></span>` : pr ? `<span class="mprog"><span class="bar"><span style="width:${pr.p}%;background:var(--accent)"></span></span>${pr.label}</span>` : ""}</div>`}
+    <div class="btns"><button type="button" class="btn small" data-close>닫기</button></div>
+  </div>`;
+  document.body.appendChild(wrap);
+  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
+  function onKey(e) { if (e.key === "Escape") close(); }
+  document.addEventListener("keydown", onKey);
+  wrap.addEventListener("click", (e) => { if (e.target === wrap || e.target.closest("[data-close]")) close(); });
+  wrap.querySelector("[data-close]").focus();
+}
+
 function viewVideos() {
   $app.innerHTML = `${topbar()}<main class="page track-page">
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">영상</span></nav>
@@ -1050,7 +1202,7 @@ async function viewLesson(l) {
       bumpActivity();
       doneRead();
       if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
-      try { await api.lessonSet(state.session.token, l.id, "passed"); if (!dayWas && courseDone(lc)) dayComplete(lc); else toast(planToast(l.id) || "레슨을 완료했습니다."); }
+      try { await api.lessonSet(state.session.token, l.id, "passed"); if (!dayWas && courseDone(lc)) dayComplete(lc); else toast(planToast(l.id) || "레슨을 완료했습니다."); awardMedals(); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     });
     return;
@@ -1085,7 +1237,7 @@ async function viewLesson(l) {
       state.lessons[l.id] = { status: "passed", quiz_score: ok, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
       bumpActivity();
       if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
-      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!dayWas && courseDone(lc)) dayComplete(lc); else if (!was) toast(planToast(l.id) || "레슨을 완료했습니다."); }
+      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!dayWas && courseDone(lc)) dayComplete(lc); else if (!was) toast(planToast(l.id) || "레슨을 완료했습니다."); awardMedals(); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     } else {
       if (state.session) api.lessonSet(state.session.token, l.id, "viewed", ok).catch(() => {});
@@ -1347,6 +1499,7 @@ function viewQuiz(p) {
       bumpActivity();
       if (saved.first_solve) !dayWas && courseDone(courseOf(p)) ? dayComplete(courseOf(p), saved) : celebrate(p, saved);
       else if (result.passed) toast("모두 맞혔습니다. 이미 맞힌 퀴즈라 순위는 그대로입니다.");
+      if (saved.first_solve) awardMedals({ rank: saved.rank });
     } catch (err) {
       if (err.code === "session") return logout(true);
       toast("채점은 됐지만 기록을 저장하지 못했습니다. " + errorMessage(err));
@@ -1747,6 +1900,7 @@ function viewProblem(p) {
         bumpActivity();
         if (saved.first_solve) {
           if (!dayWas && courseDone(courseOf(p))) dayComplete(courseOf(p), saved); else celebrate(p, saved);
+          awardMedals({ rank: saved.rank });
           if ($app.querySelector('.tab[data-tab="problem"]')?.getAttribute("aria-selected") === "true") showTab("problem");
         } else if (result.passed) toast("정답입니다. 이미 맞힌 문제라 순위는 그대로입니다.");
       } catch (err) {

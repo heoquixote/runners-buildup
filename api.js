@@ -55,6 +55,8 @@ class SupabaseApi {
       p_case_results: slimCases(result.cases),
     });
   }
+  medals(token) { return this.call("student_medals_get", { p_token: token }); }
+  awardMedals(token, ids) { return this.call("student_medals_award", { p_token: token, p_ids: ids }); }
   history(token, problemId) { return this.call("student_history", { p_token: token, p_problem_id: problemId }); }
   lessonSet(token, lessonId, status, quizScore) {
     return this.call("lesson_progress_set", { p_token: token, p_lesson_id: lessonId, p_status: status, p_quiz_score: quizScore ?? null });
@@ -256,6 +258,22 @@ class DemoApi {
     const db = this.load();
     this.requireAdmin(db, token);
     return { ok: true, rows: db.lessons || [] };
+  }
+  async medals(token) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    const medals = {};
+    for (const m of (db.medals || []).filter((x) => x.student_id === sid)) medals[m.medal_id] = m.earned_at;
+    return { ok: true, medals };
+  }
+  async awardMedals(token, ids) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    db.medals ||= [];
+    const now = new Date().toISOString();
+    for (const id of ids) if (!db.medals.some((m) => m.student_id === sid && m.medal_id === id)) db.medals.push({ student_id: sid, medal_id: id, earned_at: now });
+    this.save(db);
+    return this.medals(token);
   }
   async dayFeedback(token, courseId, score, reasons, comment) {
     const db = this.load();
