@@ -269,7 +269,10 @@ export const COURSES = [
   // ── 데이터 분석 (NumPy · pandas) ──────────────────────────
   { id: "da-01", track: "python-da", title: "NumPy 배열과 연산", summary: "배열 연산 · 만들기 · 자료형, 불리언 인덱싱, np.where, 정렬과 세기", unit: 10, level: "기본",
     concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
-    lessons: [{ id: "da-01-1", title: "반복문 없이 배열을 한 번에 계산하기", minutes: 25, concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
+    lessons: [
+      // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "da-01-0", title: "NumPy 소개: 숫자를 한꺼번에 계산하는 도구", minutes: 10, concepts: ["np.array"] },
+      { id: "da-01-1", title: "반복문 없이 배열을 한 번에 계산하기", minutes: 25, concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
       quiz: [
         { kind: "write", q: "반복문 없이 a의 모든 원소에 2를 곱한 배열을 출력하는 코드를 작성하세요.", given: "import numpy as np\na = np.array([1, 2, 3])", expect: ["[2 4 6]"], must: ["a\\s*\\*\\s*2|2\\s*\\*\\s*a"], solution: "import numpy as np\na = np.array([1, 2, 3])\nprint(a * 2)", explain: "배열에 숫자를 곱하면 모든 원소에 적용됩니다. 리스트의 [1,2,3]*2와 다릅니다." },
         { kind: "choice", q: "2차원 배열에서 열(세로) 방향으로 합을 구해 열마다 값 하나씩 얻으려면?", options: ["arr.sum()", "arr.sum(axis=0)", "arr.sum(axis=1)", "arr.sum(axis=2)"], answer: 1, explain: "axis=0은 행을 따라 접어 열별 결과를 남깁니다." },
@@ -305,7 +308,10 @@ export const COURSES = [
     ] },
   { id: "da-03", track: "python-da", title: "pandas Series · DataFrame", summary: "read_csv, describe, 표 만들기, 열 추가 · 이름 변경 · 삭제, 인덱스", unit: 24, level: "기본",
     concepts: ["pd.dataframe"],
-    lessons: [{ id: "da-03-1", title: "표 데이터를 불러와 첫인상 잡기", minutes: 25, concepts: ["pd.dataframe"],
+    lessons: [
+      // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "da-03-0", title: "pandas 소개: 표를 코드로 다루는 도구", minutes: 10, concepts: ["pd.dataframe"] },
+      { id: "da-03-1", title: "표 데이터를 불러와 첫인상 잡기", minutes: 25, concepts: ["pd.dataframe"],
       quiz: [
         { kind: "write", q: "df의 qty 열 합계를 출력하는 코드를 작성하세요.", given: "import pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C'], 'qty': [500, 480, 520, 610]})", expect: "2110", must: ["\\[\\s*['\"]qty['\"]\\s*\\]"], solution: "import pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C'], 'qty': [500, 480, 520, 610]})\nprint(df['qty'].sum())", explain: "df['qty']는 Series이고 sum()으로 합계를 냅니다." },
         { kind: "ox", q: "df.head()는 기본으로 처음 5행을 보여 준다.", answer: true, explain: "개수를 바꾸려면 head(10)처럼 숫자를 넣습니다." },
@@ -418,6 +424,8 @@ export const COURSES = [
   { id: "da-09", track: "python-viz", dir: "python-da", title: "matplotlib 기본 구조", summary: "그래프 뼈대(fig · ax), 그리는 순서, 서브플롯 배치와 꾸미기", level: "기본",
     concepts: ["mpl.basic", "mpl.layout"],
     lessons: [
+      // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "da-09-0", title: "matplotlib 소개: 파이썬 그래프의 바탕", minutes: 10, concepts: ["mpl.basic"] },
       { id: "da-09-1", title: "그래프의 뼈대: fig와 ax", minutes: 15, concepts: ["mpl.basic"],
         quiz: [
           { kind: "write", q: "fig, ax를 만들고 ax.plot으로 [1, 4, 9]를 그린 뒤, 그려진 선의 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt", expect: "1", must: ["\\.plot\\("], solution: "import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.plot([1, 4, 9])\nprint(len(ax.lines))", explain: "ax.plot을 한 번 부르면 ax.lines에 선 하나가 생깁니다." },
@@ -428,6 +436,8 @@ export const COURSES = [
   { id: "da-10", track: "python-viz", dir: "python-da", title: "seaborn 기본 구조", summary: "data · x · y · hue, 칸 단위 함수와 그림 단위 함수", level: "기본",
     concepts: ["sns.stat"],
     lessons: [
+      // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "da-10-0", title: "seaborn 소개: 표를 넘기면 통계 그래프가 나온다", minutes: 10, concepts: ["sns.stat"] },
       { id: "da-10-1", title: "seaborn의 기본 구조: data · x · y · hue", minutes: 18, concepts: ["sns.stat"],
         quiz: [
           { kind: "write", q: "sns.countplot으로 df의 line별 개수를 그린 뒤, 막대 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})", expect: "3", must: ["countplot\\("], solution: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})\nax = sns.countplot(data=df, x='line')\nprint(len(ax.patches))", explain: "범주 A, B, C마다 막대 하나입니다." },
@@ -832,6 +842,8 @@ export const COURSES = [
   { id: "ml-01", track: "ml", title: "ML 워크플로와 데이터 준비", summary: "특성과 정답, 결측치, 인코딩, train/test, stratify, 기준 모델, 누수", unit: 17, level: "입문",
     concepts: ["ml.workflow", "ml.missing", "ml.encoding"],
     lessons: [
+    // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+    { id: "ml-01-0", title: "scikit-learn 소개: 머신러닝 공구 상자", minutes: 12, concepts: ["ml.workflow"] },
     { id: "ml-01-1", title: "데이터를 표로 보기: 특성과 정답", minutes: 12, concepts: ["ml.workflow"],
       quiz: [
         { kind: "choice", q: "타이타닉에서 '생존 여부'를 예측하려고 한다. 정답(y)이 되는 열은?", options: ["pclass", "sex", "survived", "fare"], answer: 2, explain: "맞히고 싶은 값이 정답 y이고, 나머지 중 예측에 쓰는 열이 특성 X입니다." },
@@ -1023,6 +1035,8 @@ export const COURSES = [
   { id: "dl-01", track: "dl", title: "퍼셉트론과 활성화 함수", summary: "뉴런의 가중합 · 활성화, 시그모이드 · ReLU · 소프트맥스, XOR과 은닉층", unit: 40, level: "입문",
     concepts: ["dl.perceptron"],
     lessons: [
+    // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+    { id: "dl-01-0", title: "PyTorch 소개: 딥러닝을 만드는 도구", minutes: 12, concepts: ["dl.perceptron"] },
     { id: "dl-01-1", title: "뉴런 하나가 하는 일", minutes: 12, concepts: ["dl.perceptron"],
       quiz: [
         { kind: "short", q: "가중치 (2, 1), 편향 −1인 뉴런에 입력 (1, 0)이 들어왔다. 가중합 z는?", answer: ["1"], explain: "2 × 1 + 1 × 0 + (−1) = 1." },
@@ -1192,7 +1206,8 @@ export const SECTIONS = {
     { id: "pandas-adv", label: "pandas 활용", en: "pandas in Practice", blurb: "묶어서 요약하고, 여러 표를 합치고, 시간 순으로 보기", courses: ["da-06", "da-07", "da-08"] },
   ],
   "python-viz": [
-    { id: "tools", label: "도구 익히기", en: "Tools", blurb: "matplotlib · seaborn의 기본 구조", courses: ["da-09", "da-10"] },
+    { id: "matplotlib", label: "matplotlib", en: "matplotlib", blurb: "파이썬 그래프의 바탕: 도화지와 그래프 칸", courses: ["da-09"] },
+    { id: "seaborn", label: "seaborn", en: "seaborn", blurb: "표와 열 이름만으로 그리는 통계 그래프", courses: ["da-10"] },
     { id: "questions", label: "질문별 차트", en: "Chart by Question", blurb: "비교 · 추이 · 분포 · 관계 · 구성, 질문에 맞는 그래프", courses: ["da-12", "da-13", "da-14", "da-15", "da-16"] },
     { id: "wrapup", label: "정리", en: "Wrap-up", blurb: "어떤 차트를 쓸지 고르는 기준과 체크리스트", courses: ["da-11"] },
   ],
