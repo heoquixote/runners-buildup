@@ -16,7 +16,7 @@ export const TRACKS = [
   { id: "ml", label: "머신러닝", en: "Machine Learning", color: "green", ready: true,
     blurb: "scikit-learn으로 회귀 · 분류 · 군집을 만들고 평가합니다." },
   { id: "dl", label: "딥러닝", en: "Deep Learning", color: "orange", ready: true,
-    blurb: "퍼셉트론부터 어텐션까지, 개념과 모션 영상으로 원리를 이해합니다." },
+    blurb: "뉴런부터 Transformer · 생성 모델 · 전이 학습까지, 실습 없이 그림과 손 계산으로 원리를 이해합니다." },
 ];
 
 // 과정(프로그램): 같은 커리큘럼을 배우되 연습문제의 소재가 다르다.
@@ -1002,54 +1002,173 @@ export const COURSES = [
       ] }] },
 
   // ── 딥러닝 (개념 학습, 실습 없음) ───────────────────────────
-  { id: "dl-01", track: "dl", title: "퍼셉트론과 활성화 함수", summary: "뉴런, 가중치, 시그모이드 · ReLU", unit: 40, level: "입문",
+  { id: "dl-00", track: "dl", intro: true, title: "딥러닝 시작하기", summary: "머신러닝과의 차이, 층별 표현, 역사, 쓸 때 · 안 쓸 때", level: "입문",
+    concepts: ["dl.intro"],
+    lessons: [
+    { id: "dl-00-1", title: "딥러닝은 무엇이 다를까", minutes: 12, concepts: ["dl.intro"],
+      quiz: [
+        { kind: "choice", q: "전통 머신러닝과 비교한 딥러닝의 가장 큰 차이는?", options: ["평가 지표를 쓰지 않는다", "특징을 사람이 만들지 않고 모델이 데이터에서 배운다", "학습 데이터가 필요 없다", "결과를 항상 설명할 수 있다"], answer: 1, explain: "딥러닝은 층을 쌓아 선 → 모양 → 물체처럼 특징까지 스스로 배웁니다." },
+        { kind: "ox", q: "딥러닝은 사람의 뇌를 그대로 본떠 만든 것이다.", answer: false, explain: "이름만 뇌에서 따왔고, 실제로는 곱하고 더하는 계산을 여러 층 쌓은 수학 함수입니다." },
+      ] },
+    { id: "dl-00-2", title: "딥러닝의 역사와 쓸 때 · 안 쓸 때", minutes: 12, concepts: ["dl.intro"],
+      quiz: [
+        { kind: "choice", q: "설비 센서 요약값 3,000행(표 데이터)으로 고장 여부를 예측하려 한다. 먼저 시도할 방법으로 가장 알맞은 것은?", options: ["Transformer", "CNN", "부스팅 같은 전통 머신러닝", "GAN"], answer: 2, explain: "표 데이터, 적은 데이터에서는 부스팅이 더 빠르고 정확하고 설명하기 쉬운 경우가 많습니다." },
+        { kind: "ox", q: "뉴런과 역전파 같은 딥러닝의 핵심 아이디어는 2010년대에 처음 발명되었다.", answer: false, explain: "아이디어는 수십 년 전에 나왔고, 새로 갖춰진 것은 데이터 · GPU · 학습 기법이라는 조건입니다." },
+      ] }] },
+  { id: "dl-01", track: "dl", title: "퍼셉트론과 활성화 함수", summary: "뉴런의 가중합 · 활성화, 시그모이드 · ReLU · 소프트맥스, XOR과 은닉층", unit: 40, level: "입문",
     concepts: ["dl.perceptron"],
-    lessons: [{ id: "dl-01-1", title: "뉴런 하나가 하는 일", minutes: 12, concepts: ["dl.perceptron"],
+    lessons: [
+    { id: "dl-01-1", title: "뉴런 하나가 하는 일", minutes: 12, concepts: ["dl.perceptron"],
       quiz: [
-        { kind: "short", q: "ReLU(−3)의 값은?", answer: ["0"], explain: "max(0, −3) = 0." },
-        { kind: "ox", q: "시그모이드 출력은 항상 0과 1 사이다.", answer: true, explain: "1/(1 + e^(−z))는 0과 1 사이 값입니다." },
+        { kind: "short", q: "가중치 (2, 1), 편향 −1인 뉴런에 입력 (1, 0)이 들어왔다. 가중합 z는?", answer: ["1"], explain: "2 × 1 + 1 × 0 + (−1) = 1." },
+        { kind: "ox", q: "학습은 뉴런의 개수를 바꾸는 일이다.", answer: false, explain: "뉴런 수(구조)는 사람이 정하고, 학습은 그 안의 가중치와 편향만 바꿉니다." },
+      ] },
+    { id: "dl-01-2", title: "활성화 함수: 신호를 다듬는 스위치", minutes: 15, concepts: ["dl.perceptron"],
+      quiz: [
+        { kind: "short", q: "ReLU(−3)의 값은?", answer: ["0"], explain: "ReLU는 음수를 0으로, 양수는 그대로 내보냅니다." },
+        { kind: "choice", q: "사진을 고양이 · 개 · 새 세 종류 중 하나로 분류하는 신경망의 출력층 활성화로 알맞은 것은?", options: ["ReLU", "시그모이드", "소프트맥스", "활성화 없음"], answer: 2, explain: "다중 분류는 점수를 합이 1인 확률로 바꾸는 소프트맥스를 씁니다." },
+        { kind: "ox", q: "요즘 은닉층의 기본 활성화 함수는 ReLU다.", answer: true, explain: "계산이 빠르고 깊게 쌓아도 기울기가 덜 사라져 은닉층 표준이 되었습니다." },
+      ] },
+    { id: "dl-01-3", title: "왜 층을 쌓을까: XOR과 비선형", minutes: 15, concepts: ["dl.perceptron"],
+      quiz: [
+        { kind: "ox", q: "뉴런 하나(퍼셉트론)로 XOR 문제를 풀 수 있다.", answer: false, explain: "XOR은 직선 하나로 나뉘지 않아, 은닉층이 있어야 풉니다." },
+        { kind: "choice", q: "비선형 활성화 없이 선형 층만 10개 쌓은 신경망은?", options: ["10배 더 복잡한 문제를 푼다", "선형 층 하나와 같은 일밖에 못 한다", "XOR을 풀 수 있다", "과적합이 사라진다"], answer: 1, explain: "2배 다음 3배는 그냥 6배이듯, 선형을 아무리 겹쳐도 선형입니다." },
       ] }] },
-  { id: "dl-02", track: "dl", title: "손실함수와 경사하강법", summary: "MSE · 교차엔트로피, 학습률", unit: 41, level: "입문",
+  { id: "dl-02", track: "dl", title: "손실함수와 경사하강법", summary: "MSE · 교차엔트로피, 학습률, 미니배치 · 에폭, 모멘텀 · Adam", unit: 41, level: "입문",
     concepts: ["dl.loss"],
-    lessons: [{ id: "dl-02-1", title: "틀린 정도를 재고, 내리막으로 걷기", minutes: 15, concepts: ["dl.loss"],
+    lessons: [
+    { id: "dl-02-1", title: "틀린 정도 재기: 손실 함수", minutes: 15, concepts: ["dl.loss"],
       quiz: [
-        { kind: "choice", q: "경사하강법의 업데이트 식은?", options: ["w ← w + η·∂L/∂w", "w ← w − η·∂L/∂w", "w ← η·w", "w ← w / η"], answer: 1, explain: "기울기 반대 방향으로 학습률만큼 움직입니다." },
-        { kind: "ox", q: "학습률이 너무 작으면 수렴은 하지만 아주 느리다.", answer: true, explain: "그래서 학습률 스케줄러로 처음에 크게, 나중에 작게 조정하기도 합니다." },
+        { kind: "choice", q: "불량/정상 분류 신경망에 주로 쓰는 손실 함수는?", options: ["MSE", "교차엔트로피", "정확도", "R²"], answer: 1, explain: "분류는 정답 확률의 −log를 쓰는 교차엔트로피로, 자신 있게 틀릴수록 벌점이 커집니다." },
+        { kind: "ox", q: "손실이 0.3이면 30% 틀렸다는 뜻이다.", answer: false, explain: "손실은 퍼센트가 아니라, 같은 문제 안에서 비교할 때만 의미가 있는 점수입니다." },
+      ] },
+    { id: "dl-02-2", title: "내리막으로 걷기: 경사하강법과 학습률", minutes: 15, concepts: ["dl.loss"],
+      quiz: [
+        { kind: "short", q: "w = 1, 기울기 4, 학습률 0.1일 때 한 번 업데이트한 w는?", answer: ["0.6"], explain: "w ← w − η × 기울기 = 1 − 0.1 × 4 = 0.6." },
+        { kind: "ox", q: "학습률은 클수록 빨리, 확실하게 배운다.", answer: false, explain: "너무 크면 바닥을 넘나들며 발산합니다. 0.1, 0.01, 0.001처럼 바꿔 가며 찾습니다." },
+      ] },
+    { id: "dl-02-3", title: "조금씩 보고 고치기: 배치 · 미니배치 · 에폭", minutes: 12, concepts: ["dl.loss"],
+      quiz: [
+        { kind: "short", q: "데이터 600개, 배치 크기 100일 때 1에폭 동안 가중치를 몇 번 고칠까?", answer: ["6", "6번"], explain: "600 ÷ 100 = 6번." },
+        { kind: "ox", q: "1에폭은 가중치를 한 번 고친 것을 말한다.", answer: false, explain: "1에폭은 데이터 전체를 한 번 본 것이고, 그동안 (데이터 수 ÷ 배치 크기)번 고칩니다." },
+      ] },
+    { id: "dl-02-4", title: "더 똑똑하게 내려가기: 옵티마이저", minutes: 12, concepts: ["dl.optimizer"],
+      quiz: [
+        { kind: "choice", q: "Adam은 어떤 두 아이디어를 합친 옵티마이저일까?", options: ["드롭아웃 + 조기 종료", "모멘텀 + RMSProp", "배치 정규화 + 잔차 연결", "SGD + 소프트맥스"], answer: 1, explain: "관성(모멘텀)과 가중치별 보폭 조절(RMSProp)을 함께 씁니다." },
+        { kind: "ox", q: "Adam을 쓰면 학습률은 신경 쓰지 않아도 된다.", answer: false, explain: "Adam도 학습률이 너무 크면 발산하고 너무 작으면 느립니다." },
       ] }] },
-  { id: "dl-03", track: "dl", title: "순전파와 역전파", summary: "계산 그래프, 연쇄법칙", unit: 42, level: "기본",
+  { id: "dl-03", track: "dl", title: "순전파와 역전파", summary: "층별 손 계산, 계산 그래프와 연쇄법칙, 기울기 소실 · 잔차 연결", unit: 42, level: "기본",
     concepts: ["dl.backprop"],
-    lessons: [{ id: "dl-03-1", title: "기울기는 뒤에서 앞으로 흐른다", minutes: 15, concepts: ["dl.backprop"],
+    lessons: [
+    { id: "dl-03-1", title: "순전파: 입력에서 예측까지", minutes: 15, concepts: ["dl.backprop"],
       quiz: [
-        { kind: "choice", q: "곱셈 노드 z = x · y에서 ∂z/∂x는?", options: ["1", "x", "y", "x + y"], answer: 2, explain: "곱셈 노드는 상대편 입력값을 곱해 기울기를 전달합니다." },
-        { kind: "ox", q: "역전파는 출력층에서 입력층 방향으로 계산한다.", answer: true, explain: "손실에서 시작해 연쇄법칙으로 거꾸로 갑니다." },
+        { kind: "choice", q: "신경망 학습 한 바퀴의 순서로 알맞은 것은?", options: ["역전파 → 순전파 → 손실 → 업데이트", "순전파 → 손실 → 역전파 → 업데이트", "업데이트 → 순전파 → 역전파 → 손실", "손실 → 순전파 → 업데이트 → 역전파"], answer: 1, explain: "예측(순전파) → 채점(손실) → 책임 나누기(역전파) → 고치기(업데이트)." },
+        { kind: "ox", q: "순전파가 진행되는 동안 가중치가 조금씩 바뀐다.", answer: false, explain: "순전파 중 가중치는 고정이고, 역전파로 기울기를 구한 뒤 업데이트 단계에서 바뀝니다." },
+      ] },
+    { id: "dl-03-2", title: "역전파: 책임을 거꾸로 나누기", minutes: 15, concepts: ["dl.backprop"],
+      quiz: [
+        { kind: "choice", q: "곱셈 노드 z = x × y에서 x 쪽으로 넘어가는 기울기는 위에서 온 기울기에 무엇을 곱한 것일까?", options: ["1", "x", "y", "x + y"], answer: 2, explain: "곱셈 노드는 상대편 입력값을 곱해서 넘깁니다." },
+        { kind: "short", q: "톱니바퀴 A가 1바퀴 돌면 B가 2바퀴, B가 1바퀴 돌면 C가 3바퀴 돈다. A가 1바퀴 돌면 C는 몇 바퀴?", answer: ["6", "6바퀴"], explain: "연쇄법칙: 중간 영향의 곱 2 × 3 = 6." },
+      ] },
+    { id: "dl-03-3", title: "기울기 소실과 폭주", minutes: 15, concepts: ["dl.backprop"],
+      quiz: [
+        { kind: "choice", q: "깊은 신경망에서 기울기 소실을 줄이는 방법이 아닌 것은?", options: ["ReLU 사용", "잔차 연결", "배치 정규화", "은닉층 활성화를 모두 시그모이드로 바꾸기"], answer: 3, explain: "시그모이드 기울기는 최대 0.25라, 층마다 곱해지면 오히려 소실이 심해집니다." },
+        { kind: "ox", q: "기울기 폭주는 역전파에서 곱해지는 수가 1보다 클 때 생긴다.", answer: true, explain: "1보다 크면 폭주, 작으면 소실입니다. 폭주는 기울기 클리핑으로 막습니다." },
       ] }] },
-  { id: "dl-04", track: "dl", title: "MLP 학습과 과적합", summary: "에폭, 배치, 드롭아웃, 조기 종료", unit: 43, level: "기본",
+  { id: "dl-04", track: "dl", title: "MLP 학습과 과적합", summary: "출력층 · 손실 짝, 파라미터 수, 학습 곡선 · 조기 종료, 드롭아웃 · 증강", unit: 43, level: "기본",
     concepts: ["dl.mlp"],
-    lessons: [{ id: "dl-04-1", title: "층을 쌓고, 과적합을 막기", minutes: 15, concepts: ["dl.mlp"],
+    lessons: [
+    { id: "dl-04-1", title: "신경망 설계도: 층 · 노드 · 출력층", minutes: 15, concepts: ["dl.mlp"],
       quiz: [
-        { kind: "short", q: "데이터 600개, 배치 크기 100일 때 1에폭의 업데이트 횟수는?", answer: ["6"], explain: "600 / 100 = 6번." },
-        { kind: "ox", q: "검증 손실이 오르기 시작한 시점에 학습을 멈추는 것을 조기 종료라고 한다.", answer: true, explain: "가장 좋았던 검증 손실의 가중치를 저장해 둡니다." },
+        { kind: "short", q: "입력 4개 → 출력 8개인 완전연결 층의 파라미터(가중치 + 편향) 수는?", answer: ["40", "40개"], explain: "4 × 8 + 8 = 40." },
+        { kind: "choice", q: "부품 무게(kg)를 예측하는 회귀 신경망의 출력층 · 손실 짝으로 알맞은 것은?", options: ["노드 1개 · 활성화 없음 · MSE", "노드 1개 · 시그모이드 · 교차엔트로피", "노드 3개 · 소프트맥스 · 교차엔트로피", "노드 1개 · ReLU · 정확도"], answer: 0, explain: "회귀는 숫자를 그대로 내보내는 노드 1개와 MSE가 기본 세트입니다." },
+        { kind: "ox", q: "이진 분류는 출력 노드가 반드시 2개여야 한다.", answer: false, explain: "시그모이드 노드 1개(불량 확률 p)로 충분합니다." },
+      ] },
+    { id: "dl-04-2", title: "학습 곡선으로 과적합 알아보기", minutes: 12, concepts: ["dl.mlp"],
+      quiz: [
+        { kind: "choice", q: "학습 손실은 계속 줄고 검증 손실은 5에폭부터 오르기 시작했다. 무슨 상태일까?", options: ["과소적합", "과적합", "학습률이 너무 작음", "정상, 계속 학습"], answer: 1, explain: "학습 데이터만 외우기 시작해 두 곡선의 간격이 벌어지는 과적합입니다." },
+        { kind: "ox", q: "조기 종료로 학습을 멈추면 마지막 에폭의 가중치를 쓴다.", answer: false, explain: "검증 손실이 가장 낮았던 에폭의 가중치로 되돌려 씁니다." },
+      ] },
+    { id: "dl-04-3", title: "과적합을 막는 도구들", minutes: 15, concepts: ["dl.mlp"],
+      quiz: [
+        { kind: "ox", q: "드롭아웃은 예측할 때도 노드 일부를 끈다.", answer: false, explain: "드롭아웃은 학습할 때만 쓰고, 예측할 때는 모든 노드를 켭니다." },
+        { kind: "choice", q: "불량 사진을 좌우 반전 · 살짝 회전해 학습 데이터를 늘리는 방법은?", options: ["배치 정규화", "가중치 규제", "데이터 증강", "조기 종료"], answer: 2, explain: "정답이 바뀌지 않는 변형으로 배울 거리를 늘리는 데이터 증강입니다." },
       ] }] },
-  { id: "dl-05", track: "dl", title: "CNN", summary: "합성곱, 패딩 · 스트라이드, 풀링", unit: 44, level: "기본",
+  { id: "dl-05", track: "dl", title: "CNN", summary: "픽셀 · 채널, 합성곱 필터, 패딩 · 스트라이드, 풀링, CNN 구조", unit: 44, level: "기본",
     concepts: ["dl.cnn"],
-    lessons: [{ id: "dl-05-1", title: "이미지를 훑는 작은 필터", minutes: 15, concepts: ["dl.cnn"],
+    lessons: [
+    { id: "dl-05-1", title: "이미지는 숫자 격자다", minutes: 12, concepts: ["dl.cnn"],
       quiz: [
-        { kind: "short", q: "입력 32, 필터 5, 패딩 0, 스트라이드 1이면 출력 크기는?", answer: ["28"], explain: "(32 − 5) / 1 + 1 = 28." },
+        { kind: "short", q: "가로 100 · 세로 100 컬러(RGB) 사진에는 숫자가 몇 개 들어 있을까?", answer: ["30000", "30,000", "3만"], explain: "100 × 100 × 3 = 30,000." },
+        { kind: "ox", q: "사진을 한 줄로 펼쳐 MLP에 넣어도 이웃 픽셀의 위치 관계는 그대로 활용된다.", answer: false, explain: "숫자는 그대로지만, 어느 픽셀이 위 · 아래 이웃이었는지라는 구조 정보를 MLP가 쓰지 못합니다." },
+      ] },
+    { id: "dl-05-2", title: "합성곱: 이미지를 훑는 작은 필터", minutes: 15, concepts: ["dl.cnn"],
+      quiz: [
+        { kind: "short", q: "입력 32, 필터 5, 패딩 0, 스트라이드 1이면 출력 크기는?", answer: ["28"], explain: "(32 − 5 + 0) ÷ 1 + 1 = 28." },
+        { kind: "ox", q: "CNN의 필터 값은 사람이 설계해 넣는다.", answer: false, explain: "필터 값은 데이터에서 학습되는 가중치입니다." },
+      ] },
+    { id: "dl-05-3", title: "풀링과 CNN 전체 구조", minutes: 15, concepts: ["dl.cnn"],
+      quiz: [
         { kind: "choice", q: "2×2 최대 풀링(스트라이드 2)을 하면 가로 · 세로 크기는?", options: ["그대로", "절반", "2배", "1/4"], answer: 1, explain: "가로 · 세로가 각각 절반, 면적은 1/4이 됩니다." },
+        { kind: "ox", q: "풀링 층에는 학습되는 가중치가 있다.", answer: false, explain: "풀링은 최댓값(또는 평균)을 고르는 정해진 규칙이라 가중치가 없습니다." },
       ] }] },
-  { id: "dl-06", track: "dl", title: "RNN과 시퀀스", summary: "은닉 상태, 기울기 소실, LSTM", unit: 45, level: "실무",
+  { id: "dl-06", track: "dl", title: "RNN과 시퀀스", summary: "은닉 상태, 펼친 구조, 시간 방향 기울기 소실, LSTM · GRU", unit: 45, level: "실무",
     concepts: ["dl.rnn"],
-    lessons: [{ id: "dl-06-1", title: "순서를 기억하는 네트워크", minutes: 15, concepts: ["dl.rnn"],
+    lessons: [
+    { id: "dl-06-1", title: "순서를 기억하는 네트워크", minutes: 15, concepts: ["dl.rnn"],
       quiz: [
-        { kind: "choice", q: "RNN에서 이전 시점의 정보를 다음 시점으로 넘기는 것은?", options: ["가중치 감쇠", "은닉 상태", "풀링", "임베딩"], answer: 1, explain: "h_t가 지금까지의 요약을 들고 다음 시점으로 갑니다." },
-        { kind: "ox", q: "LSTM은 게이트를 써서 기울기 소실 문제를 줄인다.", answer: true, explain: "셀 상태를 따라 정보가 덧셈으로 흐르므로 기울기가 덜 사라집니다." },
+        { kind: "choice", q: "RNN에서 이전 시점의 정보를 다음 시점으로 넘기는 것은?", options: ["가중치 감쇠", "은닉 상태", "풀링", "임베딩"], answer: 1, explain: "은닉 상태 h가 지금까지의 요약(메모)을 들고 다음 시점으로 갑니다." },
+        { kind: "ox", q: "RNN은 시점마다 서로 다른 가중치를 쓴다.", answer: false, explain: "모든 시점에서 같은 셀(같은 가중치)을 재사용합니다. 그래서 길이가 달라도 처리할 수 있습니다." },
+      ] },
+    { id: "dl-06-2", title: "긴 기억의 문제와 LSTM · GRU", minutes: 15, concepts: ["dl.rnn"],
+      quiz: [
+        { kind: "choice", q: "LSTM에서 셀 상태의 어떤 정보를 버릴지 정하는 것은?", options: ["입력 게이트", "잊기 게이트", "출력 게이트", "풀링"], answer: 1, explain: "잊기 게이트가 0~1 밸브로 지난 기억 중 버릴 부분을 정합니다." },
+        { kind: "ox", q: "LSTM은 게이트를 써서 기울기 소실 문제를 줄인다.", answer: true, explain: "셀 상태가 곱 대신 덧셈 위주로 흘러 기울기가 덜 사라집니다." },
       ] }] },
-  { id: "dl-07", track: "dl", title: "임베딩과 어텐션", summary: "Q · K · V, 스케일드 닷프로덕트, Transformer", unit: 46, level: "실무",
+  { id: "dl-07", track: "dl", title: "임베딩과 어텐션", summary: "토큰 · 임베딩, Q · K · V 어텐션, Transformer, LLM", unit: 46, level: "실무",
     concepts: ["dl.attention"],
-    lessons: [{ id: "dl-07-1", title: "어디를 볼지 스스로 정하기", minutes: 18, concepts: ["dl.attention"],
+    lessons: [
+    { id: "dl-07-1", title: "단어를 숫자로: 토큰과 임베딩", minutes: 15, concepts: ["dl.attention"],
       quiz: [
-        { kind: "choice", q: "어텐션 가중치를 만들 때 Q와 K의 유사도에 적용하는 함수는?", options: ["ReLU", "softmax", "tanh", "max"], answer: 1, explain: "softmax로 0~1, 합 1인 가중치를 만듭니다." },
-        { kind: "ox", q: "셀프 어텐션에서 Q, K, V는 같은 입력에서 각각 다른 가중치 행렬로 만든다.", answer: true, explain: "같은 문장의 토큰들이 서로를 참고합니다." },
+        { kind: "choice", q: "원-핫 표현의 한계로 알맞은 것은?", options: ["단어를 구별할 수 없다", "모든 단어 사이가 똑같이 멀어서 비슷함을 담지 못한다", "숫자가 너무 작다", "학습이 필요하다"], answer: 1, explain: "원-핫은 어떤 단어인지만 담고, 어떤 단어와 비슷한지는 담지 못합니다." },
+        { kind: "ox", q: "임베딩 벡터의 숫자는 사람이 단어마다 정해 준다.", answer: false, explain: "임베딩 값은 학습으로 정해지고, 각 축의 의미도 사람이 정하지 않습니다." },
+      ] },
+    { id: "dl-07-2", title: "어텐션: 어디를 볼지 스스로 정하기", minutes: 18, concepts: ["dl.attention"],
+      quiz: [
+        { kind: "choice", q: "어텐션 가중치를 만들 때 Q와 K의 점수에 적용하는 함수는?", options: ["ReLU", "softmax", "tanh", "max"], answer: 1, explain: "softmax로 0~1, 합 1인 가중치를 만듭니다." },
+        { kind: "ox", q: "어텐션은 가장 관련 있는 단어 하나만 골라 그 정보를 가져온다.", answer: false, explain: "모든 단어의 V를 가중치만큼 섞습니다." },
+      ] },
+    { id: "dl-07-3", title: "Transformer와 대규모 언어 모델", minutes: 18, concepts: ["dl.attention"],
+      quiz: [
+        { kind: "ox", q: "어텐션은 단어 순서를 스스로 알기 때문에 위치 정보가 필요 없다.", answer: false, explain: "어텐션은 순서를 모르므로 임베딩에 위치 정보를 더해 줍니다." },
+        { kind: "choice", q: "GPT 같은 LLM이 사전학습에서 배우는 일은?", options: ["문장 중간 빈칸 맞히기", "다음 토큰 맞히기", "사진 분류", "데이터베이스 검색"], answer: 1, explain: "지금까지의 글을 보고 다음 토큰의 확률을 맞히도록 학습합니다." },
+        { kind: "choice", q: "LLM이 그럴듯하지만 틀린 말(환각)을 하는 근본 이유는?", options: ["계산이 병렬이라서", "사실을 확인하지 않고 그럴듯한 다음 토큰을 이어 쓰기 때문", "위치 정보가 없어서", "모델이 너무 작아서"], answer: 1, explain: "기본 LLM은 검색하지 않고 학습한 패턴으로 이어 쓰기 때문에, 출처 확인과 RAG가 필요합니다." },
+      ] }] },
+  { id: "dl-08", track: "dl", title: "생성 모델", summary: "오토인코더 · 복원 오차 이상 탐지, GAN, 확산 모델", level: "실무",
+    concepts: ["dl.generative"],
+    lessons: [
+    { id: "dl-08-1", title: "압축했다 되살리기: 오토인코더", minutes: 15, concepts: ["dl.generative"],
+      quiz: [
+        { kind: "choice", q: "정상 데이터로만 학습한 오토인코더에 처음 보는 고장 데이터가 들어오면?", options: ["복원 오차가 작다", "복원 오차가 크다", "정답 라벨을 출력한다", "학습이 멈춘다"], answer: 1, explain: "정상 패턴으로만 압축 · 복원하니 처음 보는 패턴은 엉망으로 복원되어 오차가 큽니다." },
+        { kind: "ox", q: "오토인코더를 학습하려면 정답 라벨이 따로 있어야 한다.", answer: false, explain: "입력 자체가 정답이라 라벨이 필요 없는 비지도 학습입니다." },
+      ] },
+    { id: "dl-08-2", title: "새로 만드는 AI: GAN과 확산 모델", minutes: 15, concepts: ["dl.generative"],
+      quiz: [
+        { kind: "ox", q: "GAN 학습이 끝나면 판별자를 최종 모델로 쓴다.", answer: false, explain: "판별자는 코치 역할이고, 실제로 쓰는 것은 생성자입니다." },
+        { kind: "choice", q: "확산 모델이 새 사진을 만드는 방법은?", options: ["판별자를 속이도록 학습한 생성자로 한 번에 만든다", "순수 잡음에서 출발해 잡음을 조금씩 지우기를 반복한다", "학습한 사진을 잘라 붙인다", "잠재 공간을 PCA로 줄인다"], answer: 1, explain: "학습한 '한 단계 잡음 지우기'를 수십~수백 번 반복해 새 사진이 드러나게 합니다." },
+      ] }] },
+  { id: "dl-09", track: "dl", title: "딥러닝 실무", summary: "사전학습 모델, 특징 추출 · 미세 조정, 프로젝트 한 바퀴, 설정값 체크리스트", level: "실무",
+    concepts: ["dl.transfer"],
+    lessons: [
+    { id: "dl-09-1", title: "처음부터 만들지 않는다: 전이 학습", minutes: 15, concepts: ["dl.transfer"],
+      quiz: [
+        { kind: "choice", q: "불량 사진이 500장뿐이다. 사전학습 CNN으로 시작할 때 가장 알맞은 방법은?", options: ["처음부터 학습", "몸통은 고정하고 새 머리만 학습(특징 추출)", "모든 층을 큰 학습률로 다시 학습", "머리를 그대로 두고 몸통만 교체"], answer: 1, explain: "데이터가 적으면 몸통을 고정한 특징 추출이 과적합 위험이 낮고 빠릅니다." },
+        { kind: "ox", q: "미세 조정할 때는 빨리 끝내기 위해 학습률을 처음보다 크게 한다.", answer: false, explain: "이미 좋은 가중치를 망가뜨리지 않도록 훨씬 작은 학습률로 조금씩 고칩니다." },
+      ] },
+    { id: "dl-09-2", title: "딥러닝 프로젝트 한 바퀴", minutes: 15, concepts: ["dl.transfer"],
+      quiz: [
+        { kind: "choice", q: "학습 손실은 줄고 검증 손실은 오른다. 먼저 손볼 설정으로 알맞지 않은 것은?", options: ["조기 종료", "드롭아웃", "데이터 증강", "모델을 더 크게 키우기"], answer: 3, explain: "과적합 신호이므로 모델을 줄이거나 규제를 더합니다. 키우는 것은 둘 다 높게 멈출 때입니다." },
+        { kind: "ox", q: "학습이 잘 안 될 때는 여러 설정을 한꺼번에 바꿔 빨리 찾는 것이 좋다.", answer: false, explain: "한 번에 하나씩 바꾸고 기록해야 무엇이 효과였는지 알 수 있습니다." },
       ] }] },
 ];
 

@@ -1,6 +1,6 @@
 // 통계(유닛 32~34) · 머신러닝(35~39) 문제와 딥러닝(40~46) 개념 퀴즈. scratchpad build_sm2.py 로 생성.
 // domain: "mfg" = QAQC 과정(제조), "general" = 데이터 과정(일반). 개념 퀴즈(N-Q)는 두 과정이 함께 쓴다.
-// 딥러닝은 실습 없이 개념만: 유닛 40~46에는 개념 퀴즈만 있다.
+// 딥러닝은 실습 없이 개념만: 유닛 40~46에는 개념 퀴즈만 있고, 코드 작성(write) 문항도 두지 않는다.
 export const SM2_UNITS = [
   {
     "id": 32,
@@ -2206,29 +2206,25 @@ export const SM2_QUIZZES = [
     "title": "퍼셉트론 · 활성화 함수 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "코드 작성 · 객관식 · OX",
+    "origin": "단답 · 객관식 · OX",
     "questions": [
       {
-        "kind": "write",
-        "q": "시그모이드 함수 1 / (1 + e^(−z))로 z = 0일 때 값을 출력하는 코드를 작성하세요.",
-        "given": "import numpy as np\nz = 0",
-        "expect": "0.5",
-        "must": [
-          "exp\\("
+        "kind": "short",
+        "q": "시그모이드 1 / (1 + e^(−z))에서 z = 0일 때 출력값은?",
+        "answer": [
+          "0.5",
+          "1/2"
         ],
-        "solution": "import numpy as np\nz = 0\nprint(1 / (1 + np.exp(-z)))",
-        "explain": "e⁰ = 1이므로 1/2."
+        "explain": "e⁰ = 1이므로 1 / (1 + 1) = 0.5. 시그모이드는 z = 0에서 정확히 반반입니다."
       },
       {
-        "kind": "write",
-        "q": "np.maximum으로 z에 ReLU를 적용한 결과를 리스트로 출력하는 코드를 작성하세요.",
-        "given": "import numpy as np\nz = np.array([-1.5, 0.0, 2.0])",
-        "expect": "[0.0, 0.0, 2.0]",
-        "must": [
-          "maximum\\("
+        "kind": "short",
+        "q": "z = [−1.5, 0, 2]에 ReLU를 적용한 세 값을 모두 더하면?",
+        "answer": [
+          "2",
+          "2.0"
         ],
-        "solution": "import numpy as np\nz = np.array([-1.5, 0.0, 2.0])\nprint(np.maximum(0, z).tolist())",
-        "explain": "ReLU(z) = max(0, z)."
+        "explain": "ReLU는 음수를 0으로 자릅니다: [0, 0, 2] → 합 2."
       },
       {
         "kind": "short",
@@ -2265,26 +2261,24 @@ export const SM2_QUIZZES = [
     "title": "손실함수 · 경사하강법 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "코드 작성 · 객관식 · OX",
+    "origin": "단답 · 객관식 · OX",
     "questions": [
       {
-        "kind": "write",
-        "q": "실제값 y와 예측값 p의 평균제곱오차(MSE)를 출력하는 코드를 작성하세요.",
-        "given": "import numpy as np\ny = np.array([3.0, 5.0])\np = np.array([2.0, 6.0])",
-        "expect": "1.0",
-        "must": [
-          "mean\\("
+        "kind": "short",
+        "q": "정답 [3, 5], 예측 [2, 6]일 때 평균제곱오차(MSE)는?",
+        "answer": [
+          "1",
+          "1.0"
         ],
-        "solution": "import numpy as np\ny = np.array([3.0, 5.0])\np = np.array([2.0, 6.0])\nprint(np.mean((y - p) ** 2))",
-        "explain": "((1)² + (−1)²) / 2 = 1."
+        "explain": "((3 − 2)² + (5 − 6)²) / 2 = (1 + 1) / 2 = 1."
       },
       {
-        "kind": "write",
-        "q": "손실 L(w) = (w − 3)²에서 w = 0, 학습률 0.1로 경사하강법을 한 번 한 뒤의 w를 출력하는 코드를 작성하세요. (기울기 = 2(w − 3))",
-        "given": "w, lr = 0.0, 0.1",
-        "expect": "0.6",
-        "solution": "w, lr = 0.0, 0.1\nw = w - lr * 2 * (w - 3)\nprint(round(w, 6))",
-        "explain": "0 − 0.1 × (−6) = 0.6. 최솟값 3을 향해 움직입니다."
+        "kind": "short",
+        "q": "손실 L(w) = (w − 3)², 기울기 = 2(w − 3)이다. w = 0, 학습률 0.1로 경사하강법을 한 번 하면 새 w는?",
+        "answer": [
+          "0.6"
+        ],
+        "explain": "기울기 2(0 − 3) = −6. 0 − 0.1 × (−6) = 0.6. 최솟값 3을 향해 움직입니다."
       },
       {
         "kind": "choice",
@@ -2324,15 +2318,15 @@ export const SM2_QUIZZES = [
     "title": "순전파 · 역전파 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "코드 작성 · 객관식 · OX",
+    "origin": "단답 · 객관식 · OX",
     "questions": [
       {
-        "kind": "write",
-        "q": "y = (2x + 1)² 에서 x = 1일 때 연쇄법칙으로 dy/dx를 계산해 출력하는 코드를 작성하세요. (u = 2x + 1, dy/du = 2u, du/dx = 2)",
-        "given": "x = 1",
-        "expect": "12",
-        "solution": "x = 1\nu = 2 * x + 1\nprint(2 * u * 2)",
-        "explain": "dy/dx = 2u · 2 = 2·3·2 = 12."
+        "kind": "short",
+        "q": "y = (2x + 1)²에서 x = 1일 때 dy/dx는? (u = 2x + 1, dy/du = 2u, du/dx = 2)",
+        "answer": [
+          "12"
+        ],
+        "explain": "연쇄법칙: dy/dx = 2u × 2 = 2 × 3 × 2 = 12."
       },
       {
         "kind": "choice",
@@ -2378,15 +2372,15 @@ export const SM2_QUIZZES = [
     "title": "MLP 학습 · 과적합 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "코드 작성 · 객관식 · OX",
+    "origin": "단답 · 객관식 · OX",
     "questions": [
       {
-        "kind": "write",
-        "q": "데이터 1,000개, 배치 크기 32일 때 1에폭의 업데이트 횟수(마지막 배치 포함)를 출력하는 코드를 작성하세요.",
-        "given": "import math",
-        "expect": "32",
-        "solution": "import math\nprint(math.ceil(1000 / 32))",
-        "explain": "1000 / 32 = 31.25 → 마지막 작은 배치까지 32번."
+        "kind": "short",
+        "q": "데이터 1,000개, 배치 크기 32일 때 1에폭의 업데이트 횟수는? (마지막 작은 배치 포함)",
+        "answer": [
+          "32"
+        ],
+        "explain": "1000 ÷ 32 = 31.25 → 32개짜리 31번 + 마지막 8개짜리 1번 = 32번."
       },
       {
         "kind": "choice",
@@ -2432,23 +2426,27 @@ export const SM2_QUIZZES = [
     "title": "CNN 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "코드 작성 · 객관식 · OX",
+    "origin": "단답 · 객관식 · OX",
     "questions": [
       {
-        "kind": "write",
-        "q": "입력 28, 필터 3, 패딩 0, 스트라이드 1일 때 합성곱 출력 크기 (N − F + 2P) / S + 1을 출력하는 코드를 작성하세요.",
-        "given": "N, F, P, S = 28, 3, 0, 1",
-        "expect": "26",
-        "solution": "N, F, P, S = 28, 3, 0, 1\nprint((N - F + 2 * P) // S + 1)",
-        "explain": "28 − 3 + 1 = 26."
+        "kind": "short",
+        "q": "입력 28, 필터 3, 패딩 0, 스트라이드 1일 때 합성곱 출력 크기는?",
+        "answer": [
+          "26"
+        ],
+        "explain": "(28 − 3 + 0) ÷ 1 + 1 = 26."
       },
       {
-        "kind": "write",
-        "q": "2×2 최대 풀링(스트라이드 2)을 a에 적용한 결과를 리스트로 출력하는 코드를 작성하세요.",
-        "given": "import numpy as np\na = np.arange(1, 17).reshape(4, 4)",
-        "expect": "[[6, 8], [14, 16]]",
-        "solution": "import numpy as np\na = np.arange(1, 17).reshape(4, 4)\nprint(a.reshape(2, 2, 2, 2).max(axis=(1, 3)).tolist())",
-        "explain": "각 2×2 칸의 최댓값입니다. 반복문으로 칸마다 max를 구해도 됩니다."
+        "kind": "choice",
+        "q": "1~16을 4×4로 차례로 놓은 격자(첫 줄 1 2 3 4, 마지막 줄 13 14 15 16)에 2×2 최대 풀링(스트라이드 2)을 하면?",
+        "options": [
+          "[[6, 8], [14, 16]]",
+          "[[1, 3], [9, 11]]",
+          "[[3.5, 5.5], [11.5, 13.5]]",
+          "[[16]]"
+        ],
+        "answer": 0,
+        "explain": "구역마다 가장 큰 값: 6, 8, 14, 16. 셋째 보기는 평균 풀링 결과입니다."
       },
       {
         "kind": "choice",
@@ -2488,17 +2486,19 @@ export const SM2_QUIZZES = [
     "title": "RNN · 시퀀스 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "코드 작성 · 객관식 · OX",
+    "origin": "단답 · 객관식 · OX",
     "questions": [
       {
-        "kind": "write",
-        "q": "기울기에 0.5를 30번 곱했을 때 값이 1e-6보다 작은지 출력하는 코드를 작성하세요.",
-        "expect": "True",
-        "must": [
-          "\\*\\*\\s*30"
+        "kind": "choice",
+        "q": "기울기에 0.5를 30번 곱하면 대략 얼마가 될까?",
+        "options": [
+          "약 15",
+          "약 0.5",
+          "약 0.001",
+          "약 0.000000001 (10억분의 1)"
         ],
-        "solution": "print(0.5 ** 30 < 1e-6)",
-        "explain": "0.5³⁰ ≈ 9.3e-10. 같은 값을 여러 번 곱하면 기울기가 사라집니다."
+        "answer": 3,
+        "explain": "0.5³⁰ ≈ 9.3 × 10⁻¹⁰. 1보다 작은 값을 여러 번 곱하면 기울기가 사라집니다(기울기 소실)."
       },
       {
         "kind": "choice",
@@ -2550,18 +2550,13 @@ export const SM2_QUIZZES = [
     "title": "임베딩 · 어텐션 개념 퀴즈",
     "type": "quiz",
     "level": 1,
-    "origin": "코드 작성 · 객관식 · OX",
+    "origin": "단답 · 객관식 · OX",
     "questions": [
       {
-        "kind": "write",
-        "q": "np.exp로 scores에 softmax를 적용한 결과의 합을 출력하는 코드를 작성하세요.",
-        "given": "import numpy as np\nscores = np.array([2.0, 1.0, 0.1])",
-        "expect": "1.0",
-        "must": [
-          "exp\\("
-        ],
-        "solution": "import numpy as np\nscores = np.array([2.0, 1.0, 0.1])\nw = np.exp(scores) / np.exp(scores).sum()\nprint(round(w.sum(), 6))",
-        "explain": "softmax 가중치는 0~1이고 합이 1입니다."
+        "kind": "ox",
+        "q": "softmax를 적용한 결과는 원래 점수가 무엇이든 합이 항상 1이다.",
+        "answer": true,
+        "explain": "eᶻ로 키운 뒤 전체 합으로 나누므로 합은 항상 1입니다. 그래서 어텐션 가중치로 쓸 수 있습니다."
       },
       {
         "kind": "choice",
