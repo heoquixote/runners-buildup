@@ -810,6 +810,27 @@ export const COURSES = [
           { kind: "ox", q: "p-value만 적으면 효과의 크기(차이)는 따로 적지 않아도 된다.", answer: false, explain: "p-value는 우연인지 아닌지만 말합니다. 차이의 크기와 신뢰구간을 함께 적어야 판단할 수 있습니다." },
         ] },
     ] },
+  { id: "st-11", track: "stats", title: "품질 통계: 관리도와 공정능력", summary: "우연 원인과 이상 원인, I-MR · X̄-R · p 관리도, 런 규칙, Cp · Cpk · Ppk", level: "실무",
+    concepts: ["st.spc"],
+    lessons: [
+      { id: "st-11-1", title: "관리도의 원리와 I-MR 관리도", minutes: 25, concepts: ["st.spc"],
+        quiz: [
+          { kind: "choice", q: "관리한계와 규격한계에 대한 설명으로 옳은 것은?", options: ["둘은 같은 것이다", "관리한계는 공정의 평소 흔들림에서, 규격한계는 고객 · 설계 요구에서 나온다", "관리한계 안이면 규격도 항상 만족한다", "규격한계는 평균 ± 3σ로 계산한다"], answer: 1, explain: "관리한계는 공정의 목소리, 규격한계는 고객의 목소리입니다. 같은 그래프에 섞지 않습니다." },
+          { kind: "write", q: "x로 I 관리도의 관리 상한(평균 + 2.66 × 이동범위 평균)을 소수 셋째 자리로 출력하세요.", given: "import numpy as np\nx = np.array([10.0, 10.2, 9.9, 10.1, 10.0, 9.8])", expect: "10.532", must: ["diff"], solution: "import numpy as np\nx = np.array([10.0, 10.2, 9.9, 10.1, 10.0, 9.8])\nmr_bar = np.abs(np.diff(x)).mean()\nprint(round(x.mean() + 2.66 * mr_bar, 3))", explain: "이동범위는 np.abs(np.diff(x))이고 평균이 0.2라 10.0 + 2.66 × 0.2 = 10.532입니다." },
+          { kind: "ox", q: "점이 모두 관리한계 안에 있으면 공정에 이상 원인이 없다고 판단해도 된다.", answer: false, explain: "연속 8점이 중심선 한쪽, 연속 상승 같은 런 규칙도 신호입니다." },
+        ] },
+      { id: "st-11-2", title: "X̄-R 관리도와 p 관리도", minutes: 25, concepts: ["st.spc"],
+        quiz: [
+          { kind: "choice", q: "X̄ 관리도에는 신호가 있고 R 관리도에는 신호가 없다. 가장 먼저 의심할 것은?", options: ["흔들림이 커졌다", "공정 중심이 옮겨 갔다 (설정 · 원료 변경 등)", "측정기가 고장 났다", "아무 일도 없다"], answer: 1, explain: "부분군 값이 함께 움직였다는 뜻이라 중심 이동을 의심합니다." },
+          { kind: "write", q: "평균 불량률 0.04, 하루 검사 수 300개일 때 p 관리도의 관리 상한을 소수 넷째 자리로 출력하세요.", given: "import numpy as np\npbar, n = 0.04, 300", expect: "0.0739", must: ["sqrt"], solution: "import numpy as np\npbar, n = 0.04, 300\nprint(round(pbar + 3 * np.sqrt(pbar * (1 - pbar) / n), 4))", explain: "p̄ + 3 × √(p̄(1 − p̄)/n)입니다." },
+        ] },
+      { id: "st-11-3", title: "공정능력지수: Cp · Cpk · Ppk", minutes: 25, concepts: ["st.spc"],
+        quiz: [
+          { kind: "write", q: "규격 9.9 ~ 10.1, 평균 10.03, 표준편차 0.02일 때 Cpk를 소수 둘째 자리로 출력하세요.", given: "LSL, USL = 9.9, 10.1\nm, s = 10.03, 0.02", expect: "1.17", must: ["min"], solution: "LSL, USL = 9.9, 10.1\nm, s = 10.03, 0.02\nprint(round(min(USL - m, m - LSL) / (3 * s), 2))", explain: "가까운 쪽(상한)까지 0.07 ÷ 0.06 = 1.17입니다." },
+          { kind: "choice", q: "Cp는 1.8인데 Cpk가 1.0이다. 가장 먼저 할 일은?", options: ["설비를 교체해 흔들림을 줄인다", "공정 평균을 규격 중앙으로 맞춘다", "규격을 넓혀 달라고 한다", "전수 검사를 중단한다"], answer: 1, explain: "Cp가 높으면 흔들림 폭은 충분히 좁습니다. Cp와 Cpk의 차이는 중심 치우침이라 중심을 맞추면 Cpk가 올라갑니다." },
+          { kind: "ox", q: "관리도에 신호가 계속 나오는 불안정한 공정도 Cpk 하나로 능력을 요약할 수 있다.", answer: false, explain: "평균과 σ가 계속 바뀌는 공정은 지수 하나로 요약할 수 없습니다. 관리 상태를 먼저 만든 뒤 계산합니다." },
+        ] },
+    ] },
 
   // ── 머신러닝 ─────────────────────────────────────────────
   { id: "ml-00", track: "ml", intro: true, title: "머신러닝 시작하기", summary: "기계가 배운다는 것, 학습과 예측, 회귀 · 분류 · 비지도", level: "입문",
