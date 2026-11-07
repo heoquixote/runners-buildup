@@ -4,7 +4,7 @@
 
 export const TRACKS = [
   { id: "python-basic", label: "파이썬 기초", en: "Python Basics", color: "violet", ready: true,
-    blurb: "변수부터 파일 입출력까지. QA/QC 현장 예제로 문법을 익힙니다." },
+    blurb: "변수부터 파일 입출력 · 표준 라이브러리까지. QA/QC 현장 예제로 문법을 익힙니다." },
   { id: "python-da", label: "데이터 분석", en: "Data Analysis", color: "cyan", ready: true,
     blurb: "NumPy · pandas로 데이터를 불러오고, 고르고, 묶고, 합칩니다." },
   { id: "python-viz", label: "데이터 시각화", en: "Visualization", color: "rose", ready: true,
@@ -263,6 +263,30 @@ export const COURSES = [
       { id: "pb-12-3", title: "데이터 정제에서 예외 다루기", minutes: 20, concepts: ["py.exception"],
         quiz: [
           { kind: "choice", q: "행 1,000개를 처리하는 for 반복 바깥에 try 를 두면 어떻게 될까요?", options: ["문제 행만 건너뛰고 끝까지 처리한다", "첫 에러에서 반복 전체가 끝난다", "에러가 난 행을 0으로 처리한다", "문법 오류가 난다"], answer: 1, explain: "에러가 나면 try 블록 전체를 빠져나가므로 반복도 끝납니다. 한 행씩 따로 처리하려면 try를 반복 안에 둡니다." },
+        ] },
+    ] },
+  // 표준 라이브러리 (2026-11-07 진성 님 원고). 기획안 docs/lesson-plans/python-basic.md 의 pb-13
+  { id: "pb-13", track: "python-basic", title: "표준 라이브러리 (datetime · math · random · os)", summary: "import와 내 모듈, datetime · timedelta, strftime · strptime, math 올림 · 내림, random seed · sample, os 경로 · 폴더", unit: 50, level: "기본",
+    concepts: ["py.module", "py.datetime", "py.math", "py.random", "py.os"],
+    lessons: [
+      { id: "pb-13-1", title: "모듈과 import: 남이 만든 도구 상자 쓰기", minutes: 15, concepts: ["py.module"],
+        quiz: [
+          { kind: "choice", q: "from math import sqrt 로 불러왔을 때 25의 제곱근을 구하는 바른 코드는?", options: ["math.sqrt(25)", "sqrt(25)", "math(sqrt(25))", "import sqrt(25)"], answer: 1, explain: "from 모듈 import 이름 으로 꺼낸 이름은 모듈 이름 없이 바로 씁니다. math 라는 이름은 불러오지 않았으므로 math.sqrt 는 NameError가 납니다." },
+          { kind: "ox", q: "datetime, math, os 같은 표준 라이브러리는 pip install 로 먼저 설치해야 쓸 수 있다.", answer: false, explain: "표준 라이브러리는 파이썬을 설치할 때 함께 들어 있어 import만 하면 됩니다. pip 설치가 필요한 것은 numpy · pandas 같은 외부 라이브러리입니다." },
+        ] },
+      { id: "pb-13-2", title: "datetime: 날짜와 시간 계산하기", minutes: 20, concepts: ["py.datetime"],
+        quiz: [
+          { kind: "choice", q: "CSV에서 읽은 문자열 \"2026-11-07\" 을 날짜 계산이 되는 datetime으로 바꾸는 코드는?", options: ["datetime.strftime(\"2026-11-07\", \"%Y-%m-%d\")", "datetime.strptime(\"2026-11-07\", \"%Y-%m-%d\")", "datetime(\"2026-11-07\")", "str(\"2026-11-07\")"], answer: 1, explain: "문자열 → 날짜는 strptime(p = parse, 읽어 내기), 날짜 → 문자열은 strftime(f = format)입니다." },
+          { kind: "write", q: "made 에 timedelta를 더해 30일 뒤 날짜를 '%Y-%m-%d' 모양으로 출력하는 코드를 작성하세요.", given: "from datetime import datetime, timedelta\nmade = datetime(2026, 11, 7)", expect: "2026-12-07", must: ["timedelta\\(", "strftime\\("], solution: "from datetime import datetime, timedelta\nmade = datetime(2026, 11, 7)\nprint((made + timedelta(days=30)).strftime('%Y-%m-%d'))", explain: "datetime + timedelta(days=30) 은 30일 뒤 datetime입니다. 월이 바뀌는 것도 알아서 처리합니다. strftime으로 원하는 모양의 문자열을 만듭니다." },
+        ] },
+      { id: "pb-13-3", title: "math와 random: 계산 도구와 난수", minutes: 20, concepts: ["py.math", "py.random"],
+        quiz: [
+          { kind: "choice", q: "math.floor(-2.5) 의 결과는?", options: ["-2", "-3", "-2.5", "2"], answer: 1, explain: "floor(내림)는 수직선에서 더 작은 쪽(왼쪽)으로 갑니다. -2.5보다 작은 정수 중 가장 가까운 것은 -3입니다. 0 쪽으로 자르는 math.trunc(-2.5)는 -2입니다." },
+          { kind: "ox", q: "random.seed(42) 로 고정한 뒤 random.randint(1, 5) 를 다섯 번 뽑으면, 다시 seed(42)를 하고 뽑아도 같은 순서로 나온다.", answer: true, explain: "seed는 난수 목록의 시작 번호입니다. 번호가 같으면 같은 난수가 같은 순서로 다시 나와 결과를 재현할 수 있습니다." },
+        ] },
+      { id: "pb-13-4", title: "os: 폴더와 파일 경로 다루기", minutes: 20, concepts: ["py.os"],
+        quiz: [
+          { kind: "choice", q: "이미 있는 logs 폴더를 os.makedirs(\"logs\") 로 한 번 더 만들면 어떤 에러가 날까요?", options: ["FileNotFoundError", "FileExistsError", "PermissionError", "에러 없이 지나간다"], answer: 1, explain: "이미 있는 폴더를 또 만들려 하면 FileExistsError가 납니다. 있어도 괜찮게 하려면 os.makedirs(\"logs\", exist_ok=True) 로 씁니다." },
         ] },
     ] },
 
@@ -1279,7 +1303,7 @@ export const SECTIONS = {
     { id: "start", label: "시작하기", en: "Start", blurb: "파이썬이 무엇이고 어디서 실행하는지", courses: ["pb-00"] },
     { id: "data", label: "자료형과 자료구조", en: "Data Types", blurb: "숫자 · 문자열 · 리스트 · 딕셔너리로 값을 담고 다루기", courses: ["pb-01", "pb-02", "pb-03", "pb-04", "pb-05", "pb-06"] },
     { id: "flow", label: "제어문과 함수", en: "Control Flow", blurb: "조건 · 반복으로 흐름을 만들고 함수로 묶기", courses: ["pb-07", "pb-08", "pb-09"] },
-    { id: "practical", label: "실무 문법", en: "Practical", blurb: "파일 입출력, 컴프리헨션 · 람다, 예외 처리", courses: ["pb-10", "pb-11", "pb-12"] },
+    { id: "practical", label: "실무 문법", en: "Practical", blurb: "파일 입출력, 컴프리헨션 · 람다, 예외 처리, 표준 라이브러리", courses: ["pb-10", "pb-11", "pb-12", "pb-13"] },
   ],
   "python-da": [
     { id: "numpy", label: "NumPy", en: "NumPy", blurb: "배열로 숫자를 한꺼번에 계산하기", courses: ["da-01", "da-02"] },

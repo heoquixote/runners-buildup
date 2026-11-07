@@ -31,6 +31,11 @@ export const CONCEPTS = {
   "py.file": { name: "파일 열기 open · with", track: "python-basic" },
   "py.csv": { name: "csv 모듈", track: "python-basic" },
   "py.json": { name: "json 모듈", track: "python-basic" },
+  "py.module": { name: "모듈 · 라이브러리와 import", track: "python-basic" },
+  "py.datetime": { name: "datetime 날짜 · 시간", track: "python-basic" },
+  "py.math": { name: "math 모듈", track: "python-basic" },
+  "py.random": { name: "random 난수 · 표본 추출", track: "python-basic" },
+  "py.os": { name: "os 경로 · 폴더 다루기", track: "python-basic" },
   // 데이터 분석 · 데이터 시각화
   "np.array": { name: "NumPy 배열과 벡터 연산", track: "python-da" },
   "np.stats": { name: "기본 통계량 (sum · mean · std)", track: "python-da" },
