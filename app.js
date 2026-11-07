@@ -1025,6 +1025,7 @@ async function viewLesson(l) {
   practice.querySelectorAll("[data-reset]").forEach((b) => b.addEventListener("click", () => { const i = Number(b.dataset.reset); cells[i].cm.setValue(cells[i].starter); }));
   if (cells.length) preload();
 
+  const lc = courseById[l.course];
   // 읽기 시작 기록
   if (!state.lessons[l.id]) {
     state.lessons[l.id] = { status: "viewed", updated_at: new Date().toISOString() };
@@ -1044,11 +1045,12 @@ async function viewLesson(l) {
     quizEl.innerHTML = `<div class="quiz-actions"><span class="muted">퀴즈 없이 읽고 넘어가는 레슨입니다.</span><span class="spacer"></span><button class="btn primary" id="lq-read">다 읽었어요 · 레슨 완료</button></div>`;
     quizEl.querySelector("#lq-read").addEventListener("click", async () => {
       const now = new Date().toISOString();
+      const dayWas = courseDone(lc);
       state.lessons[l.id] = { status: "passed", quiz_score: null, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
       bumpActivity();
       doneRead();
       if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
-      try { await api.lessonSet(state.session.token, l.id, "passed"); toast(planToast(l.id) || "레슨을 완료했습니다."); }
+      try { await api.lessonSet(state.session.token, l.id, "passed"); if (!dayWas && courseDone(lc)) dayComplete(lc); else toast(planToast(l.id) || "레슨을 완료했습니다."); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     });
     return;
@@ -1078,11 +1080,12 @@ async function viewLesson(l) {
     render();
     if (ok === qs.length) {
       const was = lessonDone(l.id);
+      const dayWas = courseDone(lc);
       const now = new Date().toISOString();
       state.lessons[l.id] = { status: "passed", quiz_score: ok, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
       bumpActivity();
       if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
-      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!was) toast(planToast(l.id) || "레슨을 완료했습니다."); }
+      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!dayWas && courseDone(lc)) dayComplete(lc); else if (!was) toast(planToast(l.id) || "레슨을 완료했습니다."); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     } else {
       if (state.session) api.lessonSet(state.session.token, l.id, "viewed", ok).catch(() => {});
@@ -1336,12 +1339,13 @@ function viewQuiz(p) {
     listEl.querySelector(".quiz-q.no")?.scrollIntoView({ behavior: "smooth", block: "center" });
     try {
       const saved = await api.submit(state.session.token, p.id, JSON.stringify(answers), result);
+      const dayWas = courseDone(courseOf(p));
       const prog = (state.progress[p.id] ||= { attempts: 0, solved: false });
       prog.attempts++;
       if (result.passed && !prog.solved_at) prog.solved_at = new Date().toISOString();
       prog.solved ||= result.passed;
       bumpActivity();
-      if (saved.first_solve) celebrate(p, saved);
+      if (saved.first_solve) !dayWas && courseDone(courseOf(p)) ? dayComplete(courseOf(p), saved) : celebrate(p, saved);
       else if (result.passed) toast("모두 맞혔습니다. 이미 맞힌 퀴즈라 순위는 그대로입니다.");
     } catch (err) {
       if (err.code === "session") return logout(true);
@@ -1487,6 +1491,103 @@ function renderGrade(res, p) {
     <div class="result-body">${errorBox(res.error)}<div class="cases">${cases}</div>${out}</div>`;
 }
 
+// DAY(코스)의 필수 레슨과 연습문제를 모두 끝냈는지
+const courseDone = (c) => { if (!c) return false; const s = courseStats(c); return s.lessons + s.problems > 0 && s.lessonsDone === s.lessons && s.solved === s.problems; };
+const nextDay = (c) => { const list = coursesOf(c.track); return list.slice(list.indexOf(c) + 1).find(isReady) || null; };
+const dd = (c) => String(dayNo(c)).padStart(2, "0");
+
+function fireConfetti(big) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || typeof window.confetti !== "function") return;
+  const colors = ["#c8ff3d", "#a896ff", "#66dbff", "#61db9c", "#ffcf4a", "#f5f7f2"];
+  const fire = (ratio, opts) => window.confetti({ origin: { y: 0.65 }, zIndex: 70, colors, particleCount: Math.floor(220 * ratio), ...opts });
+  fire(0.25, { spread: 26, startVelocity: 55 });
+  fire(0.2, { spread: 60 });
+  fire(0.35, { spread: 100, decay: 0.91, scalar: 0.9 });
+  if (big) {
+    const end = Date.now() + 1400;
+    (function frame() {
+      window.confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0 }, zIndex: 70, colors });
+      window.confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1 }, zIndex: 70, colors });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+  }
+}
+
+// DAY 완료 팝업 + 만족도 조사 (1~2점이면 아쉬운 점을 묻는다)
+const RATE_WORDS = ["별로예요", "아쉬워요", "보통이에요", "좋아요", "최고예요"];
+const FEEDBACK_REASONS = ["설명이 어려워요", "분량이 많아요", "문제가 너무 어려워요", "예제가 와닿지 않아요", "오류·버그가 있어요", "기타"];
+function dayComplete(c, info) {
+  const s = courseStats(c);
+  const nc = nextDay(c);
+  const t = trackById[c.track];
+  const ncLessons = nc ? coreLessons(nc) : [];
+  const ncMin = ncLessons.reduce((a, l) => a + (lessonById[l.id]?.minutes || 0), 0);
+  const ncProbs = nc ? courseProblems(nc).length : 0;
+  const rankLine = info?.rank ? `<p class="dayend-rank">방금 푼 문제는 <b>${Math.max(info.total, info.rank)}명</b> 중 <b>${info.rank}번째</b>로 맞혔어요.</p>` : "";
+  const wrap = document.createElement("div");
+  wrap.className = "overlay";
+  wrap.innerHTML = `<div class="celebrate dayend" role="dialog" aria-modal="true" aria-labelledby="day-title">
+    <div class="dayend-badge"><i>✓</i>Day ${dd(c)} Complete</div>
+    <h2 id="day-title"><em>DAY ${dd(c)}</em> 학습이 끝났습니다!${nc ? "<br>다음 일자를 시도해볼까요?" : `<br>${esc(t?.label || "")} 트랙을 완주했어요.`}</h2>
+    <p class="dayend-sum">${esc(c.title)} · <b>레슨 ${s.lessonsDone}/${s.lessons}</b>${s.problems ? ` · <b>문제 ${s.solved}/${s.problems}</b>` : ""}</p>
+    ${rankLine}
+    ${nc ? `<div class="dayend-next"><div class="d">DAY<b>${dd(nc)}</b></div><div class="t">${esc(nc.title)}<small>레슨 ${ncLessons.length}개${ncProbs ? ` · 문제 ${ncProbs}개` : ""}${ncMin ? ` · 약 ${ncMin}분` : ""}</small></div></div>` : ""}
+    <hr>
+    <p class="dayend-q">이번 DAY는 어땠나요? <span>선택</span></p>
+    <div class="rate" role="radiogroup" aria-label="만족도">${RATE_WORDS.map((w, i) => `<button type="button" role="radio" aria-checked="false" data-score="${i + 1}"><span class="n">${i + 1}</span><span class="w">${w}</span></button>`).join("")}</div>
+    <div class="day-why" hidden>
+      <p class="day-wq">어떤 점이 아쉬웠나요?<span>여러 개 선택 가능</span></p>
+      <div class="day-chips">${FEEDBACK_REASONS.map((r) => `<button type="button" aria-pressed="false" data-reason="${esc(r)}">${esc(r)}</button>`).join("")}</div>
+      <textarea maxlength="1000" placeholder="자세히 적어 주시면 다음 DAY에 반영할게요 (선택)"></textarea>
+    </div>
+    <p class="day-thanks" hidden></p>
+    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
+  </div>`;
+  document.body.appendChild(wrap);
+  const box = wrap.querySelector(".dayend");
+  const why = box.querySelector(".day-why"), thanks = box.querySelector(".day-thanks");
+  const skip = box.querySelector("[data-skip]"), go = box.querySelector("[data-go]");
+  const goLabel = go.textContent;
+  let score = 0, sentKey = "";
+  const reasons = () => [...box.querySelectorAll("[data-reason][aria-pressed=true]")].map((b) => b.dataset.reason);
+  const comment = () => (score <= 2 ? box.querySelector("textarea").value.trim() : "");
+  const send = () => {
+    if (!score || !state.session) return Promise.resolve();
+    const rs = score <= 2 ? reasons() : [];
+    const key = JSON.stringify([score, rs, comment()]);
+    if (key === sentKey) return Promise.resolve();
+    sentKey = key;
+    return api.dayFeedback(state.session.token, c.id, score, rs, comment()).catch((err) => {
+      sentKey = "";
+      if (err.code === "session") return;
+      toast("응답을 저장하지 못했습니다. " + errorMessage(err));
+    });
+  };
+  box.querySelectorAll("[data-score]").forEach((b) => b.addEventListener("click", async () => {
+    score = Number(b.dataset.score);
+    box.querySelectorAll("[data-score]").forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.classList.toggle("low", on && score <= 2); x.setAttribute("aria-checked", String(on)); });
+    const low = score <= 2;
+    why.hidden = !low;
+    box.querySelector(".dayend-next")?.toggleAttribute("hidden", low);
+    skip.textContent = low ? "건너뛰기" : "닫기";
+    go.textContent = low ? (nc ? `보내고 DAY ${dd(nc)} 시작 →` : "보내고 트랙으로 →") : goLabel;
+    thanks.hidden = true;
+    if (low) return void send();
+    await send();
+    thanks.hidden = false;
+    thanks.textContent = "✓ 응답이 저장됐어요. 고마워요!";
+  }));
+  box.querySelectorAll("[data-reason]").forEach((b) => b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"))));
+  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
+  function onKey(e) { if (e.key === "Escape") { send(); close(); } }
+  document.addEventListener("keydown", onKey);
+  skip.addEventListener("click", () => { if (score > 2) send(); close(); });
+  go.addEventListener("click", () => { send(); close(); });
+  go.focus();
+  fireConfetti(true);
+}
+
 function celebrate(p, info) {
   const rank = info.rank;
   const total = Math.max(info.total, rank);
@@ -1512,21 +1613,7 @@ function celebrate(p, info) {
   document.addEventListener("keydown", function onKey(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", onKey); } });
   wrap.querySelector("[data-close]").focus();
 
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduce || typeof window.confetti !== "function") return;
-  const colors = ["#c8ff3d", "#a896ff", "#66dbff", "#61db9c", "#ffcf4a", "#f5f7f2"];
-  const fire = (ratio, opts) => window.confetti({ origin: { y: 0.65 }, zIndex: 70, colors, particleCount: Math.floor(220 * ratio), ...opts });
-  fire(0.25, { spread: 26, startVelocity: 55 });
-  fire(0.2, { spread: 60 });
-  fire(0.35, { spread: 100, decay: 0.91, scalar: 0.9 });
-  if (rank <= 3) {
-    const end = Date.now() + 1400;
-    (function frame() {
-      window.confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0 }, zIndex: 70, colors });
-      window.confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1 }, zIndex: 70, colors });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    })();
-  }
+  fireConfetti(rank <= 3);
 }
 
 function viewProblem(p) {
@@ -1652,13 +1739,14 @@ function viewProblem(p) {
       const result = res.timeout ? { passed: false, passed_count: 0, total_count: (p.tests || p.checks).length, cases: [] } : res;
       try {
         const saved = await api.submit(state.session.token, p.id, code, result);
+        const dayWas = courseDone(courseOf(p));
         const prog = (state.progress[p.id] ||= { attempts: 0, solved: false });
         prog.attempts++;
         if (result.passed && !prog.solved_at) prog.solved_at = new Date().toISOString();
         prog.solved ||= result.passed;
         bumpActivity();
         if (saved.first_solve) {
-          celebrate(p, saved);
+          if (!dayWas && courseDone(courseOf(p))) dayComplete(courseOf(p), saved); else celebrate(p, saved);
           if ($app.querySelector('.tab[data-tab="problem"]')?.getAttribute("aria-selected") === "true") showTab("problem");
         } else if (result.passed) toast("정답입니다. 이미 맞힌 문제라 순위는 그대로입니다.");
       } catch (err) {
@@ -1680,7 +1768,7 @@ function viewProblem(p) {
 function routeAdmin(hash) {
   if (!state.adminToken) return viewAdminLogin();
   const section = hash.split("/")[2] || "matrix";
-  const tabs = [["matrix", "회차 과제"], ["progress", "학습 현황"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
+  const tabs = [["matrix", "회차 과제"], ["progress", "학습 현황"], ["feedback", "만족도"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
   $app.innerHTML = `${topbar({ admin: true })}<main class="page wide">
     <div class="admin-bar"><nav class="admin-tabs">${tabs.map(([k, l]) => `<a href="#/admin/${k}" ${k === section ? 'aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
       <label class="group-select"><span>그룹</span><select id="group-select"><option value="">전체</option></select></label></div>
@@ -1701,6 +1789,7 @@ function routeAdmin(hash) {
     if (section === "roster") return adminRoster(body).catch(fail);
     if (section === "progress") return adminProgress(body).catch(fail);
     if (section === "stats") return adminStats(body).catch(fail);
+    if (section === "feedback") return adminFeedback(body).catch(fail);
     return adminMatrix(body).catch(fail);
   };
   api.groups(state.adminToken).then((res) => {
@@ -2083,6 +2172,56 @@ async function adminRoster(body) {
     store.set(ADMIN_KEY, null);
     toast("데모 데이터를 처음 상태로 되돌렸습니다.");
     route();
+  });
+}
+
+// 만족도: DAY 완료 팝업에서 받은 응답. DAY별 요약 + 응답 목록 (1~2점은 아쉬운 점 · 의견 포함)
+const SCORE_COLORS = ["var(--fail)", "var(--orange)", "var(--subtle)", "var(--pass)", "var(--accent)"];
+async function adminFeedback(body) {
+  const [roster, fb] = await Promise.all([api.roster(state.adminToken), api.adminDayFeedback(state.adminToken)]);
+  const students = new Map(roster.students.filter(inGroup).map((s) => [s.id, s]));
+  const rows = (fb.rows || []).filter((r) => students.has(r.student_id) && courseById[r.course_id]);
+  if (!rows.length) {
+    body.innerHTML = `<div class="panel empty-state"><b>아직 만족도 응답이 없습니다.</b>수강생이 한 DAY의 레슨과 문제를 모두 끝내면 완료 팝업에서 만족도(1~5점)를 받습니다.</div>`;
+    return;
+  }
+  const dayLabel = (c) => `${trackById[c.track]?.label || c.track} · DAY ${String(dayNo(c)).padStart(2, "0")}`;
+  const avgOf = (list) => (list.reduce((a, r) => a + r.score, 0) / list.length).toFixed(1);
+  const low = rows.filter((r) => r.score <= 2);
+  const byCourse = new Map();
+  for (const r of rows) (byCourse.get(r.course_id) || byCourse.set(r.course_id, []).get(r.course_id)).push(r);
+  const order = (id) => { const c = courseById[id]; return TRACKS.findIndex((t) => t.id === c.track) * 1000 + dayNo(c); };
+  const days = [...byCourse.entries()].sort((a, b) => order(a[0]) - order(b[0]));
+  const dist = (list) => `<div class="fb-dist" title="${[1, 2, 3, 4, 5].map((n) => `${n}점 ${list.filter((r) => r.score === n).length}명`).join(" · ")}">${[1, 2, 3, 4, 5].map((n) => { const k = list.filter((r) => r.score === n).length; return k ? `<span style="width:${(k / list.length) * 100}%;background:${SCORE_COLORS[n - 1]}"></span>` : ""; }).join("")}</div>`;
+  const scoreChip = (n) => `<span class="fb-score ${n <= 2 ? "low" : n >= 4 ? "high" : ""}">${n}</span>`;
+  let lowOnly = store.get("rb-fb-low") === true;
+  const listHtml = () => {
+    const list = lowOnly ? low : rows;
+    return list.length ? list.map((r) => { const c = courseById[r.course_id]; return `<tr><td class="muted" style="white-space:nowrap">${esc(fmtTime(r.updated_at))}</td><td>${esc(students.get(r.student_id).name)}</td><td style="white-space:nowrap"><span class="muted">${esc(dayLabel(c))}</span> ${esc(c.title)}</td><td>${scoreChip(r.score)}</td><td>${(r.reasons || []).length ? `<div class="fb-reasons">${r.reasons.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : '<span class="muted">–</span>'}</td><td class="fb-comment">${r.comment ? esc(r.comment) : '<span class="muted">–</span>'}</td></tr>`; }).join("")
+      : `<tr><td colspan="6" class="muted">1~2점 응답이 없습니다.</td></tr>`;
+  };
+  body.innerHTML = `<div style="display:grid;gap:16px">
+    <div class="kpis">
+      <div class="panel kpi"><span class="k">응답</span><span class="v">${rows.length}건</span></div>
+      <div class="panel kpi"><span class="k">평균 만족도</span><span class="v">${avgOf(rows)}</span></div>
+      <div class="panel kpi"><span class="k">1~2점 응답</span><span class="v" style="color:${low.length ? "var(--fail)" : "inherit"}">${low.length}건</span></div>
+      <div class="panel kpi"><span class="k">응답한 수강생</span><span class="v">${new Set(rows.map((r) => r.student_id)).size}명</span></div>
+    </div>
+    <h2 class="part-title" style="margin:8px 0 0">DAY별 만족도</h2>
+    <div class="panel table-scroll"><table class="stats-table"><thead><tr><th>DAY</th><th>코스</th><th class="num">응답</th><th class="num">평균</th><th>분포 (1→5점)</th><th class="num">1~2점</th></tr></thead><tbody>
+    ${days.map(([id, list]) => { const c = courseById[id], n = list.filter((r) => r.score <= 2).length; return `<tr><td class="muted" style="white-space:nowrap">${esc(dayLabel(c))}</td><td>${esc(c.title)}</td><td class="num">${list.length}</td><td class="num"><b>${avgOf(list)}</b></td><td>${dist(list)}</td><td class="num" style="${n ? "color:var(--fail);font-weight:600" : ""}">${n || "·"}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <div class="toolbar"><h2 class="part-title" style="margin:8px 0 0">응답 목록</h2><span class="spacer"></span>
+      <label class="muted" style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="fb-low" ${lowOnly ? "checked" : ""}>1~2점만 보기</label>
+      <button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
+    <div class="panel table-scroll"><table class="stats-table"><thead><tr><th>시각</th><th>이름</th><th>DAY</th><th>점수</th><th>아쉬운 점</th><th>의견</th></tr></thead><tbody id="fb-list">${listHtml()}</tbody></table></div>
+  </div>`;
+  body.querySelector("#fb-low").addEventListener("change", (e) => { lowOnly = e.target.checked; store.set("rb-fb-low", lowOnly); body.querySelector("#fb-list").innerHTML = listHtml(); });
+  body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/feedback"));
+  body.querySelector("#csv").addEventListener("click", () => {
+    const head = ["시각", "이름", "그룹", "트랙", "DAY", "코스", "점수", "아쉬운 점", "의견"];
+    const lines = rows.map((r) => { const c = courseById[r.course_id], s = students.get(r.student_id); return [fmtTime(r.updated_at), s.name, groupLabel(s.group), trackById[c.track]?.label || c.track, dayNo(c), c.title, r.score, (r.reasons || []).join(" / "), r.comment || ""]; });
+    downloadCsv("만족도.csv", [head, ...lines]);
   });
 }
 

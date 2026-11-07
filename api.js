@@ -60,6 +60,10 @@ class SupabaseApi {
     return this.call("lesson_progress_set", { p_token: token, p_lesson_id: lessonId, p_status: status, p_quiz_score: quizScore ?? null });
   }
   adminLessons(token) { return this.call("admin_lessons", { p_token: token }); }
+  dayFeedback(token, courseId, score, reasons, comment) {
+    return this.call("day_feedback_set", { p_token: token, p_course_id: courseId, p_score: score, p_reasons: reasons || [], p_comment: comment || null });
+  }
+  adminDayFeedback(token) { return this.call("admin_day_feedback", { p_token: token }); }
   adminLogin(password) { return this.call("admin_login", { p_password: password }); }
   roster(token) { return this.call("admin_roster", { p_token: token }); }
   addStudents(token, names, group) { return this.call("admin_add_students", { p_token: token, p_names: names, p_group: group || null }); }
@@ -252,6 +256,22 @@ class DemoApi {
     const db = this.load();
     this.requireAdmin(db, token);
     return { ok: true, rows: db.lessons || [] };
+  }
+  async dayFeedback(token, courseId, score, reasons, comment) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    db.feedback ||= [];
+    const now = new Date().toISOString();
+    let row = db.feedback.find((x) => x.student_id === sid && x.course_id === courseId);
+    if (!row) db.feedback.push((row = { student_id: sid, course_id: courseId, created_at: now }));
+    Object.assign(row, { score, reasons: (reasons || []).slice(0, 10), comment: (comment || "").trim().slice(0, 1000) || null, updated_at: now });
+    this.save(db);
+    return { ok: true };
+  }
+  async adminDayFeedback(token) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    return { ok: true, rows: [...(db.feedback || [])].sort((a, b) => b.updated_at.localeCompare(a.updated_at)) };
   }
   async submit(token, problemId, code, result) {
     const db = this.load();
