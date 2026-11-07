@@ -17,7 +17,8 @@ export const SQL_TABLES = [...SQL_SEEDS.flatMap((s) => s.tables), "titanic"];
 const PY = String.raw`
 def _rb_sql(src, seeds, titanic, max_rows):
     import csv, json, sqlite3
-    db = sqlite3.connect(":memory:")
+    # 자동 커밋 모드: 문장마다 바로 반영하고, BEGIN · COMMIT · ROLLBACK 은 학생이 쓴 그대로 동작한다 (DBeaver 기본값과 같음)
+    db = sqlite3.connect(":memory:", isolation_level=None)
     for f in seeds:
         with open(f, encoding="utf-8") as fh:
             db.executescript(fh.read())
@@ -85,6 +86,13 @@ const HINTS = [
   [/ambiguous column name: (\S+)/i, (m) => `${m[1]} 열이 두 테이블에 다 있습니다. e.${m[1]}처럼 테이블 별칭을 앞에 붙이세요.`],
   [/syntax error/i, () => "문법 오류입니다. 쉼표(,) 빠짐 · 따옴표 짝 · 절 순서(SELECT → FROM → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT)를 확인하세요."],
   [/incomplete input/i, () => "문장이 끝나지 않았습니다. 괄호나 따옴표가 닫혔는지 확인하세요."],
+  [/NOT NULL constraint failed: (\S+)/i, (m) => `${m[1]} 열은 비워 둘 수 없습니다(NOT NULL). 값을 넣어 주세요.`],
+  [/UNIQUE constraint failed: (\S+)/i, (m) => `${m[1]}에 이미 같은 값이 있습니다. 기본키(PRIMARY KEY) · UNIQUE 열은 값이 겹치면 안 됩니다.`],
+  [/FOREIGN KEY constraint failed/i, () => "외래키 규칙에 걸렸습니다. 참조하는 표에 없는 값을 넣었거나, 다른 행이 가리키고 있는 행을 지우려고 했습니다."],
+  [/CHECK constraint failed/i, () => "CHECK 제약조건에 걸렸습니다. 이 열에 허용된 범위 밖의 값입니다."],
+  [/cannot store (\w+) value in (\w+) column/i, (m) => `STRICT 표라서 ${m[2]} 열에 ${m[1]} 값을 넣을 수 없습니다. 자료형을 맞춰 주세요.`],
+  [/table (\S+) already exists/i, (m) => `${m[1]} 테이블이 이미 있습니다. 실습 데이터 테이블(${SQL_TABLES.join(", ")})과 같은 이름은 쓰지 말고, 필요하면 CREATE TABLE IF NOT EXISTS를 씁니다.`],
+  [/cannot (start|commit|rollback)[a-z ]*transaction/i, () => "트랜잭션 순서를 확인하세요. BEGIN 다음에 COMMIT 또는 ROLLBACK을 한 번만 씁니다."],
   [/SELECTs to the left and right of (UNION|INTERSECT|EXCEPT)/i, () => "UNION으로 붙이는 두 SELECT는 열 개수가 같아야 합니다."],
 ];
 export function sqlHint(message) {

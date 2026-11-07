@@ -10,7 +10,7 @@ export const TRACKS = [
   { id: "python-viz", label: "데이터 시각화", en: "Visualization", color: "rose", ready: true,
     blurb: "matplotlib · seaborn으로 데이터를 그리고 읽습니다." },
   { id: "sql", label: "SQL", en: "SQL", color: "lime", ready: true,
-    blurb: "SELECT부터 윈도우 함수 · 리텐션 분석까지. 브라우저 안의 SQLite로 바로 실행합니다." },
+    blurb: "SELECT부터 윈도우 함수 · 리텐션 분석, 데이터베이스 설계(모델링 · 정규화 · 트랜잭션 · 인덱스)까지. 브라우저 안의 SQLite로 바로 실행합니다." },
   { id: "stats", label: "통계", en: "Statistics", color: "amber", ready: true,
     blurb: "기술통계 · 분포 · 검정 · 회귀. 시뮬레이션으로 직관을 만듭니다." },
   { id: "ml", label: "머신러닝", en: "Machine Learning", color: "green", ready: true,
@@ -597,7 +597,7 @@ export const COURSES = [
         { kind: "write", lang: "sql", q: "CASE를 써서 연봉(sal)이 10000 이상이면 '고급여', 6000 이상이면 '중간', 나머지는 '기본'으로 등급을 붙이고, 사원 이름(ename_ko)과 등급을 조회하는 SQL을 작성하세요.", given: "SELECT ename_ko,\n       CASE\n       END AS grade\nFROM emp;", must: ["CASE"], solution: "SELECT ename_ko,\n       CASE\n           WHEN sal >= 10000 THEN '고급여'\n           WHEN sal >= 6000 THEN '중간'\n           ELSE '기본'\n       END AS grade\nFROM emp;", explain: "큰 값(좁은 조건)부터 씁니다. 6000 이상을 먼저 쓰면 10000 이상도 모두 '중간'이 됩니다." },
         { kind: "ox", q: "CASE는 WHEN 조건을 모두 확인한 뒤, 마지막으로 맞은 조건의 값을 고른다.", answer: false, explain: "위에서부터 확인하다가 처음 맞는 조건에서 멈춥니다. 그래서 조건 순서가 결과를 바꿉니다." },
       ] }] },
-  { id: "sq-04", track: "sql", title: "JOIN", summary: "INNER · LEFT JOIN, 짝 없는 행 찾기, 키 중복, SELF JOIN, UNION", level: "기본",
+  { id: "sq-04", track: "sql", title: "JOIN", summary: "INNER · LEFT JOIN, 짝 없는 행 찾기, 키 중복, SELF JOIN, UNION · INTERSECT · EXCEPT", level: "기본",
     concepts: ["sql.join"],
     lessons: [{ id: "sq-04-1", title: "흩어진 표를 키로 잇기", minutes: 25, concepts: ["sql.join"],
       quiz: [
@@ -605,7 +605,7 @@ export const COURSES = [
         { kind: "choice", q: "고객 256명(users)과 주문 372건(orders)이 있고, 주문이 한 건도 없는 고객이 64명이다. users LEFT JOIN orders 의 결과는 몇 행일까?", options: ["256행", "372행", "436행", "95,232행"], answer: 2, explain: "주문이 있는 고객은 주문 수만큼(372행), 주문이 없는 고객 64명은 NULL을 채운 1행씩 남습니다. 372 + 64 = 436." },
         { kind: "ox", q: "UNION은 붙인 결과에서 중복 행을 지우고, UNION ALL은 지우지 않는다.", answer: true, explain: "중복을 지우는 만큼 UNION이 더 느립니다. 중복이 없거나 지울 필요가 없으면 UNION ALL." },
       ] }] },
-  { id: "sq-05", track: "sql", title: "서브쿼리와 CTE", summary: "WHERE · SELECT · FROM 안의 서브쿼리, IN, 상관 서브쿼리, WITH", level: "기본",
+  { id: "sq-05", track: "sql", title: "서브쿼리와 CTE", summary: "WHERE · SELECT · FROM 안의 서브쿼리, IN, EXISTS · NOT EXISTS, 상관 서브쿼리, WITH", level: "기본",
     concepts: ["sql.subquery"],
     lessons: [{ id: "sq-05-1", title: "쿼리 안의 쿼리, 이름 붙인 중간 결과", minutes: 22, concepts: ["sql.subquery"],
       quiz: [
@@ -626,6 +626,51 @@ export const COURSES = [
         { kind: "choice", q: "'장바구니 → 구매' 전환율을 계산할 때 분모는?", options: ["방문(visit) 세션 수", "상품 보기(view) 세션 수", "장바구니(cart) 세션 수", "구매(purchase) 세션 수"], answer: 2, explain: "단계 전환율 = 이번 단계 ÷ 바로 앞 단계. 장바구니에 담은 세션 중 몇 %가 샀는지이므로 분모는 장바구니 세션 수입니다." },
         { kind: "ox", q: "코호트 표에서 아직 관측하지 못한 달(예: 6월 가입자의 2개월째)은 0으로 채워야 한다.", answer: false, explain: "아직 오지 않은 달은 0이 아니라 '모름(NULL)'입니다. 0으로 채우면 아무도 다시 사지 않았다는 틀린 결론이 나옵니다." },
       ] }] },
+  // 데이터베이스 설계 구역 (2026-11-07 추가). 셀 안에서 CREATE TABLE로 작은 표를 직접 만든다. 기획안: docs/lesson-plans/sql.md PART 6
+  { id: "sq-09", track: "sql", title: "데이터 모델링", summary: "개념 · 논리 · 물리 모델, 엔터티 · 속성 · 관계, ERD 표기, 카디널리티, N:M 연결 테이블, 키의 종류", level: "기본",
+    concepts: ["sql.modeling"],
+    lessons: [
+      { id: "sq-09-1", title: "설계도부터 그리기: 개념 · 논리 · 물리 모델", minutes: 15, concepts: ["sql.modeling"] },
+      { id: "sq-09-2", title: "ERD 읽기: 관계 · 카디널리티 · 키", minutes: 20, concepts: ["sql.modeling"],
+        quiz: [
+          { kind: "choice", q: "고객 한 명은 주문을 여러 번 할 수 있고, 주문 한 건은 고객 한 명의 것이다. 고객 번호(외래키)는 어느 표에 두어야 할까?", options: ["고객 표", "주문 표", "두 표 모두", "새 연결 테이블"], answer: 1, explain: "고객 : 주문 = 1 : N입니다. 외래키는 N쪽(주문 표)에 둡니다. 주문 한 건에는 고객이 하나뿐이라 칸 하나면 충분합니다." },
+          { kind: "choice", q: "학생은 여러 동아리에 가입할 수 있고, 동아리에도 여러 학생이 있다. 이 관계를 표로 만드는 방법은?", options: ["학생 표에 동아리 번호 열을 하나 추가한다", "동아리 표에 학생 번호 열을 하나 추가한다", "학생 번호와 동아리 번호를 담는 가입 표(연결 테이블)를 만든다", "한 칸에 동아리 번호를 쉼표로 이어 적는다"], answer: 2, explain: "N:M 관계는 연결 테이블로 1:N 두 개로 풉니다. 쉼표로 여러 값을 적으면 1NF 위반입니다." },
+          { kind: "ox", q: "학생 표에서 {학번, 이름}은 행을 하나로 집을 수 있으므로 후보키다.", answer: false, explain: "학번만으로도 유일하므로 이름은 군더더기입니다. 최소성이 없어 슈퍼키이지 후보키가 아닙니다." },
+        ] },
+    ] },
+  { id: "sq-10", track: "sql", title: "정규화와 반정규화", summary: "삽입 · 갱신 · 삭제 이상, 함수 종속, 1NF · 2NF · 3NF · BCNF, 반정규화 기법, OLTP vs OLAP, 스타 스키마", level: "기본",
+    concepts: ["sql.normalization"],
+    lessons: [
+      { id: "sq-10-1", title: "한 사실은 한 곳에: 이상 현상과 정규화", minutes: 25, concepts: ["sql.normalization"] },
+      { id: "sq-10-2", title: "일부러 합치기: 반정규화와 분석용 테이블", minutes: 20, concepts: ["sql.normalization"],
+        quiz: [
+          { kind: "choice", q: "기본키가 (학번, 과목 코드)인 수강 표에 학생 이름이 함께 들어 있다. 학생 이름은 학번만 알면 정해진다. 이 열을 떼어 내는 정규화 단계는?", options: ["1NF", "2NF", "3NF", "BCNF"], answer: 1, explain: "기본키의 일부(학번)에만 기대는 부분 종속입니다. 부분 종속을 없애는 것이 2NF입니다." },
+          { kind: "choice", q: "과목 담당 교수가 바뀌어 여러 줄 중 일부만 고쳤더니, 같은 과목에 교수가 둘이 되었다. 이 현상은?", options: ["삽입 이상", "갱신 이상", "삭제 이상", "무손실 분해"], answer: 1, explain: "같은 사실이 여러 줄에 중복되어, 고칠 때 일부를 빠뜨려 모순이 생긴 갱신 이상입니다." },
+          { kind: "ox", q: "반정규화는 처음 설계할 때부터 JOIN을 줄이기 위해 적극적으로 적용하는 것이 좋다.", answer: false, explain: "정규화를 먼저 하고, 실제로 느린 쿼리를 측정한 뒤 꼭 필요한 곳만 반정규화합니다. 중복 데이터를 맞출 규칙도 함께 정합니다." },
+        ] },
+    ] },
+  { id: "sq-11", track: "sql", title: "테이블 만들고 고치기", summary: "DDL · DML · DCL · TCL, CREATE · ALTER · DROP, 자료형, 제약조건과 무결성, INSERT · UPDATE · DELETE", level: "기본",
+    concepts: ["sql.ddl-dml"],
+    lessons: [
+      { id: "sq-11-1", title: "테이블 만들기: 자료형과 제약조건", minutes: 25, concepts: ["sql.ddl-dml"] },
+      { id: "sq-11-2", title: "데이터 넣고 고치고 지우기", minutes: 18, concepts: ["sql.ddl-dml"],
+        quiz: [
+          { kind: "write", lang: "sql", q: "아산공장(deptno 40) 사원의 연봉(sal)을 500 올린 뒤, 40번 부서 사원의 이름(ename_ko)과 연봉을 조회하는 SQL을 작성하세요.", given: "UPDATE emp\nSET \nWHERE deptno = 40;\n\nSELECT ename_ko, sal\nFROM emp\nWHERE deptno = 40;", must: ["UPDATE"], solution: "UPDATE emp\nSET sal = sal + 500\nWHERE deptno = 40;\n\nSELECT ename_ko, sal\nFROM emp\nWHERE deptno = 40;", explain: "SET sal = sal + 500처럼 지금 값으로 계산해 고칩니다. WHERE deptno = 40이 없으면 전 직원의 연봉이 오릅니다. 이주영 6000 → 6500." },
+          { kind: "choice", q: "DELETE FROM emp; 를 실행하면?", options: ["emp 표가 통째로 사라진다", "emp의 모든 행이 지워지고 표 구조는 남는다", "WHERE가 없어서 오류가 난다", "첫 번째 행만 지워진다"], answer: 1, explain: "WHERE가 없으면 모든 행이 대상입니다. 표 구조까지 지우는 것은 DROP TABLE입니다." },
+          { kind: "choice", q: "학년(grade) 열에 1, 2, 3만 들어오게 하려면 어떤 제약조건을 쓸까?", options: ["NOT NULL", "UNIQUE", "CHECK", "DEFAULT"], answer: 2, explain: "CHECK (grade BETWEEN 1 AND 3)처럼 허용할 값의 조건을 적습니다. 이런 규칙이 지키는 것을 도메인 무결성이라고 합니다." },
+        ] },
+    ] },
+  { id: "sq-12", track: "sql", title: "트랜잭션 · 인덱스 · 뷰", summary: "BEGIN · COMMIT · ROLLBACK, ACID, 잠금, B-Tree 인덱스, 실행 계획, 인덱스를 못 쓰는 조건, 뷰", level: "실무",
+    concepts: ["sql.tx-index"],
+    lessons: [
+      { id: "sq-12-1", title: "모두 되거나, 모두 안 되거나: 트랜잭션", minutes: 18, concepts: ["sql.tx-index"] },
+      { id: "sq-12-2", title: "빨리 찾고, 이름 붙여 두기: 인덱스와 뷰", minutes: 22, concepts: ["sql.tx-index"],
+        quiz: [
+          { kind: "choice", q: "BEGIN 뒤에 UPDATE 두 개를 실행하고 ROLLBACK 했다. 결과는?", options: ["두 UPDATE 모두 반영된다", "첫 번째 UPDATE만 반영된다", "두 UPDATE 모두 취소되어 BEGIN 전 상태가 된다", "마지막 UPDATE만 취소된다"], answer: 2, explain: "ROLLBACK은 BEGIN 이후의 변경을 모두 취소합니다. 전부 되거나 전부 안 되는 원자성입니다." },
+          { kind: "choice", q: "orders의 order_date 열에 인덱스가 있다. 다음 중 인덱스를 쓰지 못하는 조건은?", options: ["WHERE order_date = '2025-07-01'", "WHERE order_date >= '2025-07-01'", "WHERE substr(order_date, 1, 4) = '2025'", "WHERE order_date BETWEEN '2025-07-01' AND '2025-07-31'"], answer: 2, explain: "열을 함수로 감싸면 정렬된 인덱스를 쓸 수 없어 전체 스캔이 됩니다. order_date >= '2025-01-01' AND order_date < '2026-01-01'처럼 범위로 씁니다." },
+          { kind: "ox", q: "인덱스는 검색을 빠르게 하므로 모든 열에 만들어 두는 것이 좋다.", answer: false, explain: "인덱스는 저장 공간을 쓰고, INSERT · UPDATE · DELETE 때마다 함께 고쳐야 해서 쓰기가 느려집니다. 자주 쓰는 느린 쿼리의 열에만 만듭니다." },
+        ] },
+    ] },
 
   // ── 통계 ─────────────────────────────────────────────────
   // 코스 · 레슨 id는 유지하고 레슨을 나눴다(2026-11-05). DAY 번호는 아래 배열 순서로 정해진다. 기획안: docs/lesson-plans/stats.md
@@ -1253,6 +1298,7 @@ export const SECTIONS = {
     { id: "aggregate", label: "집계와 변환", en: "Aggregation", blurb: "묶어서 세고 더하기, 값을 바꾸고 구간 나누기", courses: ["sq-03", "sq-06"] },
     { id: "tables", label: "여러 표 다루기", en: "Joins", blurb: "표를 이어 붙이고, 쿼리 안에 쿼리 넣기", courses: ["sq-04", "sq-05"] },
     { id: "analysis", label: "분석 쿼리", en: "Analytics", blurb: "윈도우 함수와 KPI · 퍼널 · 리텐션", courses: ["sq-07", "sq-08"] },
+    { id: "design", label: "데이터베이스 설계", en: "Database Design", blurb: "표를 설계하고 나누고, 만들고, 안전하게 바꾸고, 빨리 찾기", courses: ["sq-09", "sq-10", "sq-11", "sq-12"] },
   ],
   stats: [
     { id: "start", label: "시작하기", en: "Start", blurb: "통계가 하는 일과 기본 용어", courses: ["st-00"] },
