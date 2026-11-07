@@ -96,13 +96,17 @@ export const CONCEPTS = {
   "ml.nb": { name: "나이브 베이즈", track: "ml" },
   "ml.svm": { name: "SVM", track: "ml" },
   // 딥러닝
+  "dl.intro": { name: "딥러닝 시작하기", track: "dl" },
   "dl.perceptron": { name: "퍼셉트론과 활성화 함수", track: "dl" },
   "dl.loss": { name: "손실함수와 경사하강법", track: "dl" },
+  "dl.optimizer": { name: "옵티마이저 (모멘텀 · Adam)", track: "dl" },
   "dl.backprop": { name: "순전파와 역전파", track: "dl" },
   "dl.mlp": { name: "MLP 학습과 과적합", track: "dl" },
   "dl.cnn": { name: "CNN 합성곱과 풀링", track: "dl" },
   "dl.rnn": { name: "RNN과 시퀀스", track: "dl" },
   "dl.attention": { name: "임베딩과 어텐션", track: "dl" },
+  "dl.generative": { name: "오토인코더와 생성 모델", track: "dl" },
+  "dl.transfer": { name: "전이 학습과 딥러닝 실무", track: "dl" },
 };
 
 export const conceptName = (id) => CONCEPTS[id]?.name || id;
