@@ -86,6 +86,8 @@ export const CONCEPTS = {
   "st.regression": { name: "상관과 회귀", track: "stats" },
   "st.abtest": { name: "A/B 테스트", track: "stats" },
   "st.causal": { name: "상관과 인과 · 결과 보고", track: "stats" },
+  "st.spc": { name: "관리도와 공정능력 (SPC)", track: "stats" },
+  "st.tests": { name: "여러 가지 검정 (비율 · 분산 · 정규성 · 이원 ANOVA · 대응 · 다중비교 · 상관)", track: "stats" },
   // 머신러닝
   "ml.intro": { name: "머신러닝이란", track: "ml" },
   "ml.workflow": { name: "ML 워크플로와 데이터 분할", track: "ml" },
@@ -112,6 +114,11 @@ export const CONCEPTS = {
   "ml.anomaly": { name: "이상 탐지", track: "ml" },
   "ml.shap": { name: "SHAP 값", track: "ml" },
   "ml.deploy": { name: "모델 저장 · 드리프트 · 프로젝트", track: "ml" },
+  "ml.logistic": { name: "로지스틱 회귀", track: "ml" },
+  "ml.multiclass": { name: "다중 분류 · 소프트맥스", track: "ml" },
+  "ml.boosting": { name: "그래디언트 부스팅 · XGBoost · LightGBM", track: "ml" },
+  "ml.gmm": { name: "가우시안 혼합 (GMM)", track: "ml" },
+  "ml.tsne": { name: "t-SNE", track: "ml" },
   // 딥러닝
   "dl.intro": { name: "딥러닝 시작하기", track: "dl" },
   "dl.perceptron": { name: "퍼셉트론과 활성화 함수", track: "dl" },
