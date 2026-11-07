@@ -881,6 +881,283 @@ def _():
     return svg(640, 300, b, "엘보 방법: inertia가 꺾이는 k 찾기")
 
 
+# ---------------- 2026-11-07 빠진 개념 추가 ----------------
+@fig("ml02-ridge-lasso")
+def _():
+    b = []
+    base = [6.0, -4.0, 3.0, 1.5, -0.8]
+    ridge = [[v * f for v in base] for f in (1.0, 0.65, 0.35)]
+    def soft(v, t):
+        return 0.0 if abs(v) <= t else (abs(v) - t) * (1 if v > 0 else -1)
+    lasso = [[soft(v, t) for v in base] for t in (0.0, 1.2, 2.6)]
+    alphas = ["alpha 작음", "alpha 중간", "alpha 큼"]
+    for row, (name, data, color, note) in enumerate([("Ridge", ridge, CYAN, "모두 조금씩 줄어든다"), ("Lasso", lasso, ACC, "작은 계수부터 0이 된다")]):
+        y0 = 20 + row * 170
+        b.append(text(20, y0 + 12, name, 16, color, "start", 700))
+        b.append(text(110, y0 + 12, note, 13, INK2, "start"))
+        for k, coefs in enumerate(data):
+            x0 = 30 + k * 250
+            zy = y0 + 95
+            b.append(rect(x0, y0 + 30, 220, 130, SURF, LINE2, 8))
+            b.append(line(x0 + 15, zy, x0 + 205, zy, LINE2, 1.2))
+            for i, v in enumerate(coefs):
+                bx = x0 + 28 + i * 36
+                h = v * 9
+                if abs(v) < 1e-9:
+                    b.append(text(bx + 11, zy - 8, "0", 12, FAIL, weight=700, mono=True))
+                    continue
+                top = zy - h if h > 0 else zy
+                b.append(rect(bx, top, 22, abs(h), color, "none", 2, op=0.85))
+            b.append(text(x0 + 110, y0 + 148, alphas[k], 12, MUTED))
+        b.append(arrow(30 + 220 + 6, y0 + 95, 30 + 250 - 6, y0 + 95, MUTED, 1.4))
+        b.append(arrow(30 + 470 + 6, y0 + 95, 30 + 500 - 6, y0 + 95, MUTED, 1.4))
+    return svg(780, 360, b, "alpha를 키울 때 Ridge와 Lasso의 계수 변화")
+
+
+@fig("ml05-timesplit")
+def _():
+    b = []
+    n, cw, ch = 12, 46, 22
+    def panel(y0, title, color, folds):
+        b.append(text(20, y0, title, 15, color, "start", 700))
+        for f, cells in enumerate(folds):
+            yy = y0 + 18 + f * (ch + 6)
+            b.append(text(20, yy + ch / 2, f"{f + 1}회", 12, MUTED, "start"))
+            for i in range(n):
+                kind = cells[i]
+                fill = {"tr": CYAN, "te": ORANGE, "no": SURF3}[kind]
+                op = {"tr": 0.55, "te": 0.9, "no": 1}[kind]
+                b.append(rect(60 + i * cw, yy, cw - 4, ch, fill, LINE2 if kind == "no" else "none", 4, op=op))
+    order = [3, 8, 0, 11, 5, 9, 1, 6, 10, 2, 7, 4]
+    shuffled = []
+    for f in range(4):
+        test = set(order[f * 3:(f + 1) * 3])
+        shuffled.append(["te" if i in test else "tr" for i in range(n)])
+    panel(24, "섞은 K-fold: 시험 칸이 여기저기 → 미래 데이터로 과거를 맞히게 됨", FAIL, shuffled)
+    ts = []
+    for f in range(4):
+        end = 4 + f * 2
+        ts.append(["tr" if i < end else "te" if i < end + 2 else "no" for i in range(n)])
+    panel(180, "TimeSeriesSplit: 언제나 앞부분으로 학습 → 바로 뒤로 시험", PASS, ts)
+    for i in range(0, n, 2):
+        b.append(text(60 + i * cw + cw / 2, 316, f"{1949 + i}", 11, MUTED, mono=True))
+    b.append(text(610, 336, "시간 →", 12, MUTED))
+    b.append(rect(60, 330, 14, 12, CYAN, "none", 3, op=0.55))
+    b.append(text(80, 336, "학습", 12, INK2, "start"))
+    b.append(rect(130, 330, 14, 12, ORANGE, "none", 3, op=0.9))
+    b.append(text(150, 336, "시험", 12, INK2, "start"))
+    b.append(rect(200, 330, 14, 12, SURF3, LINE2, 3))
+    b.append(text(220, 336, "아직 안 씀", 12, INK2, "start"))
+    return svg(640, 352, b, "섞은 K-fold와 TimeSeriesSplit 비교")
+
+
+@fig("ml06-selection")
+def _():
+    b = []
+    cols = [("Filter (거르기)", CYAN, 20), ("Wrapper (감싸기)", ORANGE, 270), ("Embedded (내장)", ACC, 520)]
+    for title, color, x0 in cols:
+        b.append(rect(x0, 14, 230, 250, SURF, color, 10, 1.4))
+        b.append(text(x0 + 115, 36, title, 15, color, weight=700))
+    # filter: score bars
+    scores = [0.9, 0.82, 0.75, 0.4, 0.2, 0.1]
+    for i, sc in enumerate(scores):
+        y = 62 + i * 24
+        b.append(text(36, y + 8, f"열{i + 1}", 12, INK2, "start"))
+        b.append(rect(76, y, 150 * sc, 16, CYAN, "none", 3, op=0.85 if i < 3 else 0.25))
+    b.append(text(135, 214, "열마다 정답과의 점수 → 상위 k개", 12, INK2))
+    b.append(text(135, 240, "빠름 · 겹치는 열도 모두 뽑음", 12, MUTED))
+    # wrapper: loop
+    b.append(box(300, 66, 170, 34, "모델 학습", stroke=ORANGE, color=INK, size=13))
+    b.append(box(300, 128, 170, 34, "가장 약한 열 빼기", stroke=ORANGE, color=INK, size=13))
+    b.append(arrow(385, 100, 385, 126, ORANGE, 1.6))
+    b.append(path("M300,145 C268,145 268,83 298,83", ORANGE, 1.6))
+    b.append(text(385, 180, "원하는 개수가 될 때까지 반복", 12, INK2))
+    b.append(text(385, 214, "예: RFE", 12, INK2, mono=True))
+    b.append(text(385, 240, "조합을 봄 · 여러 번 학습해 느림", 12, MUTED))
+    # embedded: coefficients
+    coefs = [("열1", 0.8), ("열2", 0.0), ("열3", 0.5), ("열4", 0.0), ("열5", 0.3)]
+    for i, (nm, v) in enumerate(coefs):
+        y = 62 + i * 26
+        b.append(text(538, y + 8, nm, 12, INK2, "start"))
+        if v == 0:
+            b.append(text(590, y + 8, "계수 0 → 탈락", 12, FAIL, "start", 700))
+        else:
+            b.append(rect(580, y, 150 * v, 16, ACC, "none", 3, op=0.8))
+    b.append(text(635, 214, "학습하면서 모델이 스스로", 12, INK2))
+    b.append(text(635, 240, "예: Lasso · 트리 중요도", 12, MUTED))
+    return svg(770, 280, b, "피처 셀렉션의 세 방식: Filter, Wrapper, Embedded")
+
+
+@fig("ml06-vif")
+def _():
+    b = []
+    px = lambda r2: 70 + r2 * 560
+    py = lambda v: 250 - min(v, 22) / 22 * 210
+    b.append(rect(px(0.8), 40, px(0.9) - px(0.8), 210, WARN, "none", 0, op=0.08))
+    b.append(rect(px(0.9), 40, px(0.96) - px(0.9), 210, FAIL, "none", 0, op=0.10))
+    b.append(text((px(0.8) + px(0.9)) / 2, 52, "주의", 12, WARN, weight=700))
+    b.append(text((px(0.9) + px(0.96)) / 2, 52, "심함", 12, FAIL, weight=700))
+    b.append(line(px(0), 250, px(1), 250, LINE2, 1.4))
+    b.append(line(px(0), 40, px(0), 250, LINE2, 1.4))
+    pts = [i / 100 for i in range(0, 96)]
+    b.append(path("M" + " L".join(f"{px(r):.1f},{py(1 / (1 - r)):.1f}" for r in pts), CYAN, 2.6))
+    for r, v in [(0, 1), (0.5, 2), (0.8, 5), (0.9, 10)]:
+        b.append(circle(px(r), py(v), 6, ACC, INK, 1.6))
+        b.append(text(px(r) - 10, py(v) - 18, f"R² {r} → VIF {v}", 12, ACC, "end" if r > 0.3 else "start", 700))
+    for r in [0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+        b.append(text(px(r), 266, str(r), 12, MUTED, mono=True))
+    b.append(text(px(0.5), 290, "R² (나머지 열들로 이 열을 맞히는 정도)", 13, MUTED))
+    for v in [1, 5, 10, 20]:
+        b.append(text(px(0) - 10, py(v), str(v), 12, MUTED, "end", mono=True))
+    b.append(text(px(0) + 6, 28, "VIF = 1 / (1 − R²)", 13, INK2, "start", mono=True))
+    return svg(680, 300, b, "R²와 VIF의 관계")
+
+
+@fig("ml07-isolation")
+def _():
+    b = []
+    rnd = pseudo(120, 7)
+    pts = []
+    for i in range(40):
+        a, r = rnd[2 * i] * 6.283, rnd[2 * i + 1] ** 0.5 * 60
+        pts.append((140 + r * math.cos(a), 150 + r * math.sin(a) * 0.8))
+    for k, (x0, title, color) in enumerate([(0, "외딴 점: 2번 만에 혼자", FAIL), (380, "무리 속 점: 6번 잘라야 혼자", CYAN)]):
+        b.append(rect(x0 + 10, 30, 340, 250, SURF, LINE2, 10))
+        b.append(text(x0 + 180, 16, title, 15, color, weight=700))
+        for (x, y) in pts:
+            b.append(circle(x0 + x, y, 4, INK2, op=0.7))
+    # left: outlier at (300, 70)
+    b.append(circle(300, 70, 7, FAIL, INK, 1.5))
+    b.append(line(250, 30, 250, 280, ORANGE, 2, "6 4"))
+    b.append(text(256, 268, "①", 13, ORANGE, "start", 700))
+    b.append(line(250, 110, 350, 110, ORANGE, 2, "6 4"))
+    b.append(text(340, 122, "②", 13, ORANGE, "end", 700))
+    # right: normal point at center
+    cx, cy = 380 + 140, 150
+    b.append(circle(cx, cy, 7, CYAN, INK, 1.5))
+    cuts = [(cx + 30, 30, cx + 30, 280), (390, cy + 40, cx + 30, cy + 40), (cx - 40, 30, cx - 40, cy + 40),
+            (cx - 40, cy - 30, cx + 30, cy - 30), (cx + 12, cy - 30, cx + 12, cy + 40), (cx - 40, cy + 14, cx + 12, cy + 14)]
+    for i, (x1, y1, x2, y2) in enumerate(cuts):
+        b.append(line(x1, y1, x2, y2, ORANGE, 1.8, "6 4"))
+    b.append(text(380 + 330, 268, "자르기 6번", 13, ORANGE, "end", 700))
+    return svg(740, 292, b, "IsolationForest: 외딴 점은 적게 잘라도 혼자 남는다")
+
+
+@fig("ml09-shap-waterfall")
+def _():
+    b = []
+    steps = [("torque = 65.1", 0.672), ("tool_wear = 212", 0.186), ("rpm = 1299", 0.041), ("process_temp = 309.3", 0.012), ("air_temp = 299.8", -0.026)]
+    base, final = 0.043, 0.928
+    px = lambda v: 210 + v * 470
+    rows = [("기본값 (평균 예측)", None)] + steps + [("모델 예측", None)]
+    cur = base
+    for i, (label, v) in enumerate(rows):
+        y = 26 + i * 36
+        b.append(text(196, y + 12, label, 13, INK2, "end", mono=(v is not None)))
+        if i == 0:
+            b.append(rect(px(0), y, px(base) - px(0), 24, MUTED, "none", 3, op=0.6))
+            b.append(text(px(base) + 8, y + 12, f"{base:.3f}", 13, INK, "start", 700, mono=True))
+        elif v is None:
+            b.append(rect(px(0), y, px(final) - px(0), 24, ACC, "none", 3, op=0.85))
+            b.append(text(px(final) + 8, y + 12, f"{final:.3f}", 13, ACC, "start", 700, mono=True))
+        else:
+            lo, hi = sorted([cur, cur + v])
+            color = FAIL if v > 0 else CYAN
+            b.append(rect(px(lo), y, max(px(hi) - px(lo), 2), 24, color, "none", 3, op=0.85))
+            lx = px(hi) + 8
+            b.append(text(lx, y + 12, f"{v:+.3f}", 13, color, "start", 700, mono=True))
+            b.append(line(px(cur + v), y + 24, px(cur + v), y + 36, LINE2, 1, "3 3"))
+            cur += v
+    yb = 26 + len(rows) * 36 + 4
+    b.append(line(px(0), yb, px(1), yb, LINE2, 1.2))
+    for t in [0, 0.25, 0.5, 0.75, 1.0]:
+        b.append(text(px(t), yb + 14, str(t), 12, MUTED, mono=True))
+    b.append(text(px(0.5), yb + 34, "고장 확률", 13, MUTED))
+    return svg(760, yb + 46, b, "설비 2761번의 SHAP 폭포 그림")
+
+
+@fig("ml11-drift")
+def _():
+    import csv
+    path_csv = os.path.join(os.path.dirname(__file__), "..", "datasets", "ai4i2020.csv")
+    with open(path_csv, encoding="utf-8") as fh:
+        temps = [float(r["air_temp"]) for r in csv.DictReader(fh)]
+    train, hot = temps[:4000], temps[4000:6000]
+    lo, hi = 295, 305
+    bins = [lo + i * 0.5 for i in range(21)]
+    def hist(v):
+        c = [0] * 20
+        for x in v:
+            k = min(max(int((x - lo) / 0.5), 0), 19)
+            c[k] += 1
+        return [x / len(v) for x in c]
+    def cdf(v, x):
+        return sum(1 for t in v if t <= x) / len(v)
+    b = []
+    # left: histogram
+    ox, oy, w, h = 40, 40, 300, 200
+    b.append(text(ox, 22, "공기 온도 분포", 14, INK, "start", 700))
+    ht, hh = hist(train), hist(hot)
+    m = max(ht + hh)
+    for i in range(20):
+        x = ox + i * w / 20
+        for vals, color in [(ht, CYAN), (hh, ORANGE)]:
+            bh = vals[i] / m * h
+            b.append(rect(x + 1, oy + h - bh, w / 20 - 2, bh, color, "none", 1, op=0.45))
+    b.append(line(ox, oy + h, ox + w, oy + h, LINE2, 1.2))
+    for t in [295, 300, 305]:
+        b.append(text(ox + (t - lo) / (hi - lo) * w, oy + h + 14, f"{t}K", 11, MUTED, mono=True))
+    b.append(rect(ox, oy + h + 30, 12, 12, CYAN, "none", 2, op=0.6))
+    b.append(text(ox + 18, oy + h + 36, "학습 구간 (0~3999행)", 12, INK2, "start"))
+    b.append(rect(ox + 170, oy + h + 30, 12, 12, ORANGE, "none", 2, op=0.8))
+    b.append(text(ox + 188, oy + h + 36, "더운 구간", 12, INK2, "start"))
+    # right: CDF
+    ox2 = 410
+    b.append(text(ox2, 22, "누적 분포와 KS 통계량", 14, INK, "start", 700))
+    xs = [lo + i * 0.1 for i in range(101)]
+    ct = [cdf(train, x) for x in xs]
+    chh = [cdf(hot, x) for x in xs]
+    X = lambda x: ox2 + (x - lo) / (hi - lo) * w
+    Y = lambda p: oy + h - p * h
+    b.append(path("M" + " L".join(f"{X(x):.1f},{Y(p):.1f}" for x, p in zip(xs, ct)), CYAN, 2.4))
+    b.append(path("M" + " L".join(f"{X(x):.1f},{Y(p):.1f}" for x, p in zip(xs, chh)), ORANGE, 2.4))
+    gaps = [abs(a - c) for a, c in zip(ct, chh)]
+    k = gaps.index(max(gaps))
+    b.append(line(X(xs[k]), Y(ct[k]), X(xs[k]), Y(chh[k]), ACC, 2.4))
+    b.append(text(X(xs[k]) + 8, (Y(ct[k]) + Y(chh[k])) / 2, f"가장 큰 간격\nKS = {max(gaps):.2f}", 12, ACC, "start", 700))
+    b.append(line(ox2, oy + h, ox2 + w, oy + h, LINE2, 1.2))
+    b.append(line(ox2, oy, ox2, oy + h, LINE2, 1.2))
+    for t in [295, 300, 305]:
+        b.append(text(X(t), oy + h + 14, f"{t}K", 11, MUTED, mono=True))
+    b.append(text(ox2 - 6, oy, "1", 11, MUTED, "end", mono=True))
+    b.append(text(ox2 - 6, oy + h, "0", 11, MUTED, "end", mono=True))
+    return svg(740, 290, b, "학습 구간과 더운 구간의 공기 온도 분포 비교")
+
+
+@fig("ml11-project")
+def _():
+    b = []
+    steps = [("1", "문제 정의", "무엇이 더 아픈가\n(비용)"), ("2", "나누기", "시험용 20%\n봉투에 넣기"), ("3", "손질 · 특성", "Pipeline\n겹치는 열 확인"),
+             ("4", "모델 비교", "기준 → 단순 → 복잡\n교차검증"), ("5", "기준선", "학습용 예측으로\n총비용 최소"), ("6", "최종 시험", "시험용\n단 한 번"), ("7", "보고 · 저장", "숫자 + 한계\n+ 운영 계획")]
+    for i, (no, title, sub) in enumerate(steps):
+        row, col = divmod(i, 4)
+        x = 20 + col * 185 if row == 0 else 112 + col * 185
+        y = 20 + row * 140
+        color = ORANGE if no == "6" else ACC if no in ("1", "7") else CYAN
+        b.append(rect(x, y, 160, 100, SURF, color, 10, 1.4))
+        b.append(circle(x + 22, y + 22, 13, color, op=0.9))
+        b.append(text(x + 22, y + 22, no, 13, SURF, weight=800))
+        b.append(text(x + 92, y + 24, title, 15, color, weight=700))
+        b.append(text(x + 80, y + 66, sub, 12, INK2))
+        if i in (0, 1, 2, 4, 5):
+            b.append(arrow(x + 162, y + 50, x + 183, y + 50, MUTED, 1.6))
+    b.append(path("M630,122 L630,136 L192,136 L192,158", MUTED, 1.6))
+    b.append(f'<polygon points="187,152 192,160 197,152" fill="{MUTED}"/>')
+    b.append(rect(112, 274, 715, 26, ORANGE, "none", 6, op=0.10))
+    b.append(text(470, 287, "2단계에서 떼어 둔 시험용은 6단계 전까지 열어 보지 않습니다", 12, ORANGE, weight=600))
+    return svg(850, 310, b, "미니 프로젝트 7단계")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for name, f in FIGS.items():

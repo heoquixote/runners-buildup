@@ -96,6 +96,13 @@ export const CONCEPTS = {
   "ml.knn": { name: "KNN", track: "ml" },
   "ml.nb": { name: "나이브 베이즈", track: "ml" },
   "ml.svm": { name: "SVM", track: "ml" },
+  "ml.regularization": { name: "규제: Ridge · Lasso", track: "ml" },
+  "ml.timeseries": { name: "시계열 분할과 래그 특성", track: "ml" },
+  "ml.selection": { name: "피처 셀렉션", track: "ml" },
+  "ml.collinearity": { name: "다중공선성과 VIF", track: "ml" },
+  "ml.anomaly": { name: "이상 탐지", track: "ml" },
+  "ml.shap": { name: "SHAP 값", track: "ml" },
+  "ml.deploy": { name: "모델 저장 · 드리프트 · 프로젝트", track: "ml" },
   // 딥러닝
   "dl.intro": { name: "딥러닝 시작하기", track: "dl" },
   "dl.perceptron": { name: "퍼셉트론과 활성화 함수", track: "dl" },

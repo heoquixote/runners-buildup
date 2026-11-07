@@ -855,8 +855,8 @@ export const COURSES = [
         { kind: "ox", q: "스케일러는 전체 데이터로 fit 한 뒤 나누는 것이 정석이다.", answer: false, explain: "분할 후 학습 데이터로만 fit 해야 누수가 없습니다." },
         { kind: "choice", q: "타이타닉 생존(survived) 예측 모델의 특성으로 넣으면 안 되는 열은?", options: ["pclass (객실 등급)", "age (나이)", "alive (생존 여부 yes/no)", "fare (운임)"], answer: 2, explain: "alive는 정답을 다른 말로 쓴 열이라 넣으면 정답을 그대로 읽는 누수가 됩니다." },
       ] }] },
-  { id: "ml-02", track: "ml", title: "선형 · 로지스틱 회귀", summary: "직선 예측, MAE · RMSE · R², 경사하강법, 다중 회귀, 확률 출력", unit: 18, level: "기본",
-    concepts: ["ml.linear", "ml.gd"],
+  { id: "ml-02", track: "ml", title: "선형 · 로지스틱 회귀", summary: "직선 예측, MAE · RMSE · R², 경사하강법, 다중 회귀, 확률 출력, Ridge · Lasso", unit: 18, level: "기본",
+    concepts: ["ml.linear", "ml.gd", "ml.regularization"],
     lessons: [
     { id: "ml-02-1", title: "선형회귀: 직선 하나로 예측하기", minutes: 12, concepts: ["ml.linear"],
       quiz: [
@@ -876,6 +876,10 @@ export const COURSES = [
     { id: "ml-02-5", title: "로지스틱 회귀: 확률로 분류하기", minutes: 15, concepts: ["ml.linear"],
       quiz: [
         { kind: "ox", q: "LogisticRegression의 predict는 확률이 0.5 이상이면 1로 판정한다.", answer: true, explain: "이진 분류의 기본 임계값은 0.5입니다." },
+      ] },
+    { id: "ml-02-6", title: "계수에 벌점 주기: Ridge와 Lasso", minutes: 15, concepts: ["ml.regularization"],
+      quiz: [
+        { kind: "choice", q: "쓸모없는 특성의 계수를 딱 0으로 만들어, 특성을 저절로 골라 주는 효과가 있는 것은?", options: ["Ridge", "Lasso", "LinearRegression", "StandardScaler"], answer: 1, explain: "Lasso는 계수의 절댓값에 벌점을 줘서 작은 계수를 0으로 만듭니다. Ridge는 모든 계수를 조금씩 줄일 뿐 0으로 만들지는 않습니다." },
       ] }] },
   { id: "ml-03", track: "ml", title: "평가지표", summary: "혼동행렬, precision · recall · F1, 임계값, ROC-AUC · PR-AUC", unit: 19, level: "기본",
     concepts: ["ml.metrics"],
@@ -913,8 +917,8 @@ export const COURSES = [
       quiz: [
         { kind: "choice", q: "앞 트리들이 틀린 부분을 고치도록 트리를 하나씩 차례로 쌓는 방법은?", options: ["랜덤포레스트(배깅)", "부스팅", "교차검증", "PCA"], answer: 1, explain: "배깅은 독립된 트리들의 다수결, 부스팅은 앞 트리의 실수를 차례로 보완합니다." },
       ] }] },
-  { id: "ml-05", track: "ml", title: "교차검증과 하이퍼파라미터", summary: "K-fold, GridSearchCV, 검증 곡선 · 학습 곡선", unit: 35, level: "기본",
-    concepts: ["ml.cv", "ml.overfit"],
+  { id: "ml-05", track: "ml", title: "교차검증과 하이퍼파라미터", summary: "K-fold, GridSearchCV, 검증 곡선 · 학습 곡선, 시계열 분할", unit: 35, level: "기본",
+    concepts: ["ml.cv", "ml.overfit", "ml.timeseries"],
     lessons: [
     { id: "ml-05-1", title: "K-fold 교차검증: 돌아가며 시험 보기", minutes: 15, concepts: ["ml.cv"],
       quiz: [
@@ -927,9 +931,13 @@ export const COURSES = [
     { id: "ml-05-3", title: "검증 곡선: 설정값에 따라 점수가 어떻게 변하나", minutes: 15, concepts: ["ml.cv", "ml.overfit"],
       quiz: [
         { kind: "choice", q: "검증 곡선에서 학습 점수와 검증 점수가 둘 다 낮고 서로 붙어 있다. 어떤 상태일까?", options: ["과적합", "과소적합", "누수", "딱 좋음"], answer: 1, explain: "둘 다 낮으면 데이터의 패턴도 다 배우지 못한 과소적합입니다. 학습 점수만 높고 간격이 크게 벌어지면 과적합입니다." },
+      ] },
+    { id: "ml-05-4", title: "시간 순서가 있는 데이터 나누기", minutes: 15, concepts: ["ml.timeseries", "ml.cv"],
+      quiz: [
+        { kind: "ox", q: "월별 판매량처럼 시간 순서가 있는 데이터도 shuffle=True로 섞은 K-fold로 검증하는 것이 가장 정확하다.", answer: false, explain: "섞으면 미래 데이터로 과거를 맞히는 셈이라 점수가 부풀려집니다(숲 MAE 13.8 vs 시간 순서 28.6). TimeSeriesSplit처럼 과거로 학습하고 그 뒤로 시험합니다." },
       ] }] },
-  { id: "ml-06", track: "ml", title: "피처 엔지니어링과 Pipeline", summary: "SimpleImputer · OneHotEncoder, 표준화 · 정규화, 새 특성, ColumnTransformer · Pipeline", unit: 36, level: "실무",
-    concepts: ["ml.feature"],
+  { id: "ml-06", track: "ml", title: "피처 엔지니어링과 Pipeline", summary: "SimpleImputer · OneHotEncoder · 타깃 인코딩, 표준화 · 로그 변환, 새 특성, Pipeline, 피처 셀렉션, 다중공선성 · VIF", unit: 36, level: "실무",
+    concepts: ["ml.feature", "ml.selection", "ml.collinearity"],
     lessons: [
     { id: "ml-06-1", title: "도구로 빈칸 채우고 글자 바꾸기", minutes: 15, concepts: ["ml.feature", "ml.missing", "ml.encoding"],
       quiz: [
@@ -943,9 +951,18 @@ export const COURSES = [
       ] },
     { id: "ml-06-4", title: "Pipeline: 손질부터 모델까지 한 줄로", minutes: 12, concepts: ["ml.feature"],
       quiz: [
+      ] },
+    { id: "ml-06-5", title: "쓸 특성만 고르기: 피처 셀렉션", minutes: 15, concepts: ["ml.selection"],
+      quiz: [
+        { kind: "choice", q: "모델을 여러 번 학습하면서 가장 덜 쓰인 특성을 하나씩 빼 나가는 방식은?", options: ["Filter (SelectKBest)", "Wrapper (RFE)", "Embedded (Lasso)", "PCA"], answer: 1, explain: "RFE는 모델을 반복 학습하며 약한 열을 빼는 Wrapper 방식입니다. 조합을 보고 고르지만 느립니다." },
+        { kind: "ox", q: "전체 데이터로 SelectKBest를 해서 특성을 고른 뒤 교차검증하면 정직한 점수가 나온다.", answer: false, explain: "특성 선택도 정답을 보는 단계라, 전체 데이터로 고르면 시험 조각의 정답을 미리 본 셈입니다(난수 데이터가 0.79로 부풀려짐). Pipeline 안에서 골라야 합니다." },
+      ] },
+    { id: "ml-06-6", title: "비슷한 열이 겹칠 때: 다중공선성과 VIF", minutes: 15, concepts: ["ml.collinearity"],
+      quiz: [
+        { kind: "choice", q: "어떤 열의 VIF가 10이다. 무슨 뜻일까?", options: ["이 열은 정답과 상관이 0.9다", "나머지 특성들로 이 열을 약 90%(R² 0.9) 설명할 수 있다", "이 열의 중요도가 10위다", "이 열에 빈칸이 10% 있다"], answer: 1, explain: "VIF = 1 / (1 − R²). 다른 특성들로 이 열을 맞힌 R²가 0.9면 VIF는 10입니다. 거의 다른 열의 복사본이라는 뜻입니다." },
       ] }] },
-  { id: "ml-07", track: "ml", title: "비지도 학습", summary: "K-means 군집, 엘보 · 실루엣, PCA", unit: 37, level: "실무",
-    concepts: ["ml.kmeans", "ml.pca"],
+  { id: "ml-07", track: "ml", title: "비지도 학습", summary: "K-means 군집, 엘보 · 실루엣, DBSCAN · 계층 군집, PCA, 이상 탐지", unit: 37, level: "실무",
+    concepts: ["ml.kmeans", "ml.pca", "ml.anomaly"],
     lessons: [
     { id: "ml-07-1", title: "K-means: 정답 없이 묶기", minutes: 15, concepts: ["ml.kmeans"],
       quiz: [
@@ -959,6 +976,10 @@ export const COURSES = [
     { id: "ml-07-3", title: "PCA: 여러 열을 몇 개로 요약하기", minutes: 15, concepts: ["ml.pca"],
       quiz: [
         { kind: "ox", q: "PCA의 첫 번째 주성분은 데이터의 분산이 가장 큰 방향이다.", answer: true, explain: "두 번째는 첫 번째와 직교하면서 남은 분산이 가장 큰 방향입니다." },
+      ] },
+    { id: "ml-07-4", title: "평소와 다른 것 찾기: 이상 탐지", minutes: 15, concepts: ["ml.anomaly"],
+      quiz: [
+        { kind: "ox", q: "IsolationForest가 이상 점수 1등으로 뽑은 설비는 반드시 고장이다.", answer: false, explain: "이상 점수는 '평소와 다르다'는 뜻일 뿐입니다. 실제로 1등 설비는 고장이 아니었고, 상위 1% 중 고장은 34%였습니다. 사람이 먼저 볼 후보로 씁니다." },
       ] }] },
   { id: "ml-08", track: "ml", title: "불균형 데이터", summary: "정확도의 함정, class_weight, 임계값과 비용, 오버샘플링", unit: 38, level: "실무",
     concepts: ["ml.imbalance"],
@@ -978,8 +999,8 @@ export const COURSES = [
       quiz: [
         { kind: "ox", q: "오버샘플링은 train/test로 나누기 전에 전체 데이터에 해야 한다.", answer: false, explain: "나누기 전에 복사하면 같은 행의 복사본이 시험용에도 들어가 점수가 부풀려집니다. 반드시 나눈 뒤 학습용에만 합니다." },
       ] }] },
-  { id: "ml-09", track: "ml", title: "모델 해석", summary: "피처 중요도, 순열 중요도, 표준화 계수, 부분 의존도", unit: 39, level: "실무",
-    concepts: ["ml.explain"],
+  { id: "ml-09", track: "ml", title: "모델 해석", summary: "피처 중요도, 순열 중요도, 표준화 계수, 부분 의존도, SHAP", unit: 39, level: "실무",
+    concepts: ["ml.explain", "ml.shap"],
     lessons: [
     { id: "ml-09-1", title: "무엇을 많이 봤나: 피처 중요도와 순열 중요도", minutes: 15, concepts: ["ml.explain"],
       quiz: [
@@ -989,6 +1010,11 @@ export const COURSES = [
     { id: "ml-09-2", title: "어느 방향으로, 어떤 모양으로: 계수와 부분 의존도", minutes: 15, concepts: ["ml.explain"],
       quiz: [
         { kind: "ox", q: "부분 의존도에서 토크가 60을 넘을 때 고장 확률이 급히 오르면, 토크를 낮추면 반드시 고장이 줄어든다고 결론 내릴 수 있다.", answer: false, explain: "부분 의존도는 모델이 배운 관계(상관)를 보여 줄 뿐 인과를 증명하지 않습니다. 실제 조치는 현장 지식과 실험으로 확인합니다." },
+      ] },
+    { id: "ml-09-3", title: "이 한 건은 왜?: SHAP 값 직접 계산하기", minutes: 15, concepts: ["ml.shap", "ml.explain"],
+      quiz: [
+        { kind: "short", q: "기본값(평균 예측)이 0.05이고, 한 설비의 SHAP 값이 토크 +0.60, 공구 마모 +0.20, 나머지 열 합계 −0.05다. 이 설비의 모델 예측 확률은? (소수)", answer: ["0.8", "0.80", ".8"], explain: "기본값 + SHAP 값의 합 = 예측. 0.05 + 0.60 + 0.20 − 0.05 = 0.80." },
+        { kind: "ox", q: "어떤 설비에서 토크의 SHAP 값이 가장 크면, 토크를 낮추면 그 설비의 고장이 줄어든다는 것이 증명된 것이다.", answer: false, explain: "SHAP 값은 모델이 그렇게 계산했다는 판단 근거일 뿐, 원인을 증명하지 않습니다. 조치 효과는 현장 실험으로 확인합니다." },
       ] }] },
   { id: "ml-10", track: "ml", title: "다른 모델 둘러보기", summary: "KNN, 나이브 베이즈와 라플라스 스무딩, SVM과 커널, 모델 고르기", level: "실무", unit: 47,
     concepts: ["ml.knn", "ml.nb", "ml.svm"],
@@ -1004,6 +1030,16 @@ export const COURSES = [
     { id: "ml-10-3", title: "SVM: 가장 넓은 길 찾기, 그리고 모델 고르기", minutes: 15, concepts: ["ml.svm"],
       quiz: [
         { kind: "choice", q: "새 표 데이터 분류 문제를 받았다. 이 트랙에서 정리한 순서대로라면 가장 먼저 할 일은?", options: ["부스팅 설정값을 GridSearch로 튜닝한다", "기준 모델(찍기) 점수를 확인한다", "SVM 커널을 바꿔 본다", "딥러닝 모델을 만든다"], answer: 1, explain: "기준 모델로 최소선을 확인하고 → 로지스틱 회귀 → 트리 앙상블 순서로 시도합니다." },
+      ] }] },
+  { id: "ml-11", track: "ml", title: "현장에 내보내기", summary: "모델 저장 · 불러오기, 드리프트 감시, 처음부터 끝까지 미니 프로젝트", level: "실무",
+    concepts: ["ml.deploy"],
+    lessons: [
+    { id: "ml-11-1", title: "모델 저장하고 다시 쓰기, 그리고 드리프트", minutes: 15, concepts: ["ml.deploy"],
+      quiz: [
+        { kind: "choice", q: "고장 여부(정답)는 몇 주 뒤에야 확정된다. 배포한 모델이 낡았는지 가장 먼저 알아챌 수 있는 방법은?", options: ["정답이 쌓일 때까지 기다린다", "새로 들어오는 입력 데이터의 분포를 학습 때와 비교한다", "모델을 매일 처음부터 다시 만든다", "판정 기준선을 0.5로 되돌린다"], answer: 1, explain: "정답은 늦게 오지만 입력은 바로 옵니다. KS 통계량 등으로 입력 분포가 학습 때와 달라졌는지 먼저 감시합니다(공기 온도 KS 0.762)." },
+      ] },
+    { id: "ml-11-2", title: "처음부터 끝까지: 설비 고장 예측 미니 프로젝트", minutes: 25, concepts: ["ml.deploy", "ml.workflow"],
+      quiz: [
       ] }] },
 
   // ── 딥러닝 (개념 학습, 실습 없음) ───────────────────────────
@@ -1214,7 +1250,8 @@ export const SECTIONS = {
     { id: "start", label: "시작하기", en: "Start", blurb: "기계가 배운다는 것", courses: ["ml-00"] },
     { id: "supervised", label: "지도학습 기본", en: "Supervised", blurb: "데이터 준비부터 회귀 · 분류 · 트리 모델과 평가까지", courses: ["ml-01", "ml-02", "ml-03", "ml-04"] },
     { id: "tuning", label: "모델 다듬기", en: "Tuning", blurb: "교차검증 · 하이퍼파라미터, 피처 엔지니어링과 Pipeline", courses: ["ml-05", "ml-06"] },
-    { id: "beyond", label: "더 넓히기", en: "Beyond", blurb: "비지도 학습, 불균형 데이터, 모델 해석, 다른 모델", courses: ["ml-07", "ml-08", "ml-09", "ml-10"] },
+    { id: "beyond", label: "더 넓히기", en: "Beyond", blurb: "비지도 학습 · 이상 탐지, 불균형 데이터, 모델 해석, 다른 모델", courses: ["ml-07", "ml-08", "ml-09", "ml-10"] },
+    { id: "field", label: "현장에 쓰기", en: "In the Field", blurb: "모델 저장 · 드리프트 감시, 처음부터 끝까지 미니 프로젝트", courses: ["ml-11"] },
   ],
   dl: [
     { id: "start", label: "시작하기", en: "Start", blurb: "머신러닝과 딥러닝은 무엇이 다른가", courses: ["dl-00"] },
