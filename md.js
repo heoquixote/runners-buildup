@@ -4,6 +4,7 @@
 //  - 코드 펜스 ```python (읽기 전용) / ```run (파이썬 실행 셀) / ```sqlrun (SQL 실행 셀, sql.js)
 //  - 영상 블록 ::video{ref="dl-m03" start="312" end="540"}
 //  - 그림 블록 ::figure{src="content/img/ml/split.svg" alt="..." caption="..."}
+//  - 팁 상자 :::tip 제목 … ::: (전구 아이콘이 붙은 "알아 두면 좋은 지식" 상자, 안에 문단 · 코드 · 표 모두 가능)
 //  - 한 줄이 <로 시작하면 HTML 블록으로 그대로 둔다 (표 등 저작자가 쓴 HTML)
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -19,6 +20,8 @@ export function inline(text) {
     .replace(/  \n/g, "<br>");
   return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[i])}</code>`);
 }
+
+const TIP_ICON = '<svg class="md-tip-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.8.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>';
 
 export function parseDirective(line) {
   const m = line.match(/^::(\w+)\{(.*)\}\s*$/);
@@ -59,6 +62,10 @@ export function render(md, renderers = {}) {
       continue;
     }
     if (!line.trim()) { flush(); i++; continue; }
+    // 팁 상자: 여는 줄과 닫는 줄만 바꾸고 안쪽은 평소대로 렌더링한다 (실행 셀 번호가 이어지도록)
+    const tip = line.match(/^:::tip(?:\s+(.*))?$/);
+    if (tip) { flush(); out.push(`<aside class="md-tip"><div class="md-tip-head">${TIP_ICON}<span>${inline(tip[1] || "알아 두면 좋아요")}</span></div>`); i++; continue; }
+    if (/^:::\s*$/.test(line)) { flush(); out.push("</aside>"); i++; continue; }
     const directive = parseDirective(line);
     if (directive) {
       flush();

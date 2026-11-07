@@ -46,9 +46,14 @@ export const COURSES = [
       { id: "pb-00-3", title: "설치 가이드 ② Anaconda 설치하고 Jupyter 열기", minutes: 20, concepts: ["py.intro"], optional: true },
       { id: "pb-00-4", title: "설치 가이드 ③ python.org + VS Code", minutes: 25, concepts: ["py.intro"], optional: true },
     ] },
-  { id: "pb-01", track: "python-basic", title: "변수와 사칙연산", summary: "변수, 주석, + - * / // % **, 연산 우선순위, 반올림, 자료형과 형변환", unit: 1, level: "입문",
-    concepts: ["py.variable", "py.arith", "py.types"],
-    lessons: [{ id: "pb-01-1", title: "변수는 값에 붙이는 이름표", minutes: 10, concepts: ["py.variable", "py.arith"],
+  { id: "pb-01", track: "python-basic", title: "변수와 사칙연산", summary: "print 출력, 주석, f-string, 변수, 자료형, + - * / // % **, 자료형별 계산, 연산 우선순위, 반올림, 형변환", unit: 1, level: "입문",
+    concepts: ["py.print", "py.variable", "py.arith", "py.types"],
+    lessons: [{ id: "pb-01-0", title: "화면에 출력하기: print · 주석 · f-string", minutes: 12, concepts: ["py.print", "py.fstring"],
+      quiz: [
+        { kind: "write", q: "f-string 한 줄로 '합계: 30' 을 출력하는 코드를 작성하세요. 중괄호 안에서 10 + 20 을 계산하세요.", expect: "합계: 30", must: ["f[\"']", "\\{[^}]*\\+[^}]*\\}"], solution: "print(f\"합계: {10 + 20}\")", explain: "따옴표 앞 f가 중괄호 안의 10 + 20을 계산해 30으로 바꿔 끼웁니다." },
+        { kind: "ox", q: "# 뒤에 쓴 주석도 파이썬이 실행한다.", answer: false, explain: "# 뒤는 사람이 읽는 메모라 실행되지 않습니다. 줄 앞에 #를 붙이면 그 줄을 잠시 꺼 둘 수 있습니다." },
+      ] },
+      { id: "pb-01-1", title: "변수 · 자료형 · 사칙연산", minutes: 18, concepts: ["py.variable", "py.types", "py.arith"],
       quiz: [
         { kind: "write", q: "1000개를 24개들이 박스에 담을 때 가득 찬 박스 수를 출력하는 코드를 작성하세요.", expect: "41", must: ["//"], solution: "print(1000 // 24)", explain: "//는 몫입니다. 24개들이 박스 41개가 가득 찹니다." },
         { kind: "ox", q: "a = 5 는 \"a와 5가 같다\"는 뜻이다.", answer: false, explain: "=는 오른쪽 값을 왼쪽 이름에 담는 대입입니다. 같은지 비교는 ==를 씁니다." },
