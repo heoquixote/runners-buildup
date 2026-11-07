@@ -1112,7 +1112,7 @@ export const COURSES = [
       quiz: [
         { kind: "choice", q: "새 표 데이터 분류 문제를 받았다. 이 트랙에서 정리한 순서대로라면 가장 먼저 할 일은?", options: ["부스팅 설정값을 GridSearch로 튜닝한다", "기준 모델(찍기) 점수를 확인한다", "SVM 커널을 바꿔 본다", "딥러닝 모델을 만든다"], answer: 1, explain: "기준 모델로 최소선을 확인하고 → 로지스틱 회귀 → 트리 앙상블 순서로 시도합니다." },
       ] }] },
-  { id: "ml-11", track: "ml", title: "현장에 내보내기", summary: "모델 저장 · 불러오기, 드리프트 감시, 처음부터 끝까지 미니 프로젝트", level: "실무",
+  { id: "ml-11", track: "ml", title: "현장에 내보내기", summary: "모델 저장 · 불러오기, 드리프트 감시, 처음부터 끝까지 미니 프로젝트", level: "실무", unit: 51,
     concepts: ["ml.deploy"],
     lessons: [
     { id: "ml-11-1", title: "모델 저장하고 다시 쓰기, 그리고 드리프트", minutes: 15, concepts: ["ml.deploy"],
