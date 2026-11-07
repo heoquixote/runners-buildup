@@ -1127,3 +1127,95 @@ td.fb-comment { max-width: 360px; white-space: pre-wrap; word-break: break-word;
   display: grid; place-items: center; font-weight: 700; font-size: 14px; background: var(--accent); color: var(--bg, #0b0d10);
 }
 .guide-steps a, .guide-sec td a { color: var(--accent); }
+
+/* ── 업적 · 메달 ── */
+.medal-svg { display: block; flex: none; overflow: visible; }
+.medal-svg:not(.locked) { filter: drop-shadow(0 6px 14px rgba(0,0,0,.45)); }
+.medal-link { display: inline-flex; align-items: center; gap: 6px; }
+.medal-link svg { width: 16px; height: 16px; }
+.medal-link b { font-family: var(--font-en); color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.mhead { display: flex; gap: 24px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
+.mhead h1 { font-size: 28px; margin-top: 6px; }
+.mcount { font: 700 44px/1 var(--font-en); font-variant-numeric: tabular-nums; }
+.mcount small { font-size: 20px; color: var(--muted); font-weight: 600; }
+.msum .mtiers { margin-top: 8px; }
+.mtiers { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.mtiers span { display: inline-flex; align-items: center; gap: 6px; }
+.mtiers i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.mtiers b { color: var(--ink); font-family: var(--font-en); }
+.mtotal-bar { height: 6px; background: var(--surface-3); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.mtotal-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #e9ff9e); border-radius: 99px; }
+
+.mnext { padding: 18px 20px; display: grid; gap: 12px; }
+.mnext-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .mnext-list { grid-template-columns: minmax(0, 1fr); } }
+.mnext-title { display: flex; align-items: baseline; gap: 10px; }
+.msum { min-width: min(260px, 100%); }
+.mnext-item { font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100%; display: flex; gap: 12px; align-items: center; padding: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); }
+.mnext-item .mi-body { min-width: 0; display: grid; gap: 4px; flex: 1; }
+.mnext-item b { font-size: 14px; }
+.mnext-item .muted { font-size: 12px; }
+
+.mprog { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mprog .bar { flex: 1; height: 5px; background: var(--surface-3); border-radius: 99px; overflow: hidden; }
+.mprog .bar span { display: block; height: 100%; background: var(--muted); border-radius: 99px; }
+
+.mcat { display: grid; gap: 12px; }
+.mcat-head { display: flex; align-items: baseline; gap: 10px; }
+.mcat-head h2 { font-size: 17px; }
+.mcat-head .en { font: 600 11px/1 var(--font-en); letter-spacing: .14em; text-transform: uppercase; color: var(--subtle); }
+.mcat-head .n { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+@media (max-width: 560px) { .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mhead h1 { font-size: 24px; } }
+.mcard {
+  position: relative; display: grid; justify-items: center; gap: 6px; text-align: center;
+  padding: 16px 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  cursor: pointer; font: inherit; color: inherit; transition: border-color .15s, transform .15s;
+}
+.mcard:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+.mcard.earned { background: radial-gradient(120px 90px at 50% 20%, color-mix(in srgb, var(--mc, var(--accent)) 14%, transparent), transparent 70%), var(--surface); border-color: color-mix(in srgb, var(--mc, var(--accent)) 35%, transparent); }
+.mcard .mname { font-weight: 700; font-size: 14px; line-height: 1.35; }
+.mcard.locked .mname { color: var(--ink-2); }
+.mcard .mhow { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.mcard .mdate { font: 600 11px/1 var(--font-en); color: var(--mc, var(--accent)); letter-spacing: .06em; }
+.mcard .mprog { width: 100%; }
+.mcard .mnew { position: absolute; top: 8px; right: 8px; font: 700 10px/1 var(--font-en); letter-spacing: .1em; color: var(--accent-ink); background: var(--accent); padding: 3px 5px; border-radius: 3px; }
+
+/* 메달 상세 */
+.mdetail { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line-strong); padding: 30px 26px 22px; text-align: center; display: grid; gap: 8px; justify-items: center; box-shadow: var(--shadow-modal); clip-path: var(--cut-shape); animation: pop 320ms cubic-bezier(.2,1.4,.4,1); }
+.mdetail .mtier { font: 600 11px/1 var(--font-en); letter-spacing: .16em; text-transform: uppercase; color: var(--mc, var(--accent)); }
+.mdetail h2 { font-size: 22px; }
+.mdetail p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.mdetail .mcond { margin-top: 6px; width: 100%; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); font-size: 13px; color: var(--muted); display: grid; gap: 8px; text-align: left; }
+.mdetail .mcond b { color: var(--ink); }
+.mdetail .btns { margin-top: 8px; }
+
+/* 업적 달성 알림: 화면 위에서 내려오는 게임식 배너 */
+.ach-stack { position: fixed; top: calc(70px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 65; display: grid; gap: 10px; width: min(440px, calc(100% - 32px)); pointer-events: none; }
+.ach {
+  pointer-events: auto; position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 14px; padding: 12px 16px 12px 12px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--mc, var(--accent)) 16%, var(--surface-2)), var(--surface-2) 55%);
+  border: 1px solid color-mix(in srgb, var(--mc, var(--accent)) 55%, transparent); border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.6), 0 0 30px color-mix(in srgb, var(--mc, var(--accent)) 18%, transparent);
+  animation: ach-in 520ms cubic-bezier(.2,1.3,.4,1) both;
+}
+.ach.out { animation: ach-out 320ms ease-in forwards; }
+.ach::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.16) 50%, transparent 65%); transform: translateX(-100%); animation: ach-shine 1.1s .35s ease-out; pointer-events: none; }
+.ach .medal-svg { animation: ach-medal 700ms cubic-bezier(.2,1.5,.4,1) both; }
+.ach-body { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.ach-kicker { font: 700 11px/1.2 var(--font-en); letter-spacing: .16em; text-transform: uppercase; color: var(--mc, var(--accent)); }
+.ach-name { font-size: 17px; font-weight: 800; color: var(--ink); }
+.ach-desc { font-size: 13px; color: var(--ink-2); }
+.ach a { font-size: 12px; color: var(--muted); white-space: nowrap; align-self: flex-end; text-decoration: none; }
+.ach a:hover { color: var(--ink); }
+@keyframes ach-in { from { transform: translateY(-30px) scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ach-out { to { transform: translateY(-16px); opacity: 0; } }
+@keyframes ach-shine { to { transform: translateX(100%); } }
+@keyframes ach-medal { from { transform: rotateY(180deg) scale(.6); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ach, .ach .medal-svg, .mdetail { animation: none; }
+  .ach::after { display: none; }
+}
+.mnext-item:hover { border-color: var(--line-strong); }
