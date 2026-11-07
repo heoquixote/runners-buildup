@@ -2,6 +2,7 @@ import { CONFIG } from "./config.js";
 import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, SESSIONS } from "./problems.js";
 import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath, sectionsOf } from "./content/index.js";
 import { conceptName } from "./content/concepts.js";
+import { ADDED_LESSONS } from "./content/added.js";
 import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
 import { render as renderMd } from "./md.js";
 import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
@@ -56,7 +57,15 @@ const courseEntry = (c) => { const l = coreLessons(c).find((x) => !lessonDone(x.
 const courseHref = (c) => { const l = courseEntry(c); return l ? `#/l/${l.id}` : `#/c/${c.id}`; };
 const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
 // 진도 계산과 추천에 쓰는 필수 레슨 (optional: 고르는 레슨은 뺀다)
-const coreLessons = (c) => c.lessons.filter((l) => !l.optional);
+// 나중에 붙인 레슨(content/added.js)은, 붙이기 전에 그 코스의 원래 레슨을 모두 끝낸 학생에게는 선택(보강) 레슨으로 둔다.
+const passedBefore = (lid, at) => { const r = state.lessons[lid]; const t = r?.passed_at || r?.updated_at; return r?.status === "passed" && !!t && new Date(t) < new Date(at); };
+const isBonusLesson = (c, l) => {
+  const at = ADDED_LESSONS[l.id];
+  if (!at || lessonDone(l.id)) return false;
+  const original = c.lessons.filter((x) => !x.optional && !ADDED_LESSONS[x.id]);
+  return original.length > 0 && original.every((x) => passedBefore(x.id, at));
+};
+const coreLessons = (c) => c.lessons.filter((l) => !l.optional && !isBonusLesson(c, l));
 const solved = (pid) => !!state.progress[pid]?.solved;
 const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)" };
 const trackStyle = (t) => `style="--tc:${TRACK_COLOR[t.color] || "var(--track)"}"`;
@@ -1064,7 +1073,7 @@ function viewCourse(c) {
         ${firstLesson && s.lessonsDone < s.lessons ? `<a class="btn primary" href="#/l/${firstLesson.id}">${s.lessonsDone ? "레슨 이어서" : "레슨 시작"} →</a>` : nextP ? `<a class="btn primary" href="#/p/${nextP.id}">문제 풀기 →</a>` : ""}</div>
     </header>
     <section class="part"><h2 class="part-title">레슨</h2>
-      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span>${l.optional ? '<span class="pmark" title="셋 중 하나만 골라 보면 됩니다">선택</span>' : ""}<span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
+      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span>${l.optional ? '<span class="pmark" title="셋 중 하나만 골라 보면 됩니다">선택</span>' : ""}${isBonusLesson(c, l) ? '<span class="pmark" title="코스를 끝낸 뒤 새로 추가된 레슨입니다. 진도율에는 들어가지 않아요.">새 레슨</span>' : ""}<span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
     ${c.intro && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
       ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>`}
     <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="${courseHref(prevC)}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="${courseHref(nextC)}">${esc(nextC.title)} →</a>` : ""}</nav>
