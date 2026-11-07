@@ -940,7 +940,7 @@ async function viewLesson(l) {
   if (location.hash !== `#/l/${l.id}`) return; // 그사이 다른 화면으로 이동
   body.innerHTML = renderMd(md, { run: (code, i, lang) => runCellHtml(code, i, lang), video: videoBlock });
   // 각 예제가 놓인 소제목을 셀 제목에 붙인다
-  const topicOf = (el) => { for (let n = el.previousElementSibling; n; n = n.previousElementSibling) if (/^H[234]$/.test(n.tagName)) return n.textContent.trim(); return ""; };
+  const topicOf = (el) => { for (let n = el.previousElementSibling; n; n = n.previousElementSibling) if (/^H[234]$/.test(n.tagName)) return n.textContent.trim(); const tip = el.parentElement?.closest(".md-tip"); return tip ? tip.querySelector(".md-tip-head").textContent.trim().replace(/^알아 두면 좋아요\s*·\s*/, "") : ""; };
   body.querySelectorAll(".run-cell").forEach((cell) => { const t = topicOf(cell); if (t) cell.querySelector(".run-title").textContent += ` · ${t}`; });
   const practice = body;
 

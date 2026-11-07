@@ -2,6 +2,7 @@
 export const CONCEPTS = {
   // 파이썬 기초
   "py.intro": { name: "파이썬 소개와 설치", track: "python-basic" },
+  "py.print": { name: "print 출력과 주석", track: "python-basic" },
   "py.variable": { name: "변수와 대입", track: "python-basic" },
   "py.arith": { name: "사칙연산 · 몫 · 나머지", track: "python-basic" },
   "py.types": { name: "자료형과 형변환", track: "python-basic" },
