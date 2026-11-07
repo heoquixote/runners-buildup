@@ -386,9 +386,10 @@ function viewGuide() {
   const back = `<a class="btn small" href="#/">홈으로</a>`;
   $app.innerHTML = `${topbar()}<main class="page guide">
     <div class="hero"><div><div class="eyebrow">Guide</div><h1>사용 방법과 코드 작성법</h1>
-      <p>문제는 세 가지 유형이 있습니다. 유형마다 답을 내는 방법이 다르니 처음 한 번만 읽어 보세요.</p></div>${back}</div>
+      <p>처음이라면 <b>시작하기</b>부터 읽어 보세요. 가입부터 첫 레슨, 첫 문제 제출까지 순서대로 안내합니다.</p></div>${back}</div>
 
     <nav class="guide-toc panel flat" aria-label="목차">
+      <a href="#/guide/start" data-jump="g-start">시작하기</a>
       <a href="#/guide" data-jump="g-use">사이트 사용법</a>
       <a href="#/guide" data-jump="g-io">입출력형</a>
       <a href="#/guide" data-jump="g-fn">함수형</a>
@@ -396,7 +397,43 @@ function viewGuide() {
       <a href="#/guide" data-jump="g-mistakes">자주 하는 실수</a>
     </nav>
 
-    <section class="panel lime guide-sec" id="g-use"><div class="eyebrow">01 · Basics</div><h2>사이트 사용법</h2>
+    <section class="panel lime guide-sec" id="g-start"><div class="eyebrow">00 · Start</div><h2>시작하기: 회원가입부터 첫 문제까지</h2>
+      <p>레슨 읽기와 예제 실행은 로그인 없이도 됩니다. <b>진도 저장, 오늘의 학습, 연습문제 제출</b>은 가입하고 로그인해야 열립니다.</p>
+      <ol class="guide-steps">
+        <li><h3>회원가입</h3>
+          <ul><li>오른쪽 위 <b>회원가입</b>을 누릅니다.</li>
+          <li><b>이름</b>: 실명으로 적으세요. 강사님이 제출 현황을 이 이름으로 확인합니다.</li>
+          <li><b>4자리 번호</b>: 로그인할 때 쓰는 비밀번호입니다. 직접 정하고, 확인 칸에 한 번 더 적습니다.</li>
+          <li><b>가입 코드</b>: 수업 시간에 강사님이 알려 준 코드를 그대로 적습니다. 대소문자는 구분하지 않습니다.</li>
+          <li><b>가입하고 시작하기</b>를 누르면 바로 로그인된 상태로 홈으로 갑니다.</li></ul></li>
+        <li><h3>다음부터는 로그인</h3>
+          <ul><li>오른쪽 위 <b>로그인</b>에서 가입한 이름과 4자리 번호를 넣습니다.</li>
+          <li>로그인은 이 브라우저에 유지됩니다. 다른 컴퓨터나 휴대폰에서도 같은 이름과 번호로 들어오면 진도가 그대로 이어집니다.</li>
+          <li>공용 컴퓨터라면 끝날 때 <b>로그아웃</b>을 눌러 주세요.</li></ul></li>
+        <li><h3>홈에서 오늘 할 일 고르기</h3>
+          <ul><li><b>오늘의 학습</b>: 매일 레슨 1개와 연습문제 몇 개를 골라 줍니다. 위에서부터 하나씩 끝내면 체크됩니다.</li>
+          <li><b>내 트랙</b>: 최근 공부한 트랙의 진행률입니다. <b>이어서 달리기</b>를 누르면 멈춘 레슨으로 갑니다.</li>
+          <li>처음이라면 <b>파이썬 기초</b> 트랙의 Day 1부터 시작하세요.</li></ul></li>
+        <li><h3>레슨 한 개를 끝내는 순서</h3>
+          <ul><li>본문을 읽고, 예제 코드 칸의 <b>실행</b>을 눌러 결과를 직접 확인합니다. 코드를 고쳐서 다시 실행해도 됩니다.</li>
+          <li>영상이 있는 레슨은 본문 중간에서 바로 재생됩니다.</li>
+          <li>맨 아래 <b>체크 퀴즈</b>를 모두 맞히면 레슨이 완료(✓)됩니다.</li>
+          <li>코스의 마지막 레슨을 마치면 <b>연습문제 풀기</b>로 넘어갑니다.</li></ul></li>
+        <li><h3>연습문제 풀고 제출하기</h3>
+          <ul><li>코드를 쓰고 <b>실행</b>으로 확인한 뒤 <b>제출</b>을 누르면 채점됩니다.</li>
+          <li>처음 맞히면 몇 번째로 맞혔는지 알려 줍니다. 틀려도 몇 번이든 다시 제출할 수 있습니다.</li>
+          <li>문제 유형별 답 내는 법은 아래 <a href="#/guide" data-jump="g-io">입출력형</a>, <a href="#/guide" data-jump="g-fn">함수형</a>, <a href="#/guide" data-jump="g-steps">단계 실습형</a>을 참고하세요.</li></ul></li>
+      </ol>
+      <div class="table-scroll"><table class="ex-table guide-table"><thead><tr><th>가입 · 로그인할 때 이런 메시지가 뜨면</th><th>이렇게 하세요</th></tr></thead><tbody>
+        <tr><td>이미 가입된 이름입니다</td><td>본인이면 <b>로그인</b>으로 들어가세요. 동명이인이면 이름 뒤에 숫자를 붙여 가입합니다 (예: 김민수2).</td></tr>
+        <tr><td>가입 코드가 맞지 않습니다</td><td>강사님이 알려 준 코드를 다시 확인하세요. 앞뒤 공백은 신경 쓰지 않아도 됩니다.</td></tr>
+        <tr><td>이름 또는 번호가 맞지 않습니다</td><td>가입할 때 쓴 이름을 띄어쓰기까지 똑같이 적었는지 확인하세요.</td></tr>
+        <tr><td>5번 틀려서 잠시 잠겼습니다</td><td>5분 뒤에 다시 시도하세요. 번호가 기억나지 않으면 강사님께 재발급을 요청합니다.</td></tr>
+        <tr><td>로그인이 만료되었습니다</td><td>다시 로그인하면 됩니다. 저장된 진도는 사라지지 않습니다.</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section class="panel guide-sec" id="g-use"><div class="eyebrow">01 · Basics</div><h2>사이트 사용법</h2>
       <div class="guide-grid">
         <div><h3>실행과 제출의 차이</h3>
           <ul><li><b>실행</b>: 코드를 돌려 출력만 보여 줍니다. 채점도 기록도 하지 않습니다.</li>
@@ -489,6 +526,9 @@ daily_defect_rate = np.round(
       document.getElementById(a.dataset.jump)?.scrollIntoView({ behavior: "smooth", block: "start" });
     })
   );
+  // #/guide/start 처럼 들어오면 그 절로 바로 이동 (수강생에게 링크로 안내할 때)
+  const jump = { start: "g-start" }[(location.hash.match(/^#\/guide\/(\w+)/) || [])[1]];
+  if (jump) requestAnimationFrame(() => document.getElementById(jump)?.scrollIntoView({ block: "start" }));
 }
 
 // ── 회원가입 ─────────────────────────────────────────────
@@ -505,7 +545,7 @@ async function viewSignup() {
     <p class="form-error" id="su-error"></p>
     <button class="btn primary block" type="submit" id="su-btn">가입하고 시작하기</button>
     <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
-    <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요.</span><a href="#/admin">강사 로그인</a></div>
+    <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#signup-form");
   const pins = [form.querySelector("#su-pin"), form.querySelector("#su-pin2")];

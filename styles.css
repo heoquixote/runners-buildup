@@ -1068,3 +1068,12 @@ kbd {
 .md-tip-head { display: flex; align-items: center; gap: 8px; color: var(--warn); font-weight: 700; font-size: 14px; letter-spacing: .01em; }
 .md-tip-ico { width: 20px; height: 20px; flex: none; fill: color-mix(in srgb, var(--warn) 25%, transparent); stroke: var(--warn); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .lesson-body .md-tip .run-cell, .lesson-body .md-tip pre { background: var(--code-bg); }
+
+/* ── 사용 방법: 시작하기 단계 ── */
+.guide-steps { margin: 0; padding: 0; list-style: none; counter-reset: gstep; display: grid; gap: 16px; }
+.guide-steps > li { counter-increment: gstep; position: relative; padding-left: 44px; }
+.guide-steps > li::before {
+  content: counter(gstep); position: absolute; left: 0; top: -2px; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700; font-size: 14px; background: var(--accent); color: var(--bg, #0b0d10);
+}
+.guide-steps a, .guide-sec td a { color: var(--accent); }
