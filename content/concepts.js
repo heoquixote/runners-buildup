@@ -64,6 +64,10 @@ export const CONCEPTS = {
   "sql.case-date": { name: "CASE · 날짜 · 문자열", track: "sql" },
   "sql.window": { name: "윈도우 함수", track: "sql" },
   "sql.analytics": { name: "실무 분석 쿼리", track: "sql" },
+  "sql.modeling": { name: "데이터 모델링 · ERD · 키", track: "sql" },
+  "sql.normalization": { name: "정규화와 반정규화", track: "sql" },
+  "sql.ddl-dml": { name: "DDL · 제약조건 · DML", track: "sql" },
+  "sql.tx-index": { name: "트랜잭션 · 인덱스 · 뷰", track: "sql" },
   // 통계
   "st.intro": { name: "통계란 · 모집단과 표본 · 척도", track: "stats" },
   "st.descriptive": { name: "기술통계", track: "stats" },
