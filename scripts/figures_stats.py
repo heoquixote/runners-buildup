@@ -913,6 +913,83 @@ def _():
     return svg(720, 244, b, "결과 보고의 네 칸")
 
 
+# ---------------- 2026-11-07 검정 도구 상자 ----------------
+@fig("st12-qq-patterns")
+def _():
+    b = []
+    pats = [("정규에 가까움", "점이 직선 위", lambda z: z, PASS),
+            ("오른쪽 꼬리가 김", "아래로 볼록 (양 끝이 위로)", lambda z: 1.2 * (math.exp(0.6 * z) - 1.15), ORANGE),
+            ("양쪽 꼬리가 두꺼움", "S자를 뒤집은 모양", lambda z: 0.8 * z + 0.1 * z ** 3, FAIL),
+            ("양쪽 꼬리가 얇음 (균등)", "S자 모양", lambda z: 1.9 * math.tanh(0.75 * z), CYAN)]
+    for i, (title, sub, f, col) in enumerate(pats):
+        ox = 15 + i * 200
+        b.append(rect(ox, 10, 185, 210, SURF, LINE2, 10))
+        b.append(text(ox + 92, 30, title, 13, col, weight=700))
+        x0, y0, s = ox + 92, 125, 30
+        b.append(line(x0 - 75, y0 + 75, x0 + 75, y0 - 75, LINE2, 1.4, "5 4"))
+        for k in range(15):
+            z = -2.2 + k * 4.4 / 14
+            y = max(-2.6, min(2.6, f(z)))
+            b.append(circle(x0 + z * s, y0 - y * s, 3.6, col, op=0.9))
+        b.append(text(ox + 92, 206, sub, 11, INK2))
+    b.append(text(410, 238, "가로: 정규분포라면 나올 값 (이론 분위수)   세로: 실제 데이터 값 (정렬)", 12, MUTED))
+    return svg(820, 252, b, "Q-Q 플롯의 네 가지 모양: 직선, 아래로 볼록, 뒤집은 S, S")
+
+
+@fig("st12-interaction")
+def _():
+    b = []
+    panels = [("교호작용 없음: 평행", [(0.25, 0.55), (0.55, 0.85)], PASS),
+              ("교호작용 있음: 간격이 다름", [(0.25, 0.40), (0.45, 0.90)], WARN),
+              ("교호작용 강함: 엇갈림", [(0.30, 0.75), (0.75, 0.35)], FAIL)]
+    for i, (title, lines_, col) in enumerate(panels):
+        ox = 15 + i * 250
+        b.append(rect(ox, 10, 235, 220, SURF, LINE2, 10))
+        b.append(text(ox + 117, 30, title, 13, col, weight=700))
+        x1, x2, y0, h = ox + 50, ox + 190, 200, 150
+        b.append(line(ox + 30, y0, ox + 215, y0, LINE2, 1.2))
+        b.append(text(x1, y0 + 14, "요인 A: 수준 1", 10, INK2))
+        b.append(text(x2, y0 + 14, "수준 2", 10, INK2))
+        for (a1, a2), c, lab in zip(lines_, [CYAN, TRACK], ["B = 1", "B = 2"]):
+            b.append(line(x1, y0 - a1 * h, x2, y0 - a2 * h, c, 2.6))
+            b.append(circle(x1, y0 - a1 * h, 5, c))
+            b.append(circle(x2, y0 - a2 * h, 5, c))
+            b.append(text(x2 + 8, y0 - a2 * h, lab, 11, c, "start", 700))
+    return svg(770, 240, b, "교호작용 그래프: 평행하면 교호작용 없음, 간격이 다르거나 엇갈리면 교호작용 있음")
+
+
+@fig("st12-test-map")
+def _():
+    b = []
+    # 3 columns by data type; rows: 2 groups indep / 2 groups paired / 3+ indep / 3+ paired / relation
+    cols = [("연속형 · 정규에 가까움", ACC), ("연속형 · 치우침 / 순서형", CYAN), ("범주형 (비율 · 도수)", ORANGE)]
+    rows = ["1그룹 vs 기준값", "2그룹 · 독립", "2그룹 · 대응", "3그룹 이상 · 독립", "3그룹 이상 · 대응", "두 변수의 관계"]
+    cells = [
+        ["1표본 t (σ를 알면 z)", "부호검정 · 윌콕슨 부호순위", "이항 · 1비율 z · 적합도 χ²"],
+        ["Welch t", "맨-휘트니 U", "2비율 z · χ² · 피셔 정확"],
+        ["대응 t", "윌콕슨 부호순위 · 부호검정", "McNemar"],
+        ["ANOVA (+Tukey) · 이원 ANOVA", "크루스칼-월리스", "χ² 독립성"],
+        ["반복측정 ANOVA", "프리드먼", "코크런 Q"],
+        ["피어슨 r · 회귀 F", "스피어만 · 켄달", "χ² 독립성 · 크래머 V"],
+    ]
+    x0, w0, w, h, y0 = 10, 150, 225, 46, 66
+    for j, (t, c) in enumerate(cols):
+        x = x0 + w0 + 10 + j * (w + 10)
+        b.append(rect(x, 10, w, 46, SURF3, c, 8, 1.8))
+        b.append(text(x + w / 2, 33, t, 14, c, weight=700))
+    for i, r in enumerate(rows):
+        y = y0 + i * (h + 8)
+        b.append(rect(x0, y, w0, h, SURF, LINE2, 8))
+        b.append(text(x0 + w0 / 2, y + h / 2, r, 13, INK, weight=700))
+        for j, (t, c) in enumerate(cols):
+            x = x0 + w0 + 10 + j * (w + 10)
+            b.append(rect(x, y, w, h, SURF, c, 8, 1.0, op=1))
+            b.append(text(x + w / 2, y + h / 2, cells[i][j], 13, INK, weight=600))
+    yb = y0 + len(rows) * (h + 8) + 6
+    b.append(text(437, yb + 6, "검정 전 확인: 정규성은 Q-Q 플롯 · 샤피로, 등분산은 레빈   |   여러 번 검정하면: Holm · BH 보정", 12, MUTED))
+    return svg(875, yb + 22, b, "검정 고르기 지도: 데이터 종류(열)와 그룹 구조(행)로 검정을 고른다")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for name, f in FIGS.items():
