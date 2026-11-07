@@ -81,6 +81,7 @@ export const CONCEPTS = {
   "st.regression": { name: "상관과 회귀", track: "stats" },
   "st.abtest": { name: "A/B 테스트", track: "stats" },
   "st.causal": { name: "상관과 인과 · 결과 보고", track: "stats" },
+  "st.spc": { name: "관리도와 공정능력 (SPC)", track: "stats" },
   // 머신러닝
   "ml.intro": { name: "머신러닝이란", track: "ml" },
   "ml.workflow": { name: "ML 워크플로와 데이터 분할", track: "ml" },
