@@ -1177,6 +1177,53 @@ export const COURSES = [
       ] }] },
 ];
 
+// 트랙 페이지의 구역(단원). 같은 구역의 코스는 COURSES 순서에서 이어져 있어야 한다.
+// DAY 번호는 구역과 관계없이 트랙 전체에서 이어 매긴다(dayNo). 구역에 없는 코스는 맨 뒤에 머리글 없이 붙는다.
+export const SECTIONS = {
+  "python-basic": [
+    { id: "start", label: "시작하기", en: "Start", blurb: "파이썬이 무엇이고 어디서 실행하는지", courses: ["pb-00"] },
+    { id: "data", label: "자료형과 자료구조", en: "Data Types", blurb: "숫자 · 문자열 · 리스트 · 딕셔너리로 값을 담고 다루기", courses: ["pb-01", "pb-02", "pb-03", "pb-04", "pb-05", "pb-06"] },
+    { id: "flow", label: "제어문과 함수", en: "Control Flow", blurb: "조건 · 반복으로 흐름을 만들고 함수로 묶기", courses: ["pb-07", "pb-08", "pb-09"] },
+    { id: "practical", label: "실무 문법", en: "Practical", blurb: "파일 입출력, 컴프리헨션 · 람다, 예외 처리", courses: ["pb-10", "pb-11", "pb-12"] },
+  ],
+  "python-da": [
+    { id: "numpy", label: "NumPy", en: "NumPy", blurb: "배열로 숫자를 한꺼번에 계산하기", courses: ["da-01", "da-02"] },
+    { id: "pandas-basic", label: "pandas 기초", en: "pandas Basics", blurb: "표를 읽고, 고르고, 깨끗하게 다듬기", courses: ["da-03", "da-04", "da-05"] },
+    { id: "pandas-adv", label: "pandas 활용", en: "pandas in Practice", blurb: "묶어서 요약하고, 여러 표를 합치고, 시간 순으로 보기", courses: ["da-06", "da-07", "da-08"] },
+  ],
+  "python-viz": [
+    { id: "tools", label: "도구 익히기", en: "Tools", blurb: "matplotlib · seaborn의 기본 구조", courses: ["da-09", "da-10"] },
+    { id: "questions", label: "질문별 차트", en: "Chart by Question", blurb: "비교 · 추이 · 분포 · 관계 · 구성, 질문에 맞는 그래프", courses: ["da-12", "da-13", "da-14", "da-15", "da-16"] },
+    { id: "wrapup", label: "정리", en: "Wrap-up", blurb: "어떤 차트를 쓸지 고르는 기준과 체크리스트", courses: ["da-11"] },
+  ],
+  sql: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "SQL과 데이터베이스, 실습 데이터 소개", courses: ["sq-00"] },
+    { id: "select", label: "조회 기초", en: "Querying", blurb: "필요한 행과 열을 골라 정렬하기", courses: ["sq-01", "sq-02"] },
+    { id: "aggregate", label: "집계와 변환", en: "Aggregation", blurb: "묶어서 세고 더하기, 값을 바꾸고 구간 나누기", courses: ["sq-03", "sq-06"] },
+    { id: "tables", label: "여러 표 다루기", en: "Joins", blurb: "표를 이어 붙이고, 쿼리 안에 쿼리 넣기", courses: ["sq-04", "sq-05"] },
+    { id: "analysis", label: "분석 쿼리", en: "Analytics", blurb: "윈도우 함수와 KPI · 퍼널 · 리텐션", courses: ["sq-07", "sq-08"] },
+  ],
+  stats: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "통계가 하는 일과 기본 용어", courses: ["st-00"] },
+    { id: "describe", label: "요약과 확률", en: "Describe · Probability", blurb: "데이터를 숫자로 요약하고, 확률과 분포로 불확실성 다루기", courses: ["st-01", "st-09", "st-02"] },
+    { id: "inference", label: "추론 통계", en: "Inference", blurb: "표본으로 모집단을 추정하고 검정하기", courses: ["st-03", "st-04", "st-05"] },
+    { id: "relation", label: "비교와 관계", en: "Comparison · Relation", blurb: "여러 집단 비교, 두 변수의 관계와 회귀", courses: ["st-06", "st-07"] },
+    { id: "practice", label: "실무 해석", en: "In Practice", blurb: "A/B 테스트 설계와 흔한 해석 실수", courses: ["st-08", "st-10"] },
+  ],
+  ml: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "기계가 배운다는 것", courses: ["ml-00"] },
+    { id: "supervised", label: "지도학습 기본", en: "Supervised", blurb: "데이터 준비부터 회귀 · 분류 · 트리 모델과 평가까지", courses: ["ml-01", "ml-02", "ml-03", "ml-04"] },
+    { id: "tuning", label: "모델 다듬기", en: "Tuning", blurb: "교차검증 · 하이퍼파라미터, 피처 엔지니어링과 Pipeline", courses: ["ml-05", "ml-06"] },
+    { id: "beyond", label: "더 넓히기", en: "Beyond", blurb: "비지도 학습, 불균형 데이터, 모델 해석, 다른 모델", courses: ["ml-07", "ml-08", "ml-09", "ml-10"] },
+  ],
+  dl: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "머신러닝과 딥러닝은 무엇이 다른가", courses: ["dl-00"] },
+    { id: "basics", label: "신경망 기초", en: "Neural Nets", blurb: "뉴런 · 손실 · 경사하강법 · 역전파 · 과적합", courses: ["dl-01", "dl-02", "dl-03", "dl-04"] },
+    { id: "arch", label: "구조별 모델", en: "Architectures", blurb: "이미지는 CNN, 순서는 RNN, 문장은 어텐션", courses: ["dl-05", "dl-06", "dl-07"] },
+    { id: "practice", label: "생성과 실무", en: "Generative · Practice", blurb: "생성 모델과 사전학습 모델 활용", courses: ["dl-08", "dl-09"] },
+  ],
+};
+
 export const LESSONS = COURSES.flatMap((c) => c.lessons.map((l) => ({ ...l, course: c.id, track: c.track, dir: c.dir || c.track })));
 export const courseById = Object.fromEntries(COURSES.map((c) => [c.id, c]));
 export const lessonById = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
@@ -1185,3 +1232,16 @@ export const coursesOf = (trackId) => COURSES.filter((c) => c.track === trackId)
 export const courseOfUnit = (unitId) => COURSES.find((c) => c.unit === unitId);
 // dir: 레슨 md 폴더. 트랙을 옮긴 코스(da-09~da-11 → python-viz)는 파일을 원래 폴더에 둔다.
 export const lessonPath = (l) => `content/${l.dir || l.track}/${l.id}.md`;
+// 트랙의 코스를 구역별로 나눈다. [{ section | null, courses: [...] }]
+export const sectionsOf = (trackId) => {
+  const list = coursesOf(trackId);
+  const used = new Set();
+  const out = (SECTIONS[trackId] || []).map((sec) => {
+    const courses = list.filter((c) => sec.courses.includes(c.id));
+    courses.forEach((c) => used.add(c.id));
+    return { section: sec, courses };
+  }).filter((g) => g.courses.length);
+  const rest = list.filter((c) => !used.has(c.id));
+  if (rest.length) out.push({ section: null, courses: rest });
+  return out;
+};

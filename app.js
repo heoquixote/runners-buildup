@@ -1,6 +1,6 @@
 import { CONFIG } from "./config.js";
 import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, SESSIONS } from "./problems.js";
-import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath } from "./content/index.js";
+import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath, sectionsOf } from "./content/index.js";
 import { conceptName } from "./content/concepts.js";
 import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
 import { render as renderMd } from "./md.js";
@@ -849,15 +849,33 @@ function courseRow(c, i) {
   </li>`;
 }
 
+// 트랙 페이지의 구역 하나: 머리글(번호 · 이름 · DAY 범위 · 진도) + 그 구역의 DAY 목록
+function sectionBlock(g, i, all) {
+  const rows = `<ol class="clist panel">${g.courses.map(courseRow).join("")}</ol>`;
+  if (!g.section || all.length < 2) return `<section class="csec">${rows}</section>`;
+  const days = g.courses.map(dayNo);
+  const range = days.length > 1 ? `DAY ${dd2(days[0])}–${dd2(days[days.length - 1])}` : `DAY ${dd2(days[0])}`;
+  const st = g.courses.map(courseStats).reduce((a, s) => ({ done: a.done + s.lessonsDone + s.solved, all: a.all + s.lessons + s.problems }), { done: 0, all: 0 });
+  const sec = g.section;
+  return `<section class="csec" id="sec-${esc(sec.id)}">
+    <header class="csec-head">
+      <span class="csec-no">PART ${i + 1}</span>
+      <div class="csec-title"><h2>${esc(sec.label)}</h2>${sec.blurb ? `<p class="muted">${esc(sec.blurb)}</p>` : ""}</div>
+      <div class="csec-meta"><span>${range}</span><span class="meter-bar"><span style="width:${pct(st.done, st.all)}%"></span></span></div>
+    </header>
+    ${rows}
+  </section>`;
+}
+const dd2 = (n) => String(n).padStart(2, "0");
+
 function viewTrack(t) {
-  const list = coursesOf(t.id);
   const s = trackStats(t);
   $app.innerHTML = `${topbar()}<main class="page track-page" ${trackStyle(t)}>
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">${esc(t.label)}</span></nav>
     <header class="unit-hero"><span class="tcard-en">${esc(t.en)}</span><h1>${esc(t.label)}</h1><p class="muted">${esc(t.blurb)}</p>
       <div class="unit-actions"><span class="ucard-count">${s.ready} / ${s.courses} 코스 열림 · 레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span></div></header>
     ${t.ready ? "" : `<div class="panel soon-panel"><h2>이 트랙은 준비 중입니다</h2><p class="muted">아래는 예정된 코스 순서입니다. 레슨과 문제가 준비되는 대로 하나씩 열립니다.</p></div>`}
-    <ol class="clist panel">${list.map(courseRow).join("")}</ol>
+    <div class="csecs">${sectionsOf(t.id).map(sectionBlock).join("")}</div>
   </main>`;
   bindTopbar();
 }
