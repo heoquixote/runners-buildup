@@ -86,11 +86,12 @@ def _():
     b = []
     steps = [("01", "시작하기", ""), ("02", "기술통계", "요약"), ("03", "확률", "확률"), ("04", "확률분포", "확률"),
              ("05", "표본분포", "표본"), ("06", "신뢰구간", "추정"), ("07", "가설검정", "검정"), ("08", "카이제곱·ANOVA", "검정"),
-             ("09", "상관과 회귀", "관계"), ("10", "A/B 테스트", "실험"), ("11", "해석 실수", "해석")]
-    colors = {"": MUTED, "요약": INK2, "확률": TRACK, "표본": CYAN, "추정": CYAN, "검정": PINK, "관계": ACC, "실험": ORANGE, "해석": WARN}
+             ("09", "상관과 회귀", "관계"), ("10", "검정 도구 상자", "검정"), ("11", "A/B 테스트", "실험"),
+             ("12", "해석 실수", "해석"), ("13", "품질 통계", "품질")]
+    colors = {"": MUTED, "요약": INK2, "확률": TRACK, "표본": CYAN, "추정": CYAN, "검정": PINK, "관계": ACC, "실험": ORANGE, "해석": WARN, "품질": PASS}
     for i, (d, name, tag) in enumerate(steps):
         row, col = divmod(i, 4)
-        if row == 1:
+        if row % 2 == 1:
             col = 3 - col
         x, y = 30 + col * 172, 24 + row * 104
         c = colors[tag]
@@ -99,7 +100,7 @@ def _():
         b.append(text(x + 14, y + 44, name, 14, INK, "start", 700))
         if i < len(steps) - 1:
             nrow, ncol = divmod(i + 1, 4)
-            if nrow == 1:
+            if nrow % 2 == 1:
                 ncol = 3 - ncol
             if nrow == row:
                 if ncol > col:
@@ -108,7 +109,7 @@ def _():
                     b.append(arrow(x - 2, y + 32, x - 24, y + 32, MUTED, 1.6))
             else:
                 b.append(arrow(x + 73, y + 66, x + 73, y + 102, MUTED, 1.6))
-    return svg(720, 330, b, "통계 트랙 11일 지도")
+    return svg(720, 434, b, "통계 트랙 13일 지도")
 
 
 @fig("st00-pop-sample")
