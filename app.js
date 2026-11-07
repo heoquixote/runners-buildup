@@ -880,10 +880,8 @@ function videoBlock(attrs) {
   const q = new URLSearchParams({ rel: "0", modestbranding: "1" });
   if (attrs.start) q.set("start", attrs.start);
   if (attrs.end) q.set("end", attrs.end);
-  const span = attrs.start || attrs.end ? ` · ${fmtSec(attrs.start)}–${fmtSec(attrs.end)}` : "";
-  return `<details class="video-block"><summary><span class="video-ico" aria-hidden="true">▶</span><span><span class="eyebrow">Video · 데이터러너즈</span><b>${esc(v.title)}</b><span class="muted">${esc(v.length)}${span}</span></span></summary>
-    <div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${esc(yt)}?${q}" title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-    <a class="muted" style="font-size:13px" href="https://www.youtube.com/watch?v=${esc(yt)}" target="_blank" rel="noopener">유튜브에서 전체 영상 보기</a></details>`;
+  // 토글 없이 유튜브 플레이어를 바로 보여 준다(제목·채널은 플레이어가 표시).
+  return `<div class="video-block video-embed"><div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${esc(yt)}?${q}" title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div>`;
 }
 // youtube_id가 없어도 release_url(유튜브 주소)만 채우면 재생된다.
 function youtubeId(v) {
@@ -891,7 +889,6 @@ function youtubeId(v) {
   const m = String(v.release_url || "").match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/);
   return m ? m[1] : null;
 }
-const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 // 레슨 본문: 설명 → 실행 셀 → 설명 → 실행 셀 순서로, 셀은 마크다운에 놓인 자리에 그대로 들어간다.
 function runCellHtml(code, i, lang = "python", topic = "", note = "") {
