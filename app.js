@@ -907,13 +907,16 @@ async function viewLesson(l) {
   const c = courseById[l.course];
   const t = trackById[c.track];
   const idx = c.lessons.findIndex((x) => x.id === l.id);
-  const prev = c.lessons[idx - 1], next = c.lessons[idx + 1];
+  // 이전 · 다음은 필수 레슨끼리만 잇는다. 선택 레슨(설치 가이드 등)은 본문 링크로 들어가고,
+  // 선택 레슨에서는 앞의 필수 레슨으로 돌아가거나 다음 필수 레슨 · 다음 코스로 넘어간다.
+  const prev = c.lessons.slice(0, idx).reverse().find((x) => !x.optional);
+  const next = c.lessons.slice(idx + 1).find((x) => !x.optional);
   const probs = courseProblems(c);
   const tl = coursesOf(c.track);
   const nextC = tl.slice(tl.indexOf(c) + 1).find(isReady);
   const nextCLesson = nextC?.lessons[0];
   const prevC = tl.slice(0, tl.indexOf(c)).reverse().find(isReady);
-  const prevCLesson = prevC?.lessons[prevC.lessons.length - 1];
+  const prevCLesson = prevC && (coreLessons(prevC).at(-1) || prevC.lessons.at(-1));
   const cs = courseStats(c);
   const multi = c.lessons.length > 1;
   const sid = state.session?.student.id || "guest";
