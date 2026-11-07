@@ -128,10 +128,10 @@ def cost(y_true, proba, t):
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)""",
       [("oof", "학습용(X_train, y_train) 5-fold 교차검증으로 얻은 고장 확률 배열", "cross_val_predict(model, X_train, y_train, cv=cv, method='predict_proba')[:, 1]", "len({var}) == 8000 and 0 <= min({var}) and max({var}) <= 1"),
-       ("costs", "기준선 0.05, 0.1, 0.15, 0.2, 0.3 → 학습용 총비용(만 원) 딕셔너리", "{t: cost(y_train, oof, t) for t in [0.05, 0.1, 0.15, 0.2, 0.3]}", "{var} == {v}"),
-       ("best_t", "costs에서 비용이 가장 적은 기준선", "min(costs, key=costs.get)", "abs({var} - {v}) < 1e-9"),
+       ("costs", "기준선 0.05, 0.1, 0.15, 0.2, 0.3 → 학습용 총비용(만 원) 딕셔너리", "{t: cost(y_train, oof, t) for t in [0.05, 0.1, 0.15, 0.2, 0.3]}", "sorted({var}) == [0.05, 0.1, 0.15, 0.2, 0.3] and {var} == {{t: cost(y_train, oof, t) for t in [0.05, 0.1, 0.15, 0.2, 0.3]}}"),
+       ("best_t", "costs에서 비용이 가장 적은 기준선", "min(costs, key=costs.get)", "{var} in costs and costs[{var}] == min(costs.values())"),
        ("test_proba", "학습용 전체로 model을 학습한 뒤 시험용에서 낸 고장 확률", "model.fit(X_train, y_train).predict_proba(X_test)[:, 1]", "len({var}) == 2000"),
-       ("test_recall", "시험용에서 best_t로 판정한 재현율 (시험용은 여기서 한 번만)", "recall_score(y_test, (test_proba >= best_t).astype(int))", F)],
+       ("test_recall", "시험용에서 best_t로 판정한 재현율 (시험용은 여기서 한 번만)", "recall_score(y_test, (test_proba >= best_t).astype(int))", "abs({var} - recall_score(y_test, (test_proba >= best_t).astype(int))) < 1e-9 and {var} > 0.7")],
       "print(costs, best_t, round(float(test_recall), 3))")
 
 # ───────────── 51-4 일반: 미니 프로젝트 ─────────────

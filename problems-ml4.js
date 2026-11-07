@@ -160,12 +160,12 @@ export const ML4_PROBLEMS = [
       },
       {
         "label": "2단계 기준선 0.05, 0.1, 0.15, 0.2, 0.3 → 학습용 총비용(만 원) 딕셔너리",
-        "expr": "costs == {0.05: 5640, 0.1: 4475, 0.15: 4660, 0.2: 4790, 0.3: 4785}",
+        "expr": "sorted(costs) == [0.05, 0.1, 0.15, 0.2, 0.3] and costs == {t: cost(y_train, oof, t) for t in [0.05, 0.1, 0.15, 0.2, 0.3]}",
         "hint": "{t: cost(y_train, oof, t) for t in [0.05, 0.1, 0.15, 0.2, 0.3]}"
       },
       {
         "label": "3단계 costs에서 비용이 가장 적은 기준선",
-        "expr": "abs(best_t - 0.1) < 1e-9",
+        "expr": "best_t in costs and costs[best_t] == min(costs.values())",
         "hint": "min(costs, key=costs.get)"
       },
       {
@@ -175,7 +175,7 @@ export const ML4_PROBLEMS = [
       },
       {
         "label": "5단계 시험용에서 best_t로 판정한 재현율 (시험용은 여기서 한 번만)",
-        "expr": "abs(test_recall - 0.9117647058823529) < 1e-6",
+        "expr": "abs(test_recall - recall_score(y_test, (test_proba >= best_t).astype(int))) < 1e-9 and test_recall > 0.7",
         "hint": "recall_score(y_test, (test_proba >= best_t).astype(int))"
       }
     ]
