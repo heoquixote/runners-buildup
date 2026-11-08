@@ -468,7 +468,8 @@ export const COURSES = [
           { kind: "choice", q: "새 도화지를 스스로 만들어서 ax=를 받지 않고, col=로 칸을 나누는 함수는?", options: ["histplot", "boxplot", "displot", "heatmap"], answer: 2, explain: "displot · catplot · relplot · pairplot 같은 그림 단위 함수는 새 도화지를 만듭니다. 칸 단위 함수(histplot 등)는 ax=로 자리를 정해 줍니다." },
         ] },
     ] },
-  { id: "da-12", track: "python-viz", dir: "python-da", title: "비교: 어느 쪽이 더 큰가", summary: "막대 · 가로 막대 · countplot, 평균과 오차 막대, 묶음 막대 · pointplot · 점 그래프", level: "기본",
+  // 질문별 차트(PART 3~7): 질문(비교 · 추이 · 분포 · 관계 · 구성) = PART, 차트 하나 = DAY 하나. 레슨 md 이름(da-12-1 …)은 진도 기록 때문에 그대로 둔다.
+  { id: "vz-01", track: "python-viz", dir: "python-da", title: "막대 그래프", summary: "세로 · 가로 막대와 정렬, 0에서 시작하는 축, countplot, 개수가 많다 ≠ 비율이 높다", level: "기본",
     concepts: ["viz.compare"],
     lessons: [
       { id: "da-12-1", title: "막대 그래프 읽기", minutes: 15, concepts: ["viz.compare"],
@@ -476,17 +477,33 @@ export const COURSES = [
           { kind: "choice", q: "두 공장의 합격률 막대 그래프에서 y축이 90%부터 시작한다. A 막대가 B 막대보다 3배 길어 보이고 실제 값은 A 99%, B 93%다. 맞는 해석은?", options: ["A가 B보다 합격률이 3배 높다", "A가 B보다 6%p 높다. 막대 길이 차이는 축을 90에서 잘라 과장된 것이다", "축과 상관없이 막대 길이 비율이 곧 값의 비율이다", "B 공장은 합격률이 매우 낮다"], answer: 1, explain: "막대는 길이로 값을 나타내므로 0에서 시작해야 합니다. 축을 자르면 작은 차이가 몇 배처럼 보입니다." },
           { kind: "ox", q: "3등실 생존자 수(119명)가 2등실(87명)보다 많으므로 3등실의 생존율도 더 높다.", answer: false, explain: "개수는 그룹 크기의 영향을 받습니다. 3등실은 491명, 2등실은 184명이라 생존율은 3등실 24%, 2등실 47%입니다." },
         ] },
+    ] },
+  { id: "vz-02", track: "python-viz", dir: "python-da", title: "평균과 오차 막대", summary: "barplot 막대는 평균, 오차 막대 vs 표준편차 막대, 합계로 바꾸기", level: "기본",
+    concepts: ["viz.compare"],
+    lessons: [
       { id: "da-12-2", title: "평균과 오차 막대 읽기", minutes: 18, concepts: ["viz.compare"],
         quiz: [
           { kind: "ox", q: "sns.barplot의 막대 높이는 기본으로 그룹의 합계다.", answer: false, explain: "기본은 평균입니다. 합계를 그리려면 estimator=\"sum\"을 줍니다." },
           { kind: "choice", q: "두 그룹의 평균 막대에서 오차 막대(95% 신뢰 구간)가 크게 겹친다. 알맞은 해석은?", options: ["두 그룹의 평균은 확실히 다르다", "두 그룹의 평균이 다르다고 단정하기 어렵다", "두 그룹의 데이터 개수가 같다", "오차 막대는 최솟값과 최댓값이다"], answer: 1, explain: "신뢰 구간이 크게 겹치면 데이터를 다시 모았을 때 순서가 바뀔 수도 있습니다. 차이를 단정하지 않습니다." },
         ] },
-      { id: "da-12-3", title: "두 기준으로 나눠 비교하기", minutes: 18, concepts: ["viz.compare"],
+    ] },
+  { id: "vz-03", track: "python-viz", dir: "python-da", title: "묶음 막대 · 칸 나누기", summary: "기준이 둘이면 hue로 묶음 막대, 셋이면 catplot col=로 칸 나누기", level: "기본",
+    concepts: ["viz.compare"],
+    lessons: [
+      { id: "da-12-3", title: "묶음 막대 · 칸 나누기 읽기", minutes: 15, concepts: ["viz.compare"],
+        quiz: [
+          { kind: "ox", q: "sns.barplot(x=\"class\", hue=\"sex\")로 그린 묶음 막대에서는 같은 등급 안의 여성 · 남성 비교가, 같은 성별끼리 등급을 비교하는 것보다 쉽다.", answer: true, explain: "hue로 나눈 쪽이 한 묶음 안에 나란히 서므로 묶음 안 비교가 쉽습니다. 다른 비교가 중요하면 x와 hue를 바꿉니다." },
+        ] },
+    ] },
+  { id: "vz-04", track: "python-viz", dir: "python-da", title: "점 그래프", summary: "pointplot으로 평행 · 엇갈림 읽기, 범주가 많을 때 dot plot · 롤리팝", level: "기본",
+    concepts: ["viz.compare"],
+    lessons: [
+      { id: "da-12-4", title: "점 그래프 읽기: pointplot · dot plot", minutes: 15, concepts: ["viz.compare"],
         quiz: [
           { kind: "choice", q: "종(Adelie · Chinstrap · Gentoo)별 평균 몸무게 pointplot에서 암컷 선과 수컷 선이 거의 평행하다. 맞는 해석은?", options: ["암수 차이가 종마다 크게 다르다", "종과 상관없이 수컷이 암컷보다 비슷한 만큼 무겁다", "성별은 몸무게와 관계없다", "종은 몸무게와 관계없다"], answer: 1, explain: "평행선은 한 기준의 효과가 다른 기준과 상관없이 일정하다는 뜻입니다. 선이 엇갈려야 '조건에 따라 효과가 다르다'고 말합니다." },
         ] },
     ] },
-  { id: "da-13", track: "python-viz", dir: "python-da", title: "추이: 시간에 따라 어떻게 변하나", summary: "선 그래프의 추세 · 계절성 · 급변, 이동평균 · 로그 축 · 기준선, 여러 시계열 비교", level: "기본",
+  { id: "vz-05", track: "python-viz", dir: "python-da", title: "선 그래프", summary: "추세 · 계절성 나눠 보기, y축 범위가 바꾸는 인상, 범주는 선으로 잇지 않기", level: "기본",
     concepts: ["viz.trend"],
     lessons: [
       { id: "da-13-1", title: "선 그래프 읽기", minutes: 18, concepts: ["viz.trend"],
@@ -494,17 +511,25 @@ export const COURSES = [
           { kind: "choice", q: "월별 매출 선 그래프가 매년 12월에 봉우리를 만들고, 봉우리 높이가 해마다 높아진다. 맞는 해석은?", options: ["계절성만 있고 추세는 없다", "추세만 있고 계절성은 없다", "매년 12월에 오르는 계절성과 해마다 늘어나는 추세가 함께 있다", "불규칙 변동이라 해석할 수 없다"], answer: 2, explain: "같은 간격으로 반복되는 봉우리는 계절성, 전체 수준이 올라가는 것은 추세입니다." },
           { kind: "ox", q: "x축이 '1등실 · 2등실 · 3등실'처럼 순서 없는 범주여도 점들을 선으로 이어 추이로 읽을 수 있다.", answer: false, explain: "선은 '이어지는 변화'를 뜻합니다. 순서가 없는 범주는 막대로 비교합니다." },
         ] },
+    ] },
+  { id: "vz-06", track: "python-viz", dir: "python-da", title: "이동평균 · 로그 축 · 기준선", summary: "이동평균으로 흔들림 걸러 내기, 비율 성장은 로그 축, 기준선과 목표 범위", level: "기본",
+    concepts: ["viz.trend"],
+    lessons: [
       { id: "da-13-2", title: "추세를 또렷하게: 이동평균 · 로그 축 · 기준선", minutes: 18, concepts: ["viz.trend"],
         quiz: [
           { kind: "choice", q: "7일 이동평균선이 오늘 막 아래로 꺾였다. 알맞은 해석은?", options: ["오늘 처음으로 값이 떨어졌다", "실제 변화는 며칠 전부터 시작됐을 수 있다", "이동평균은 미래를 예측한 값이다", "꺾인 것은 의미가 없다"], answer: 1, explain: "이동평균은 과거 N일을 평균하므로 실제 변화보다 늦게 반응합니다." },
           { kind: "ox", q: "로그 y축에서 선이 곧은 직선이면 매년 같은 개수(예: 100명)씩 늘어난 것이다.", answer: false, explain: "로그 축의 직선은 매년 같은 '비율(%)'로 늘었다는 뜻입니다. 같은 개수씩 늘면 일반 축에서 직선입니다." },
         ] },
+    ] },
+  { id: "vz-07", track: "python-viz", dir: "python-da", title: "여러 시계열", summary: "한 칸에 여러 선, 작은 여러 칸, 시작점 = 100 지수화, 달력형 히트맵", level: "기본",
+    concepts: ["viz.trend"],
+    lessons: [
       { id: "da-13-3", title: "여러 시계열 비교하기", minutes: 18, concepts: ["viz.trend"],
         quiz: [
           { kind: "choice", q: "1월 승객과 7월 승객을 첫해 = 100으로 지수화했더니 1960년에 두 선이 각각 372, 420이 됐다. 맞는 해석은?", options: ["1960년 7월 승객은 420명이다", "7월 승객이 1월보다 더 빠른 비율로 늘었다", "두 달의 실제 승객 수가 비슷하다", "1월 승객은 줄었다"], answer: 1, explain: "지수는 첫해 대비 몇 배인지를 나타냅니다. 원래 크기는 사라지고 증가 속도만 비교됩니다." },
         ] },
     ] },
-  { id: "da-14", track: "python-viz", dir: "python-da", title: "분포: 값들이 어떻게 퍼져 있나", summary: "히스토그램, 밀도 곡선 · ECDF · 러그, 상자그림, 바이올린 · 스트립 · 스웜", level: "기본",
+  { id: "vz-08", track: "python-viz", dir: "python-da", title: "히스토그램", summary: "분포의 네 가지 모양, 긴 꼬리와 봉우리 두 개, bins와 비율", level: "기본",
     concepts: ["viz.dist"],
     lessons: [
       { id: "da-14-1", title: "히스토그램 읽기", minutes: 20, concepts: ["viz.dist"],
@@ -513,24 +538,50 @@ export const COURSES = [
           { kind: "choice", q: "히스토그램에 봉우리가 두 개 보일 때 가장 먼저 의심할 것은?", options: ["데이터 입력 오류", "서로 다른 무리(그룹)가 섞여 있다", "평균이 정확하다", "bins가 너무 적다"], answer: 1, explain: "봉우리 두 개는 종 · 성별 · 공정처럼 다른 그룹이 섞여 있을 때 자주 생깁니다. hue로 나눠 확인합니다." },
           { kind: "ox", q: "bins 개수를 바꿔도 히스토그램의 모양은 항상 같다.", answer: false, explain: "bins에 따라 봉우리가 생기거나 사라질 수 있습니다. bins를 바꿔도 유지되는 모양만 믿습니다." },
         ] },
-      { id: "da-14-2", title: "밀도 곡선과 ECDF 읽기", minutes: 18, concepts: ["viz.dist"],
+    ] },
+  { id: "vz-09", track: "python-viz", dir: "python-da", title: "밀도 곡선 · 러그", summary: "KDE로 그룹 분포 겹쳐 보기, bw_adjust와 꼬리, 러그로 실제 위치 확인", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
+      { id: "da-14-2", title: "밀도 곡선(KDE) · 러그 읽기", minutes: 15, concepts: ["viz.dist"],
         quiz: [
-          { kind: "choice", q: "ECDF 그래프에서 y = 0.5 가로선과 곡선이 만나는 x값은?", options: ["평균", "중앙값", "최빈값", "최댓값"], answer: 1, explain: "ECDF의 y는 '그 값 이하의 비율'입니다. 50%가 되는 지점이 중앙값입니다." },
           { kind: "ox", q: "나이 KDE 곡선이 0보다 작은 쪽까지 뻗어 있으므로 나이가 음수인 데이터가 있다.", answer: false, explain: "KDE는 데이터마다 언덕을 쌓아 양 끝에서도 곡선이 뻗습니다. 실제 범위는 러그나 최솟값으로 확인합니다." },
         ] },
+    ] },
+  { id: "vz-10", track: "python-viz", dir: "python-da", title: "ECDF", summary: "'이 값 이하가 몇 %', 중앙값 · 백분위를 누적 계단으로 읽기", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
+      { id: "da-14-5", title: "ECDF 읽기", minutes: 10, concepts: ["viz.dist"],
+        quiz: [
+          { kind: "choice", q: "ECDF 그래프에서 y = 0.5 가로선과 곡선이 만나는 x값은?", options: ["평균", "중앙값", "최빈값", "최댓값"], answer: 1, explain: "ECDF의 y는 '그 값 이하의 비율'입니다. 50%가 되는 지점이 중앙값입니다." },
+        ] },
+    ] },
+  { id: "vz-11", track: "python-viz", dir: "python-da", title: "상자그림", summary: "상자의 부품(중앙값 · IQR · 이상치), 치우침 읽기, 그룹별 상자", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
       { id: "da-14-3", title: "상자그림 읽기", minutes: 18, concepts: ["viz.dist"],
         quiz: [
           { kind: "choice", q: "상자그림에서 상자 안의 가운데 선이 뜻하는 것은?", options: ["평균", "중앙값", "최빈값", "최댓값"], answer: 1, explain: "가운데 선은 중앙값, 상자의 아래 · 위 끝은 Q1 · Q3(가운데 50%)입니다." },
           { kind: "ox", q: "상자가 더 큰 그룹은 데이터 개수도 더 많다.", answer: false, explain: "상자 높이(IQR)는 값이 퍼진 정도입니다. 개수는 상자에 나타나지 않으므로 n을 따로 적어 줍니다." },
           { kind: "choice", q: "봉우리가 두 개인 분포를 상자그림으로 그리면?", options: ["상자가 두 개로 나뉜다", "봉우리가 보이지 않고 평범한 상자로 그려진다", "이상치 점이 두 무리로 찍힌다", "그릴 수 없다"], answer: 1, explain: "상자그림은 다섯 숫자로 요약하므로 봉우리 개수를 보여 주지 못합니다. 바이올린이나 히스토그램으로 확인합니다." },
         ] },
-      { id: "da-14-4", title: "바이올린 · 스트립 · 스웜 읽기", minutes: 18, concepts: ["viz.dist"],
+    ] },
+  { id: "vz-12", track: "python-viz", dir: "python-da", title: "바이올린", summary: "상자 + 밀도 곡선으로 봉우리까지, 폭을 개수로 읽지 않기", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
+      { id: "da-14-4", title: "바이올린 그래프 읽기", minutes: 12, concepts: ["viz.dist"],
         quiz: [
           { kind: "ox", q: "바이올린 두 개의 크기가 비슷하면 두 그룹의 데이터 개수도 비슷하다.", answer: false, explain: "바이올린은 그룹마다 넓이를 같게 맞춰 그립니다. 개수는 스트립 · 스웜이나 n 표시로 확인합니다." },
+        ] },
+    ] },
+  { id: "vz-13", track: "python-viz", dir: "python-da", title: "스트립 · 스웜", summary: "값마다 점 하나, 개수까지 보이는 그래프, 상자 + 점 겹쳐 그리기", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
+      { id: "da-14-6", title: "스트립 · 스웜 읽기", minutes: 12, concepts: ["viz.dist"],
+        quiz: [
           { kind: "choice", q: "그룹마다 데이터가 20개 정도일 때 분포를 가장 정직하게 보여 주는 그래프는?", options: ["바이올린", "밀도 곡선", "스트립 또는 스웜", "파이"], answer: 2, explain: "데이터가 적으면 매끈한 곡선 모양은 대부분 곡선이 만든 것입니다. 점을 다 찍는 것이 가장 정직합니다." },
         ] },
     ] },
-  { id: "da-15", track: "python-viz", dir: "python-da", title: "관계와 상관: 두 값이 함께 움직이나", summary: "산점도, 추세선 · 잔차, 상관계수 · 히트맵 · 앤스콤, pairplot · jointplot · 심슨의 역설", unit: 30, level: "실무",
+  { id: "vz-14", track: "python-viz", dir: "python-da", title: "산점도", summary: "방향 · 모양 · 강도 · 튀는 점, 색 · 크기로 정보 얹기, 점이 겹칠 때", level: "실무",
     concepts: ["viz.relation"],
     lessons: [
       { id: "da-15-1", title: "산점도 읽기", minutes: 18, concepts: ["viz.relation"],
@@ -538,23 +589,35 @@ export const COURSES = [
           { kind: "choice", q: "점 1만 개를 기본 산점도로 그렸더니 가운데가 한 덩어리로 칠해졌다. 가장 먼저 할 일은?", options: ["점을 더 크게 그린다", "alpha(투명도)를 낮추고 점을 작게 그린다", "파이 그래프로 바꾼다", "데이터를 지운다"], answer: 1, explain: "점이 겹치면 빽빽한 곳과 드문 곳이 똑같아 보입니다. 투명하게 그리면 겹친 곳일수록 진해집니다." },
           { kind: "ox", q: "산점도에서 오른쪽 위로 올라가는 띠가 보이면 x가 y의 원인이다.", answer: false, explain: "산점도는 '함께 움직인다'까지만 보여 줍니다. 원인인지는 따로 따져야 합니다." },
         ] },
+    ] },
+  { id: "vz-15", track: "python-viz", dir: "python-da", title: "추세선", summary: "regplot 기울기 해석, 잔차, 그룹별 추세선과 곡선 추세선", level: "실무",
+    concepts: ["viz.relation"],
+    lessons: [
       { id: "da-15-2", title: "추세선 읽기", minutes: 18, concepts: ["viz.relation"],
         quiz: [
           { kind: "choice", q: "계산 금액(x)과 팁(y)의 추세선 기울기가 0.105다. 맞는 해석은?", options: ["팁은 항상 계산 금액의 0.105배다", "계산 금액이 1달러 늘면 팁이 평균 약 0.1달러 늘어난다", "상관계수가 0.105다", "팁이 1달러 늘면 계산 금액이 0.105달러 는다"], answer: 1, explain: "기울기는 x가 1 늘 때 선 위의 y가 늘어나는 양입니다. 개별 점은 선 위아래로 흩어져 있습니다." },
           { kind: "ox", q: "추세선 주변의 옅은 띠 안에 대부분의 점이 들어 있어야 한다.", answer: false, explain: "띠는 '선이 있을 법한 범위'(신뢰 구간)이지 점들의 범위가 아닙니다. 대부분의 점은 띠 밖에 있습니다." },
         ] },
+    ] },
+  { id: "vz-16", track: "python-viz", dir: "python-da", title: "상관계수 · 히트맵", summary: "상관계수 r, 상관 히트맵, 같은 r 다른 그림, 상관은 원인이 아니다", level: "실무",
+    concepts: ["viz.relation"],
+    lessons: [
       { id: "da-15-3", title: "상관계수와 히트맵 읽기", minutes: 20, concepts: ["viz.relation"],
         quiz: [
           { kind: "ox", q: "상관계수가 0에 가까우면 두 값 사이에는 아무 관계도 없다.", answer: false, explain: "r은 직선 관계만 잽니다. 양 끝에서 고장이 나는 U자 관계처럼 r ≈ 0이어도 강한 관계가 있을 수 있습니다." },
           { kind: "choice", q: "네 데이터의 상관계수가 모두 0.82로 같다. 가장 먼저 할 일은?", options: ["네 데이터 모두 강한 직선 관계라고 보고한다", "산점도를 그려 곡선 · 이상치 여부를 확인한다", "평균을 비교한다", "히트맵을 그린다"], answer: 1, explain: "앤스콤의 네 데이터처럼 r이 같아도 모양은 전혀 다를 수 있습니다. r을 보고하기 전에 산점도를 그립니다." },
           { kind: "ox", q: "아이스크림 판매량과 물놀이 사고 건수의 상관계수가 0.9이므로, 아이스크림 판매가 사고의 원인이다.", answer: false, explain: "상관은 인과가 아닙니다. 둘 다 더운 날씨라는 제3의 원인 때문에 함께 늘었을 수 있습니다." },
         ] },
-      { id: "da-15-4", title: "여러 변수 한 번에: pairplot · jointplot", minutes: 18, concepts: ["viz.relation"],
+    ] },
+  { id: "vz-17", track: "python-viz", dir: "python-da", title: "pairplot · jointplot", summary: "여러 변수 한 번에 훑기, 섞인 그룹과 심슨의 역설", unit: 30, level: "실무",
+    concepts: ["viz.relation"],
+    lessons: [
+      { id: "da-15-4", title: "pairplot · jointplot 읽기", minutes: 18, concepts: ["viz.relation"],
         quiz: [
           { kind: "choice", q: "펭귄 전체로는 부리 깊이와 몸무게의 r이 −0.47인데, 종별로 나누면 세 종 모두 +0.6 안팎이다. 알맞은 결론은?", options: ["부리가 깊을수록 가볍다", "같은 종 안에서는 부리가 깊을수록 무겁다. 전체 음의 관계는 종을 섞어서 생긴 착시다", "두 변수는 관계가 없다", "종별 계산이 틀렸다"], answer: 1, explain: "그룹을 섞으면 관계 방향이 뒤집히는 심슨의 역설입니다. 그룹별 결론을 보고합니다." },
         ] },
     ] },
-  { id: "da-16", track: "python-viz", dir: "python-da", title: "구성과 비율: 전체 중 얼마인가", summary: "파이 · 도넛, 누적 막대와 100% 막대, 누적 영역", level: "기본",
+  { id: "vz-18", track: "python-viz", dir: "python-da", title: "파이 · 도넛", summary: "전체 중 비중, 비슷한 조각은 막대로, 무엇의 100%인가, 도넛", level: "기본",
     concepts: ["viz.composition"],
     lessons: [
       { id: "da-16-1", title: "파이 · 도넛 읽기", minutes: 15, concepts: ["viz.composition"],
@@ -562,11 +625,19 @@ export const COURSES = [
           { kind: "choice", q: "제품 12종의 판매 비율을 비교해 가장 많이 팔린 순서를 보여 주려면?", options: ["파이 그래프", "크기순으로 정렬한 막대 그래프", "선 그래프", "히스토그램"], answer: 1, explain: "조각이 많거나 비슷한 파이는 크기 비교가 어렵습니다. 정렬한 막대가 순위를 가장 정확히 보여 줍니다." },
           { kind: "ox", q: "파이 그래프는 빠진 값(결측)이 많으면 원이 덜 채워져서 바로 알 수 있다.", answer: false, explain: "파이는 무엇을 넣든 꽉 찬 원(100%)으로 그려집니다. 분모(n)를 제목이나 설명에서 확인해야 합니다." },
         ] },
+    ] },
+  { id: "vz-19", track: "python-viz", dir: "python-da", title: "누적 막대 · 100% 막대", summary: "개수 누적 vs 100% 누적, 가운데 조각 읽기, 막대마다 n 적기", level: "기본",
+    concepts: ["viz.composition"],
+    lessons: [
       { id: "da-16-2", title: "누적 막대와 100% 막대 읽기", minutes: 18, concepts: ["viz.composition"],
         quiz: [
           { kind: "choice", q: "등급별 생존 비율을 비교하려고 한다. 그룹 크기가 491명, 216명, 184명으로 다를 때 알맞은 그래프는?", options: ["개수 누적 막대", "100% 누적 막대 + 막대마다 n 표시", "파이 세 개", "선 그래프"], answer: 1, explain: "비율 비교는 100% 막대가 정확합니다. 그룹 크기가 사라지므로 n을 함께 적습니다." },
           { kind: "ox", q: "누적 막대에서 위쪽 조각은 조각 끝의 높이로 막대끼리 비교할 수 있다.", answer: false, explain: "위쪽 조각은 막대마다 시작 높이가 달라서 끝 높이가 아니라 조각 길이로 비교해야 합니다." },
         ] },
+    ] },
+  { id: "vz-20", track: "python-viz", dir: "python-da", title: "누적 영역", summary: "전체 추이와 구성 변화를 한 장에, 100% 누적 영역", level: "기본",
+    concepts: ["viz.composition"],
+    lessons: [
       { id: "da-16-3", title: "시간에 따른 구성: 누적 영역", minutes: 15, concepts: ["viz.composition"],
         quiz: [
           { kind: "ox", q: "100% 누적 영역에서 겨울 층이 얇아졌으므로 겨울 승객 수가 줄었다.", answer: false, explain: "100% 그래프는 비중만 보여 줍니다. 겨울 승객 수는 3.6배 늘었고 비중만 조금 줄었습니다." },
@@ -1313,7 +1384,11 @@ export const SECTIONS = {
   "python-viz": [
     { id: "matplotlib", label: "matplotlib", en: "matplotlib", blurb: "파이썬 그래프의 바탕: 도화지와 그래프 칸", courses: ["da-09"] },
     { id: "seaborn", label: "seaborn", en: "seaborn", blurb: "표와 열 이름만으로 그리는 통계 그래프", courses: ["da-10"] },
-    { id: "questions", label: "질문별 차트", en: "Chart by Question", blurb: "비교 · 추이 · 분포 · 관계 · 구성, 질문에 맞는 그래프", courses: ["da-12", "da-13", "da-14", "da-15", "da-16"] },
+    { id: "compare", label: "비교", en: "Comparison", blurb: "어느 쪽이 더 큰가: 막대 · 오차 막대 · 묶음 막대 · 점 그래프", courses: ["vz-01", "vz-02", "vz-03", "vz-04"] },
+    { id: "trend", label: "추이", en: "Trend", blurb: "시간에 따라 어떻게 변하나: 선 그래프와 다듬기, 여러 시계열", courses: ["vz-05", "vz-06", "vz-07"] },
+    { id: "dist", label: "분포", en: "Distribution", blurb: "값들이 어떻게 퍼져 있나: 히스토그램부터 스웜까지", courses: ["vz-08", "vz-09", "vz-10", "vz-11", "vz-12", "vz-13"] },
+    { id: "relation", label: "관계", en: "Relationship", blurb: "두 값이 함께 움직이나: 산점도 · 추세선 · 상관 · pairplot", courses: ["vz-14", "vz-15", "vz-16", "vz-17"] },
+    { id: "composition", label: "구성", en: "Composition", blurb: "전체 중 얼마인가: 파이 · 누적 막대 · 누적 영역", courses: ["vz-18", "vz-19", "vz-20"] },
     { id: "wrapup", label: "정리", en: "Wrap-up", blurb: "어떤 차트를 쓸지 고르는 기준과 체크리스트", courses: ["da-11"] },
   ],
   sql: [
