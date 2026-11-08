@@ -11,6 +11,7 @@ const MAX_ROWS = 100;
 export const SQL_SEEDS = [
   { file: "sql_company.sql", tables: ["emp", "dept", "salgrade"] },
   { file: "sql_shop.sql", tables: ["users", "orders", "events"] },
+  { file: "chinook.sql", tables: ["artist", "album", "genre", "media_type", "track", "playlist", "playlist_track", "employee", "customer", "invoice", "invoice_line"] },
 ];
 export const SQL_TABLES = [...SQL_SEEDS.flatMap((s) => s.tables), "titanic"];
 
