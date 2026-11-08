@@ -28,6 +28,7 @@ export const CONCEPTS = {
   "py.comprehension": { name: "리스트 컴프리헨션", track: "python-basic" },
   "py.lambda": { name: "람다와 key 함수", track: "python-basic" },
   "py.exception": { name: "예외 처리 try · except", track: "python-basic" },
+  "py.data-format": { name: "정형 · 반정형 · 비정형 데이터", track: "python-basic" },
   "py.file": { name: "파일 열기 open · with", track: "python-basic" },
   "py.csv": { name: "csv 모듈", track: "python-basic" },
   "py.json": { name: "json 모듈", track: "python-basic" },
