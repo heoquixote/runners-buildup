@@ -1527,7 +1527,7 @@ export const DAY1_QUIZZES = [
       { kind: "ox", q: "sorted(a)를 실행하면 a 자체가 정렬된다.", answer: false, explain: "sorted()는 정렬된 새 리스트를 돌려주고 원본은 그대로입니다. 원본을 바꾸려면 a.sort()" },
       { kind: "write", q: "sort()로 a를 오름차순 정렬한 뒤, 정렬된 리스트를 출력하는 코드를 작성하세요. b = a.sort() 처럼 결과를 따로 담으면 무엇이 나오는지도 확인해 보세요.", given: "a = [3, 1, 2]", expect: "[1, 2, 3]", must: ["\\.sort\\("], solution: "a = [3, 1, 2]\na.sort()\nprint(a)", explain: "sort()는 원본을 바꾸고 None을 돌려줍니다." },
       { kind: "choice", q: "a = [1, 2, 3] 에서 print(a[3])을 실행하면?", options: ["SyntaxError", "IndexError", "NameError", "ZeroDivisionError"], answer: 1, explain: "번호는 0~2까지입니다. 없는 번호로 접근하면 IndexError" },
-      { kind: "short", q: "print(5 / 0)을 실행했을 때 나오는 에러 이름을 쓰세요.", answer: "ZeroDivisionError", explain: "0으로 나누기를 시도하면 발생합니다." },
+      { kind: "choice", q: "print(5 / 0)을 실행했을 때 나오는 에러를 고르세요.", options: ["ValueError", "ZeroDivisionError", "TypeError", "OverflowError"], answer: 1, explain: "0으로 나누기를 시도하면 발생합니다." },
     ],
   },
   {

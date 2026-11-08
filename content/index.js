@@ -65,7 +65,7 @@ export const COURSES = [
         ] },
       { id: "pb-01-3", title: "자료형과 형변환", minutes: 15, concepts: ["py.types"],
         quiz: [
-          { kind: "short", q: "int(\"3.5\") 를 실행하면 나는 에러 이름을 쓰세요.", answer: "ValueError", explain: "int()는 정수 모양의 글자만 받습니다. 소수 모양이면 float()를 먼저 거칩니다." },
+          { kind: "choice", q: "int(\"3.5\") 를 실행하면 나는 에러를 고르세요.", options: ["TypeError", "ValueError", "NameError", "SyntaxError"], answer: 1, explain: "int()는 정수 모양의 글자만 받습니다. 소수 모양이면 float()를 먼저 거칩니다." },
           { kind: "choice", q: "bool()에 넣었을 때 False가 나오는 값은?", options: ["\"0\"", "\" \"", "0", "-1"], answer: 2, explain: "숫자 0과 빈 문자열이 False입니다. \"0\"과 \" \"는 글자가 들어 있는 문자열이라 True입니다." },
         ] },
     ] },
@@ -128,7 +128,7 @@ export const COURSES = [
     lessons: [{ id: "pb-05-1", title: "정렬 두 가지와 에러 메시지 읽는 법", minutes: 12, concepts: ["py.sort", "py.error"],
       quiz: [
         { kind: "choice", q: "nums = [3, 1, 2] 일 때 print(nums.sort()) 의 출력은?", options: ["[1, 2, 3]", "[3, 1, 2]", "None", "에러"], answer: 2, explain: "sort()는 리스트를 제자리에서 바꾸고 None을 돌려줍니다. 정렬된 새 리스트가 필요하면 sorted()를 씁니다." },
-        { kind: "short", q: "리스트 길이가 3인데 nums[5]를 읽으면 나는 에러 이름을 쓰세요.", answer: "IndexError", explain: "범위를 벗어난 인덱스는 IndexError입니다." },
+        { kind: "choice", q: "리스트 길이가 3인데 nums[5]를 읽으면 나는 에러를 고르세요.", options: ["KeyError", "ValueError", "IndexError", "TypeError"], answer: 2, explain: "범위를 벗어난 인덱스는 IndexError입니다." },
       ] },
       { id: "pb-05-2", title: "리스트에서 찾고 요약하기", minutes: 15, concepts: ["py.list", "py.sort"],
         quiz: [
@@ -138,7 +138,7 @@ export const COURSES = [
       { id: "pb-05-3", title: "에러 메시지 읽고 고치기", minutes: 15, concepts: ["py.error"],
         quiz: [
           { kind: "choice", q: "Traceback에서 가장 먼저 읽어야 할 곳은?", options: ["맨 위 Traceback (most recent call last) 줄", "맨 아래 에러 이름과 설명 줄", "가운데 File 줄", "아무 데나 상관없다"], answer: 1, explain: "맨 아래 줄에 에러 이름과 설명이 있습니다. 그다음 바로 위의 줄 번호와 코드를 봅니다." },
-          { kind: "short", q: "int('1,250') 처럼 자료형은 맞지만 값을 바꿀 수 없을 때 나는 에러 이름을 쓰세요.", answer: "ValueError", explain: "문자열을 int()에 넣는 것은 맞지만 쉼표가 섞인 값이라 바꿀 수 없어 ValueError입니다." },
+          { kind: "choice", q: "int('1,250') 처럼 자료형은 맞지만 값을 바꿀 수 없을 때 나는 에러를 고르세요.", options: ["ValueError", "TypeError", "IndexError", "NameError"], answer: 0, explain: "문자열을 int()에 넣는 것은 맞지만 쉼표가 섞인 값이라 바꿀 수 없어 ValueError입니다." },
         ] },
     ] },
   { id: "pb-06", track: "python-basic", title: "딕셔너리와 Set", summary: "key-value CRUD, get, 중첩 딕셔너리, 행 목록, update, pop, Set 연산(| & - ^), 부분집합", unit: 6, level: "입문",
