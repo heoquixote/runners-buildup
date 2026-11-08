@@ -2213,7 +2213,7 @@ async function adminRoster(body) {
   const pickGroup = `<p class="muted" style="margin:0;font-size:14px">위쪽 <b>그룹</b>에서 그룹을 먼저 고르세요.</p>`;
   body.innerHTML = `<div class="roster-grid"><div style="display:grid;gap:16px;align-content:start">
     <section class="panel lime card-pad"><h3>그룹 관리</h3>
-      <p class="muted" style="margin:0;font-size:14px">그룹 코드가 곧 회원가입 코드입니다. 수강생이 가입할 때 넣은 코드로 그룹이 나뉘고, 로고 아래에 그룹 이름이 보입니다. 순위('n명 중 k번째')도 같은 그룹 안에서 매깁니다.</p>
+      <p class="muted" style="margin:0;font-size:14px">그룹 코드가 곧 회원가입 코드입니다. 수강생이 가입할 때 넣은 코드로 그룹이 나뉘고, 로고 아래에 그룹 이름이 보입니다. 순위('n명 중 k번째')도 같은 그룹 안에서 매깁니다. 테스트 계정은 명단에서 '순위 제외'를 누르면 순위에 세지 않습니다.</p>
       <div class="table-scroll"><table class="pin-list"><thead><tr><th>코드</th><th>표시 이름</th><th class="num">수강생</th><th></th></tr></thead><tbody>
       ${state.groups.map((x) => `<tr data-code="${esc(x.code)}"><td class="pin">${esc(x.code)}</td><td>${esc(x.label)}</td><td class="num">${x.count}명</td>
         <td class="act"><button class="btn small" data-edit-group>이름 수정</button> <button class="btn small danger" data-del-group>삭제</button></td></tr>`).join("") || `<tr><td colspan="4" class="muted">그룹이 없으면 누구나 코드 없이 가입할 수 있습니다.</td></tr>`}
@@ -2235,8 +2235,8 @@ async function adminRoster(body) {
     </section></div>
     <section class="panel card-pad"><div class="toolbar"><h3>${groupName ? esc(groupName) + " · " : ""}등록된 수강생 ${students.length}명</h3></div>
       ${students.length ? `<div class="table-scroll"><table class="pin-list"><thead><tr><th>이름</th><th>그룹</th><th>등록일</th><th></th></tr></thead><tbody>
-      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
-        <td class="act"><span class="pin-slot"></span> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
+      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}${s.exclude_from_rank ? '<span class="lock-chip rank-off">순위 제외</span>' : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
+        <td class="act"><span class="pin-slot"></span> <button class="btn small ghost" data-rankx title="켜면 이 계정은 다른 수강생의 'N명 중 M번째'에 세지 않습니다">${s.exclude_from_rank ? "순위 포함" : "순위 제외"}</button> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
     </section></div>`;
@@ -2344,12 +2344,29 @@ async function adminRoster(body) {
       try {
         const res = await api.resetPin(state.adminToken, id);
         tr.querySelector(".pin-slot").innerHTML = `<span class="pin">${res.pin}</span>`;
-        tr.querySelector(".lock-chip")?.remove();
+        tr.querySelector(".lock-chip:not(.rank-off)")?.remove();
         toast(`${res.name} 님의 새 번호는 ${res.pin}입니다.`);
       } catch (err) {
         toast(errorMessage(err));
       } finally {
         e.target.disabled = false;
+      }
+    });
+    tr.querySelector("[data-rankx]").addEventListener("click", async (e) => {
+      const btn = e.target;
+      const exclude = !tr.querySelector(".rank-off");
+      btn.disabled = true;
+      try {
+        await api.setRankExclude(state.adminToken, id, exclude);
+        const cell = tr.querySelector("td");
+        if (exclude) cell.insertAdjacentHTML("beforeend", '<span class="lock-chip rank-off">순위 제외</span>');
+        else tr.querySelector(".rank-off")?.remove();
+        btn.textContent = exclude ? "순위 포함" : "순위 제외";
+        toast(exclude ? "이 계정은 이제 반 순위에 세지 않습니다." : "이 계정을 다시 반 순위에 셉니다.");
+      } catch (err) {
+        toast(errorMessage(err));
+      } finally {
+        btn.disabled = false;
       }
     });
     const del = tr.querySelector("[data-del]");
