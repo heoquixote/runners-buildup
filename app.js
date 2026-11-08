@@ -2,6 +2,7 @@ import { CONFIG } from "./config.js";
 import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, SESSIONS } from "./problems.js";
 import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath, sectionsOf } from "./content/index.js";
 import { conceptName } from "./content/concepts.js";
+import { ADDED_LESSONS } from "./content/added.js";
 import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
 import { render as renderMd } from "./md.js";
 import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
@@ -35,7 +36,7 @@ const domainOf = (p) => p.domain || "mfg";
 const program = () => programOfJoinCode(state.session?.student?.org);
 // 코스의 연습문제: 개념 퀴즈 먼저, 그다음 문제 순서대로. 과정의 소재(domain)에 맞는 문제만,
 // 아직 그 소재의 문제가 없는 코스는 제조 문제를 대신 보여준다 (표시 없이).
-function courseProblems(c, prog = program()) {
+function allCourseProblems(c, prog = program()) {
   if (!c?.unit) return [];
   const all = ALL_PROBLEMS.filter((p) => p.unit === c.unit);
   const quiz = all.filter((p) => p.type === "quiz");
@@ -43,9 +44,12 @@ function courseProblems(c, prog = program()) {
   if (!rest.length) rest = all.filter((p) => p.type !== "quiz" && domainOf(p) === "mfg");
   return [...quiz, ...rest];
 }
+// tip 코스(가볍게 읽고 넘어가는 참고 코스)는 코스 화면 · 진도에 연습문제를 보여 주지 않는다.
+// 유닛 문제는 그대로 남아 있어 QAQC 회차 과제(SESSIONS)에서는 계속 열 수 있다.
+const courseProblems = (c, prog = program()) => (c?.tip ? [] : allCourseProblems(c, prog));
 const courseOf = (p) => courseOfUnit(p.unit);
 // 이 문제를 보여주는 과정 (문제 소재와 다른 과정에서 열어도 코스 맥락은 유지)
-const problemList = (p) => { const c = courseOf(p); const list = courseProblems(c); return list.includes(p) ? list : courseProblems(c, PROGRAMS.find((x) => x.domain === domainOf(p)) || program()); };
+const problemList = (p) => { const c = courseOf(p); const list = allCourseProblems(c); return list.includes(p) ? list : allCourseProblems(c, PROGRAMS.find((x) => x.domain === domainOf(p)) || program()); };
 // 코스 안 번호: Q(개념 퀴즈), 1, 2, …
 const cno = (p) => { const i = problemList(p).filter((x) => x.type !== "quiz").indexOf(p); return p.type === "quiz" ? "Q" : String(i + 1); };
 const isReady = (c) => c.status !== "planned";
@@ -56,7 +60,15 @@ const courseEntry = (c) => { const l = coreLessons(c).find((x) => !lessonDone(x.
 const courseHref = (c) => { const l = courseEntry(c); return l ? `#/l/${l.id}` : `#/c/${c.id}`; };
 const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
 // 진도 계산과 추천에 쓰는 필수 레슨 (optional: 고르는 레슨은 뺀다)
-const coreLessons = (c) => c.lessons.filter((l) => !l.optional);
+// 나중에 붙인 레슨(content/added.js)은, 붙이기 전에 그 코스의 원래 레슨을 모두 끝낸 학생에게는 선택(보강) 레슨으로 둔다.
+const passedBefore = (lid, at) => { const r = state.lessons[lid]; const t = r?.passed_at || r?.updated_at; return r?.status === "passed" && !!t && new Date(t) < new Date(at); };
+const isBonusLesson = (c, l) => {
+  const at = ADDED_LESSONS[l.id];
+  if (!at || lessonDone(l.id)) return false;
+  const original = c.lessons.filter((x) => !x.optional && !ADDED_LESSONS[x.id]);
+  return original.length > 0 && original.every((x) => passedBefore(x.id, at));
+};
+const coreLessons = (c) => c.lessons.filter((l) => !l.optional && !isBonusLesson(c, l));
 const solved = (pid) => !!state.progress[pid]?.solved;
 const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)" };
 const trackStyle = (t) => `style="--tc:${TRACK_COLOR[t.color] || "var(--track)"}"`;
@@ -1064,8 +1076,8 @@ function viewCourse(c) {
         ${firstLesson && s.lessonsDone < s.lessons ? `<a class="btn primary" href="#/l/${firstLesson.id}">${s.lessonsDone ? "레슨 이어서" : "레슨 시작"} →</a>` : nextP ? `<a class="btn primary" href="#/p/${nextP.id}">문제 풀기 →</a>` : ""}</div>
     </header>
     <section class="part"><h2 class="part-title">레슨</h2>
-      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span>${l.optional ? '<span class="pmark" title="셋 중 하나만 골라 보면 됩니다">선택</span>' : ""}<span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
-    ${c.intro && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
+      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span>${l.optional ? '<span class="pmark" title="셋 중 하나만 골라 보면 됩니다">선택</span>' : ""}${isBonusLesson(c, l) ? '<span class="pmark" title="코스를 끝낸 뒤 새로 추가된 레슨입니다. 진도율에는 들어가지 않아요.">새 레슨</span>' : ""}<span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
+    ${(c.intro || c.tip) && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
       ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>`}
     <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="${courseHref(prevC)}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="${courseHref(nextC)}">${esc(nextC.title)} →</a>` : ""}</nav>
   </main>`;
@@ -1731,7 +1743,7 @@ function dayComplete(c, info) {
   const rankLine = info?.rank ? `<p class="dayend-rank">방금 푼 문제는 <b>${Math.max(info.total, info.rank)}명</b> 중 <b>${info.rank}번째</b>로 맞혔어요.</p>` : "";
   const wrap = document.createElement("div");
   wrap.className = "overlay";
-  wrap.innerHTML = `<div class="celebrate dayend" role="dialog" aria-modal="true" aria-labelledby="day-title">
+  wrap.innerHTML = `<div class="celebrate dayend" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="day-title">
     <div class="dayend-badge"><i>✓</i>Day ${dd(c)} Complete</div>
     <h2 id="day-title"><em>DAY ${dd(c)}</em> 학습이 끝났습니다!${nc ? "<br>다음 일자를 시도해볼까요?" : `<br>${esc(t?.label || "")} 트랙을 완주했어요.`}</h2>
     <p class="dayend-sum">${esc(c.title)} · <b>레슨 ${s.lessonsDone}/${s.lessons}</b>${s.problems ? ` · <b>문제 ${s.solved}/${s.problems}</b>` : ""}</p>
@@ -1745,12 +1757,11 @@ function dayComplete(c, info) {
       <div class="day-chips">${FEEDBACK_REASONS.map((r) => `<button type="button" aria-pressed="false" data-reason="${esc(r)}">${esc(r)}</button>`).join("")}</div>
       <textarea maxlength="1000" placeholder="자세히 적어 주시면 다음 DAY에 반영할게요 (선택)"></textarea>
     </div>
-    <p class="day-thanks" hidden></p>
-    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
+    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary idle" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary idle" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
   </div>`;
   document.body.appendChild(wrap);
   const box = wrap.querySelector(".dayend");
-  const why = box.querySelector(".day-why"), thanks = box.querySelector(".day-thanks");
+  const why = box.querySelector(".day-why");
   const skip = box.querySelector("[data-skip]"), go = box.querySelector("[data-go]");
   const goLabel = go.textContent;
   let score = 0, sentKey = "";
@@ -1768,7 +1779,7 @@ function dayComplete(c, info) {
       toast("응답을 저장하지 못했습니다. " + errorMessage(err));
     });
   };
-  box.querySelectorAll("[data-score]").forEach((b) => b.addEventListener("click", async () => {
+  box.querySelectorAll("[data-score]").forEach((b) => b.addEventListener("click", () => {
     score = Number(b.dataset.score);
     box.querySelectorAll("[data-score]").forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.classList.toggle("low", on && score <= 2); x.setAttribute("aria-checked", String(on)); });
     const low = score <= 2;
@@ -1776,11 +1787,8 @@ function dayComplete(c, info) {
     box.querySelector(".dayend-next")?.toggleAttribute("hidden", low);
     skip.textContent = low ? "건너뛰기" : "닫기";
     go.textContent = low ? (nc ? `보내고 DAY ${dd(nc)} 시작 →` : "보내고 트랙으로 →") : goLabel;
-    thanks.hidden = true;
-    if (low) return void send();
-    await send();
-    thanks.hidden = false;
-    thanks.textContent = "✓ 응답이 저장됐어요. 고마워요!";
+    go.classList.remove("idle");
+    send();
   }));
   box.querySelectorAll("[data-reason]").forEach((b) => b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"))));
   const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
@@ -1788,7 +1796,7 @@ function dayComplete(c, info) {
   document.addEventListener("keydown", onKey);
   skip.addEventListener("click", () => { if (score > 2) send(); close(); });
   go.addEventListener("click", () => { send(); close(); });
-  go.focus();
+  box.focus();
   fireConfetti(true);
 }
 

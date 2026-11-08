@@ -212,23 +212,13 @@ export const COURSES = [
           { kind: "write", q: "max와 key로 defects에서 불량이 가장 많은 라인 이름을 출력하는 코드를 작성하세요.", given: "defects = {'L1': 18, 'L2': 7, 'L3': 25}", expect: "L3", must: ["max\\(", "key\\s*="], solution: "defects = {'L1': 18, 'L2': 7, 'L3': 25}\nprint(max(defects, key=defects.get))", explain: "딕셔너리를 그냥 max에 넣으면 key끼리 비교합니다. key=defects.get으로 값을 기준으로 삼습니다." },
         ] },
     ] },
-  { id: "pb-10", track: "python-basic", title: "파일 입출력 (CSV · JSON)", summary: "open, with, read/readlines, csv.reader · DictReader · writer, json dump · load, 설정 파일", unit: 11, level: "기본",
-    concepts: ["py.file", "py.csv", "py.json"],
-    lessons: [{ id: "pb-10-1", title: "파일을 열고 CSV · JSON 읽기", minutes: 15, concepts: ["py.file", "py.csv", "py.json"],
-      quiz: [
-        { kind: "ox", q: "with open(...) as f: 블록이 끝나면 파일은 자동으로 닫힌다.", answer: true, explain: "with 문은 블록을 벗어날 때 close()를 대신 호출합니다." },
-        { kind: "choice", q: "CSV 한 줄 'A,12,OK'를 읽어 값 3개로 나누는 방법은?", options: ["line.split()", "line.split(',')", "line.strip()", "line.join(',')"], answer: 1, explain: "쉼표 기준으로 나누려면 split(',')입니다. 줄 끝 개행은 strip()으로 먼저 지웁니다." },
-      ] },
-      { id: "pb-10-2", title: "CSV 파일 읽고 쓰기", minutes: 20, concepts: ["py.csv", "py.file"],
-        quiz: [
-          { kind: "choice", q: "csv.DictReader 로 읽은 한 행 row 에서 row['qty'] 의 자료형은?", options: ["int", "float", "str", "파일 안의 값에 따라 다르다"], answer: 2, explain: "CSV에서 읽은 값은 모두 문자열입니다. 계산하려면 int()나 float()로 바꿔야 합니다." },
-          { kind: "ox", q: "csv.writer 로 쓸 파일은 newline=\"\" 를 넣어 열어야 줄 사이에 빈 줄이 끼지 않는다.", answer: true, explain: "newline=\"\"를 빼면 Windows에서 줄바꿈이 두 번 들어가 빈 줄이 생깁니다." },
-        ] },
-      { id: "pb-10-3", title: "JSON으로 설정과 결과 저장하기", minutes: 15, concepts: ["py.json"],
-        quiz: [
-          { kind: "choice", q: "JSON 의 null 은 json.loads 로 읽으면 파이썬에서 무엇이 될까요?", options: ["0", "\"null\"", "None", "False"], answer: 2, explain: "null은 None, true/false는 True/False가 됩니다." },
-          { kind: "ox", q: "json.load() 에는 파일 이름 문자열 'config.json' 을 바로 넣는다.", answer: false, explain: "json.load()는 열린 파일을 받습니다. with open('config.json') as f: 다음 json.load(f)로 씁니다. 문자열을 바꾸는 것은 json.loads()입니다." },
-        ] },
+  // tip: 가볍게 읽고 넘어가는 참고 코스(2026-11-08 진성 요청). 코스 화면 · 진도에 연습문제를 보여 주지 않는다.
+  // unit 11 문제는 QAQC 회차 과제(SESSIONS 5회차)에서 계속 쓰므로 unit 연결은 남겨 둔다.
+  { id: "pb-10", track: "python-basic", tip: true, title: "Tip · 파일 입출력과 데이터 형식", summary: "정형 · 반정형 · 비정형 데이터, with open, CSV · JSON 맛보기", unit: 11, level: "참고",
+    concepts: ["py.data-format", "py.file", "py.csv", "py.json"],
+    lessons: [
+      // 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "pb-10-1", title: "데이터의 모양과 파일 다루기: 정형 · 반정형, CSV · JSON", minutes: 10, concepts: ["py.data-format", "py.file", "py.csv", "py.json"] },
     ] },
   { id: "pb-11", track: "python-basic", title: "컴프리헨션과 람다", summary: "리스트 · 딕셔너리 · Set 컴프리헨션, 조건식, lambda, 여러 기준 정렬, map · filter", unit: 21, level: "기본",
     concepts: ["py.comprehension", "py.lambda"],
@@ -1277,7 +1267,7 @@ export const COURSES = [
         { kind: "short", q: "기본값(평균 예측)이 0.05이고, 한 설비의 SHAP 값이 토크 +0.60, 공구 마모 +0.20, 나머지 열 합계 −0.05다. 이 설비의 모델 예측 확률은? (소수)", answer: ["0.8", "0.80", ".8"], explain: "기본값 + SHAP 값의 합 = 예측. 0.05 + 0.60 + 0.20 − 0.05 = 0.80." },
         { kind: "ox", q: "어떤 설비에서 토크의 SHAP 값이 가장 크면, 토크를 낮추면 그 설비의 고장이 줄어든다는 것이 증명된 것이다.", answer: false, explain: "SHAP 값은 모델이 그렇게 계산했다는 판단 근거일 뿐, 원인을 증명하지 않습니다. 조치 효과는 현장 실험으로 확인합니다." },
       ] }] },
-  { id: "ml-11", track: "ml", title: "현장에 내보내기", summary: "모델 저장 · 불러오기, 드리프트 감시, 처음부터 끝까지 미니 프로젝트", level: "실무",
+  { id: "ml-11", track: "ml", title: "현장에 내보내기", summary: "모델 저장 · 불러오기, 드리프트 감시, 처음부터 끝까지 미니 프로젝트", level: "실무", unit: 51,
     concepts: ["ml.deploy"],
     lessons: [
     { id: "ml-11-1", title: "모델 저장하고 다시 쓰기, 그리고 드리프트", minutes: 15, concepts: ["ml.deploy"],

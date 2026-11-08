@@ -221,6 +221,55 @@ def _():
     return svg(800, 270, b, "폴더 나무와 상대 경로, 절대 경로")
 
 
+# ---------------- pb-10-1 정형 · 반정형 · 비정형 ----------------
+@fig("py-data-structure-types")
+def _():
+    b = []
+    # 정형
+    b.append(rect(10, 10, 250, 260, SURF, LINE2, 10))
+    b.append(text(30, 34, "정형 데이터", 16, ACC, "start", 700))
+    b.append(text(30, 56, "행 · 열이 정해진 표", 12, MUTED, "start"))
+    cols, rows = ["lot", "qty", "defects"], [["A0915", "1250", "18"], ["A0916", "980", "7"], ["A0917", "1100", "25"]]
+    cw = [78, 62, 70]
+    x0, y0 = 30, 76
+    for j, cname in enumerate(cols):
+        x = x0 + sum(cw[:j])
+        b.append(rect(x, y0, cw[j], 28, ACC, ACC, 0, 1.2, op=0.14))
+        b.append(text(x + cw[j] / 2, y0 + 14, cname, 12, ACC, weight=700, mono=True))
+        for i, r in enumerate(rows):
+            b.append(rect(x, y0 + 28 + i * 28, cw[j], 28, SURF3, LINE2, 0, 1))
+            b.append(text(x + cw[j] / 2, y0 + 42 + i * 28, r[j], 12, INK, mono=True))
+    b.append(text(30, 214, "모든 행이 같은 칸 → 바로 합계 · 평균", 12, INK2, "start"))
+    b.append(code(30, 244, "CSV · 엑셀 · DB 표", 12.5, ACC, weight=700))
+    # 반정형
+    b.append(rect(275, 10, 250, 260, SURF, LINE2, 10))
+    b.append(text(295, 34, "반정형 데이터", 16, CYAN, "start", 700))
+    b.append(text(295, 56, "이름표(key)가 붙은 묶음", 12, MUTED, "start"))
+    b.append(code(295, 136, '{\n "equip": "EQ-07",\n "sensors": {\n   "temp": 78.5,\n   "pressure": 1.2\n },\n "alarms": ["E205"]\n}', 12, INK2))
+    b.append(text(295, 214, "칸이 자유롭고 겹겹이 → 유연함", 12, INK2, "start"))
+    b.append(code(295, 244, "JSON · XML · 로그", 12.5, CYAN, weight=700))
+    # 비정형
+    b.append(rect(540, 10, 250, 260, SURF, LINE2, 10))
+    b.append(text(560, 34, "비정형 데이터", 16, ORANGE, "start", 700))
+    b.append(text(560, 56, "정해진 칸이 없음", 12, MUTED, "start"))
+    # 사진
+    b.append(rect(560, 76, 96, 70, SURF3, ORANGE, 6, 1.3))
+    b.append(path("M568,136 l22,-28 l16,18 l12,-12 l30,22", ORANGE, 1.6))
+    b.append(circle(640, 94, 7, ORANGE, op=0.6))
+    b.append(text(608, 158, "불량 사진", 11.5, MUTED))
+    # 글
+    b.append(rect(672, 76, 100, 70, SURF3, ORANGE, 6, 1.3))
+    for k, w in enumerate([80, 66, 74, 50]):
+        b.append(line(682, 90 + k * 14, 682 + w, 90 + k * 14, ORANGE, 1.6))
+    b.append(text(722, 158, "작업 일지", 11.5, MUTED))
+    # 소리
+    pts = " ".join(f"{560 + i * 7},{186 + (12 if i % 2 else -12) * ((i * 37) % 5) / 4:.0f}" for i in range(31))
+    b.append(f'<polyline points="{pts}" fill="none" stroke="{ORANGE}" stroke-width="1.6"/>')
+    b.append(text(665, 214, "설비 소리 · 그대로는 계산 불가", 12, INK2))
+    b.append(code(560, 244, "이미지 · 텍스트 · 음성", 12.5, ORANGE, weight=700))
+    return svg(800, 280, b, "정형, 반정형, 비정형 데이터 비교")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     only = set(sys.argv[1:])
