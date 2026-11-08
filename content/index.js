@@ -926,6 +926,44 @@ export const COURSES = [
           { kind: "ox", q: "잔차 그래프에 뚜렷한 U자 패턴이 보이면 직선 모델이 적절하다는 뜻이다.", answer: false, explain: "잔차에 패턴이 남았다면 직선이 데이터의 곡선 모양을 놓친 것입니다." },
         ] },
     ] },
+  { id: "st-12", track: "stats", title: "검정 도구 상자", summary: "z검정 · 비율 검정, 분산 검정(F · 바틀렛), 정규성 검정(Q-Q · KS · 앤더슨), 이원분산분석, McNemar · 부호 · 프리드먼, 다중비교 보정, 상관 검정, 검정 고르기 지도", level: "실무",
+    concepts: ["st.tests"],
+    lessons: [
+      { id: "st-12-1", title: "z검정과 비율 검정", minutes: 22, concepts: ["st.tests", "st.test"],
+        quiz: [
+          { kind: "choice", q: "불량률 목표가 2%인 라인에서 500개를 검사해 15개(3%)가 불량이었다. 가장 알맞은 검정은?", options: ["1표본 비율 z검정 (또는 이항검정)", "독립 2표본 t검정", "카이제곱 독립성 검정", "맨-휘트니 U 검정"], answer: 0, explain: "비율 하나를 기준값(0.02)과 비교하므로 1표본 비율 검정입니다. np = 10이라 z 근사도 쓸 수 있고, 정확한 값은 이항검정으로 구합니다." },
+        ] },
+      { id: "st-12-2", title: "흩어짐을 비교하는 검정: 카이제곱 분산 검정 · F검정 · 바틀렛", minutes: 22, concepts: ["st.tests"],
+        quiz: [
+          { kind: "ox", q: "F검정과 바틀렛 검정은 데이터가 정규분포에서 조금만 벗어나도 결과가 크게 흔들린다.", answer: true, explain: "두 검정은 정규성에 아주 민감합니다. 분포가 치우쳤거나 이상치가 있으면 레빈(또는 브라운-포사이스) 검정을 씁니다." },
+        ] },
+      { id: "st-12-3", title: "정규성 검정 더 보기: Q-Q 플롯 · KS · 앤더슨-달링", minutes: 20, concepts: ["st.tests"],
+        quiz: [
+          { kind: "choice", q: "Q-Q 플롯에서 점들이 가운데는 직선을 따르다가 오른쪽 끝에서 직선 위로 휘어 올라간다. 무슨 뜻일까?", options: ["오른쪽 꼬리가 정규분포보다 길다", "데이터가 완벽한 정규분포다", "표본이 너무 작다", "평균이 0이다"], answer: 0, explain: "큰 쪽 값들이 정규분포에서 기대한 것보다 더 크다는 뜻이라 오른쪽 꼬리가 깁니다(양의 왜도)." },
+        ] },
+      { id: "st-12-4", title: "두 요인을 함께: 이원분산분석과 교호작용", minutes: 25, concepts: ["st.tests", "st.chi-anova"],
+        quiz: [
+          { kind: "choice", q: "교호작용 그래프에서 두 선이 서로 엇갈린다. 무슨 뜻일까?", options: ["두 요인 모두 효과가 없다", "한 요인의 효과가 다른 요인의 수준에 따라 달라진다", "표본 수가 부족하다", "주효과만 있다"], answer: 1, explain: "선이 평행하면 교호작용이 없고, 기울기가 다르거나 엇갈리면 한 요인의 효과가 다른 요인에 따라 바뀝니다." },
+        ] },
+      { id: "st-12-5", title: "같은 대상을 여러 번: McNemar · 부호검정 · 프리드먼", minutes: 22, concepts: ["st.tests"],
+        quiz: [
+          { kind: "choice", q: "같은 학생 200명에게 교육 전후로 합격/불합격을 기록했다. 합격률이 달라졌는지 볼 검정은?", options: ["카이제곱 독립성 검정", "McNemar 검정", "독립 2표본 t검정", "크루스칼-월리스"], answer: 1, explain: "같은 대상의 두 번 측정(대응)이고 결과가 범주(합격/불합격)라 McNemar입니다. 결과가 바뀐 사람(불일치 칸)만 비교합니다." },
+        ] },
+      { id: "st-12-6", title: "여러 번 검정할 때: Bonferroni · Holm · FDR", minutes: 22, concepts: ["st.tests", "st.power"],
+        quiz: [
+          { kind: "short", q: "검정 10개를 하고 Bonferroni로 전체 1종 오류를 0.05로 묶으려 한다. 검정 하나의 유의수준은? (소수)", answer: ["0.005", ".005"], explain: "α / m = 0.05 / 10 = 0.005." },
+          { kind: "ox", q: "Benjamini-Hochberg(FDR) 보정은 Bonferroni보다 더 많은 발견을 남기는 대신, 유의하다고 한 것 중 일부가 헛발견일 수 있음을 받아들인다.", answer: true, explain: "FDR은 '발견 중 헛발견의 비율'을 관리합니다. 탐색 단계에 알맞고, 하나라도 틀리면 안 되는 확인 단계에는 Bonferroni · Holm을 씁니다." },
+        ] },
+      { id: "st-12-7", title: "관계를 검정하기: 상관계수 검정 · 스피어만 · 켄달 · 회귀 F검정", minutes: 22, concepts: ["st.tests", "st.regression"],
+        quiz: [
+          { kind: "choice", q: "순위로 매긴 두 심사위원의 점수(1위~10위)가 얼마나 일치하는지 검정하려 한다. 가장 알맞은 것은?", options: ["피어슨 상관 검정", "스피어만 또는 켄달 순위상관 검정", "카이제곱 적합도 검정", "대응 t검정"], answer: 1, explain: "값이 순위라서 순위상관을 씁니다. 표본이 작고 같은 순위가 많으면 켄달 타우가 더 안정적입니다." },
+        ] },
+      { id: "st-12-8", title: "검정 고르기 지도와 효과크기 총정리", minutes: 20, concepts: ["st.tests"],
+        quiz: [
+          { kind: "choice", q: "세 공장의 불량 여부(불량/정상) 비율이 같은지 비교하려 한다. 검정 고르기 지도대로라면?", options: ["일원 ANOVA", "카이제곱 독립성(동질성) 검정", "크루스칼-월리스", "McNemar"], answer: 1, explain: "결과가 범주(불량/정상)이고 독립된 세 그룹이므로 3 × 2 분할표의 카이제곱 검정입니다." },
+          { kind: "choice", q: "같은 환자 20명의 통증 점수(0~10, 치우침)를 세 가지 약으로 차례로 바꿔 쟀다. 알맞은 검정은?", options: ["일원 ANOVA", "프리드먼 검정", "크루스칼-월리스", "카이제곱"], answer: 1, explain: "같은 대상(대응) · 세 조건 이상 · 순서형/치우친 값이라 프리드먼 검정입니다." },
+        ] },
+    ] },
   { id: "st-08", track: "stats", title: "A/B 테스트와 검정력", summary: "무작위 배정, 두 비율 비교와 차이의 신뢰구간, 표본 수 설계, 유의성 vs 중요성", unit: 34, level: "실무",
     concepts: ["st.abtest", "st.power"],
     lessons: [
@@ -955,6 +993,27 @@ export const COURSES = [
           { kind: "ox", q: "p-value만 적으면 효과의 크기(차이)는 따로 적지 않아도 된다.", answer: false, explain: "p-value는 우연인지 아닌지만 말합니다. 차이의 크기와 신뢰구간을 함께 적어야 판단할 수 있습니다." },
         ] },
     ] },
+  { id: "st-11", track: "stats", title: "품질 통계: 관리도와 공정능력", summary: "우연 원인과 이상 원인, I-MR · X̄-R · p 관리도, 런 규칙, Cp · Cpk · Ppk", level: "실무",
+    concepts: ["st.spc"],
+    lessons: [
+      { id: "st-11-1", title: "관리도의 원리와 I-MR 관리도", minutes: 25, concepts: ["st.spc"],
+        quiz: [
+          { kind: "choice", q: "관리한계와 규격한계에 대한 설명으로 옳은 것은?", options: ["둘은 같은 것이다", "관리한계는 공정의 평소 흔들림에서, 규격한계는 고객 · 설계 요구에서 나온다", "관리한계 안이면 규격도 항상 만족한다", "규격한계는 평균 ± 3σ로 계산한다"], answer: 1, explain: "관리한계는 공정의 목소리, 규격한계는 고객의 목소리입니다. 같은 그래프에 섞지 않습니다." },
+          { kind: "write", q: "x로 I 관리도의 관리 상한(평균 + 2.66 × 이동범위 평균)을 소수 셋째 자리로 출력하세요.", given: "import numpy as np\nx = np.array([10.0, 10.2, 9.9, 10.1, 10.0, 9.8])", expect: "10.532", must: ["diff"], solution: "import numpy as np\nx = np.array([10.0, 10.2, 9.9, 10.1, 10.0, 9.8])\nmr_bar = np.abs(np.diff(x)).mean()\nprint(round(x.mean() + 2.66 * mr_bar, 3))", explain: "이동범위는 np.abs(np.diff(x))이고 평균이 0.2라 10.0 + 2.66 × 0.2 = 10.532입니다." },
+          { kind: "ox", q: "점이 모두 관리한계 안에 있으면 공정에 이상 원인이 없다고 판단해도 된다.", answer: false, explain: "연속 8점이 중심선 한쪽, 연속 상승 같은 런 규칙도 신호입니다." },
+        ] },
+      { id: "st-11-2", title: "X̄-R 관리도와 p 관리도", minutes: 25, concepts: ["st.spc"],
+        quiz: [
+          { kind: "choice", q: "X̄ 관리도에는 신호가 있고 R 관리도에는 신호가 없다. 가장 먼저 의심할 것은?", options: ["흔들림이 커졌다", "공정 중심이 옮겨 갔다 (설정 · 원료 변경 등)", "측정기가 고장 났다", "아무 일도 없다"], answer: 1, explain: "부분군 값이 함께 움직였다는 뜻이라 중심 이동을 의심합니다." },
+          { kind: "write", q: "평균 불량률 0.04, 하루 검사 수 300개일 때 p 관리도의 관리 상한을 소수 넷째 자리로 출력하세요.", given: "import numpy as np\npbar, n = 0.04, 300", expect: "0.0739", must: ["sqrt"], solution: "import numpy as np\npbar, n = 0.04, 300\nprint(round(pbar + 3 * np.sqrt(pbar * (1 - pbar) / n), 4))", explain: "p̄ + 3 × √(p̄(1 − p̄)/n)입니다." },
+        ] },
+      { id: "st-11-3", title: "공정능력지수: Cp · Cpk · Ppk", minutes: 25, concepts: ["st.spc"],
+        quiz: [
+          { kind: "write", q: "규격 9.9 ~ 10.1, 평균 10.03, 표준편차 0.02일 때 Cpk를 소수 둘째 자리로 출력하세요.", given: "LSL, USL = 9.9, 10.1\nm, s = 10.03, 0.02", expect: "1.17", must: ["min"], solution: "LSL, USL = 9.9, 10.1\nm, s = 10.03, 0.02\nprint(round(min(USL - m, m - LSL) / (3 * s), 2))", explain: "가까운 쪽(상한)까지 0.07 ÷ 0.06 = 1.17입니다." },
+          { kind: "choice", q: "Cp는 1.8인데 Cpk가 1.0이다. 가장 먼저 할 일은?", options: ["설비를 교체해 흔들림을 줄인다", "공정 평균을 규격 중앙으로 맞춘다", "규격을 넓혀 달라고 한다", "전수 검사를 중단한다"], answer: 1, explain: "Cp가 높으면 흔들림 폭은 충분히 좁습니다. Cp와 Cpk의 차이는 중심 치우침이라 중심을 맞추면 Cpk가 올라갑니다." },
+          { kind: "ox", q: "관리도에 신호가 계속 나오는 불안정한 공정도 Cpk 하나로 능력을 요약할 수 있다.", answer: false, explain: "평균과 σ가 계속 바뀌는 공정은 지수 하나로 요약할 수 없습니다. 관리 상태를 먼저 만든 뒤 계산합니다." },
+        ] },
+    ] },
 
   // ── 머신러닝 ─────────────────────────────────────────────
   { id: "ml-00", track: "ml", intro: true, title: "머신러닝 시작하기", summary: "기계가 배운다는 것, 학습과 예측, 회귀 · 분류 · 비지도", level: "입문",
@@ -968,6 +1027,10 @@ export const COURSES = [
       quiz: [
         { kind: "choice", q: "'내일 가게 매출액(원)을 예측하기'는 어떤 문제일까?", options: ["회귀", "분류", "군집", "차원 축소"], answer: 0, explain: "맞히려는 답이 연속된 숫자(매출액)이므로 회귀입니다." },
         { kind: "choice", q: "'정답 없이, 구매 행동이 비슷한 고객끼리 무리로 나누기'는 어떤 문제일까?", options: ["회귀", "분류", "군집 (비지도 학습)", "기준 모델"], answer: 2, explain: "정답(y)이 없고 비슷한 것끼리 묶으므로 비지도 학습의 군집입니다." },
+      ] },
+    { id: "ml-00-3", title: "머신러닝 모델 지도: 어떤 문제에 어떤 모델", minutes: 15, concepts: ["ml.intro"],
+      quiz: [
+        { kind: "choice", q: "정답 없이 고객 1만 명의 구매 기록만 있다. 비슷한 고객끼리 묶고 싶을 때 어느 갈래의 모델을 쓸까?", options: ["지도학습 · 회귀 (선형회귀)", "지도학습 · 분류 (로지스틱 회귀)", "비지도학습 · 군집 (K-means)", "비지도학습 · 차원 축소 (PCA)"], answer: 2, explain: "정답(y)이 없고 비슷한 것끼리 묶는 일이라 비지도학습의 군집입니다." },
       ] }] },
   { id: "ml-01", track: "ml", title: "ML 워크플로와 데이터 준비", summary: "특성과 정답, 결측치, 인코딩, train/test, stratify, 기준 모델, 누수", unit: 17, level: "입문",
     concepts: ["ml.workflow", "ml.missing", "ml.encoding"],
@@ -997,7 +1060,7 @@ export const COURSES = [
         { kind: "ox", q: "스케일러는 전체 데이터로 fit 한 뒤 나누는 것이 정석이다.", answer: false, explain: "분할 후 학습 데이터로만 fit 해야 누수가 없습니다." },
         { kind: "choice", q: "타이타닉 생존(survived) 예측 모델의 특성으로 넣으면 안 되는 열은?", options: ["pclass (객실 등급)", "age (나이)", "alive (생존 여부 yes/no)", "fare (운임)"], answer: 2, explain: "alive는 정답을 다른 말로 쓴 열이라 넣으면 정답을 그대로 읽는 누수가 됩니다." },
       ] }] },
-  { id: "ml-02", track: "ml", title: "선형 · 로지스틱 회귀", summary: "직선 예측, MAE · RMSE · R², 경사하강법, 다중 회귀, 확률 출력, Ridge · Lasso", unit: 18, level: "기본",
+  { id: "ml-02", track: "ml", title: "회귀: 선형 모델", summary: "최소제곱 직선, MAE · RMSE · R², 경사하강법, 다중 회귀, 다항 회귀와 편향-분산, Ridge · Lasso · ElasticNet", unit: 18, level: "기본",
     concepts: ["ml.linear", "ml.gd", "ml.regularization"],
     lessons: [
     { id: "ml-02-1", title: "선형회귀: 직선 하나로 예측하기", minutes: 12, concepts: ["ml.linear"],
@@ -1015,15 +1078,26 @@ export const COURSES = [
     { id: "ml-02-4", title: "특성을 여러 개 쓰면", minutes: 10, concepts: ["ml.linear"],
       quiz: [
       ] },
-    { id: "ml-02-5", title: "로지스틱 회귀: 확률로 분류하기", minutes: 15, concepts: ["ml.linear"],
+    { id: "ml-02-7", title: "곡선도 직선 모델로: 다항회귀와 편향-분산", minutes: 18, concepts: ["ml.linear", "ml.overfit"],
       quiz: [
-        { kind: "ox", q: "LogisticRegression의 predict는 확률이 0.5 이상이면 1로 판정한다.", answer: true, explain: "이진 분류의 기본 임계값은 0.5입니다." },
+        { kind: "choice", q: "다항회귀의 차수를 1에서 15로 올렸더니 학습 R²는 0.99, 시험 R²는 크게 음수가 됐다. 어떤 상태일까?", options: ["과소적합 (편향이 크다)", "과적합 (분산이 크다)", "누수", "딱 좋다"], answer: 1, explain: "학습 데이터는 외웠지만 새 데이터에서 크게 흔들리는 고분산 상태입니다. 차수를 낮추거나 규제를 겁니다." },
       ] },
     { id: "ml-02-6", title: "계수에 벌점 주기: Ridge와 Lasso", minutes: 15, concepts: ["ml.regularization"],
       quiz: [
         { kind: "choice", q: "쓸모없는 특성의 계수를 딱 0으로 만들어, 특성을 저절로 골라 주는 효과가 있는 것은?", options: ["Ridge", "Lasso", "LinearRegression", "StandardScaler"], answer: 1, explain: "Lasso는 계수의 절댓값에 벌점을 줘서 작은 계수를 0으로 만듭니다. Ridge는 모든 계수를 조금씩 줄일 뿐 0으로 만들지는 않습니다." },
       ] }] },
-  { id: "ml-03", track: "ml", title: "평가지표", summary: "혼동행렬, precision · recall · F1, 임계값, ROC-AUC · PR-AUC", unit: 19, level: "기본",
+  { id: "ml-12", track: "ml", title: "분류의 기본: 로지스틱 회귀와 다중 분류", summary: "시그모이드 · 로그 오즈 · 오즈비, 로그 손실, 결정 경계, 소프트맥스와 OvR", level: "기본",
+    concepts: ["ml.logistic", "ml.multiclass"],
+    lessons: [
+    { id: "ml-02-5", title: "로지스틱 회귀: 확률로 분류하기", minutes: 15, concepts: ["ml.logistic"],
+      quiz: [
+        { kind: "ox", q: "LogisticRegression의 predict는 확률이 0.5 이상이면 1로 판정한다.", answer: true, explain: "이진 분류의 기본 임계값은 0.5입니다." },
+      ] },
+    { id: "ml-12-1", title: "셋 이상으로 나누기: 다중 분류와 소프트맥스", minutes: 18, concepts: ["ml.multiclass"],
+      quiz: [
+        { kind: "choice", q: "펭귄 세 종을 분류하는 모델의 클래스별 재현율이 0.98, 0.95, 0.40이다. macro 평균 재현율은?", options: ["약 0.78", "약 0.95", "약 0.40", "약 0.98"], answer: 0, explain: "macro 평균은 클래스 수로 나눈 단순 평균입니다. (0.98 + 0.95 + 0.40) / 3 ≈ 0.78." },
+      ] }] },
+  { id: "ml-03", track: "ml", title: "분류 평가지표", summary: "혼동행렬, 정밀도 · 재현율 · F1 · F-beta, macro · weighted 평균, 임계값, ROC-AUC · PR-AUC", unit: 19, level: "기본",
     concepts: ["ml.metrics"],
     lessons: [
     { id: "ml-03-1", title: "혼동행렬: 맞힘과 틀림을 네 칸으로", minutes: 12, concepts: ["ml.metrics"],
@@ -1042,12 +1116,31 @@ export const COURSES = [
     { id: "ml-03-4", title: "ROC 곡선과 AUC", minutes: 12, concepts: ["ml.metrics"],
       quiz: [
       ] }] },
-  { id: "ml-04", track: "ml", title: "트리와 앙상블", summary: "결정트리, 지니 불순도, 과적합 · 과소적합, 랜덤포레스트, 부스팅, 피처 중요도", unit: 20, level: "기본",
+  { id: "ml-10", track: "ml", title: "분류 모델 더 보기: 거리 · 확률 · 경계", summary: "KNN(거리), 나이브 베이즈(확률)와 라플라스 스무딩, SVM(마진)과 커널, 모델 고르기", level: "실무", unit: 47,
+    concepts: ["ml.knn", "ml.nb", "ml.svm"],
+    lessons: [
+    { id: "ml-10-1", title: "KNN: 가까운 이웃에게 묻기", minutes: 15, concepts: ["ml.knn"],
+      quiz: [
+        { kind: "ox", q: "KNN은 거리로 이웃을 고르므로, 운임(0~512)과 성별(0/1)을 표준화 없이 넣으면 운임이 거리를 거의 독차지한다.", answer: true, explain: "표준화 없이 0.698, 표준화 후 0.793이었습니다. 거리를 재는 모델은 스케일링이 꼭 필요합니다." },
+      ] },
+    { id: "ml-10-2", title: "나이브 베이즈: 확률을 곱해서 분류하기", minutes: 15, concepts: ["ml.nb"],
+      quiz: [
+        { kind: "choice", q: "나이브 베이즈에서 한 번도 나오지 않은 단어 때문에 확률 곱 전체가 0이 되는 것을 막는 방법은?", options: ["표준화", "라플라스 스무딩(개수에 1 더하기)", "원-핫 인코딩", "임계값 낮추기"], answer: 1, explain: "모든 개수에 1을 더해 '한 번도 안 나왔다 = 절대 안 나온다'로 단정하지 않게 합니다." },
+      ] },
+    { id: "ml-10-3", title: "SVM: 가장 넓은 길 찾기, 그리고 모델 고르기", minutes: 15, concepts: ["ml.svm"],
+      quiz: [
+        { kind: "choice", q: "새 표 데이터 분류 문제를 받았다. 이 트랙에서 정리한 순서대로라면 가장 먼저 할 일은?", options: ["부스팅 설정값을 GridSearch로 튜닝한다", "기준 모델(찍기) 점수를 확인한다", "SVM 커널을 바꿔 본다", "딥러닝 모델을 만든다"], answer: 1, explain: "기준 모델로 최소선을 확인하고 → 로지스틱 회귀 → 트리 앙상블 순서로 시도합니다." },
+      ] }] },
+  { id: "ml-04", track: "ml", title: "트리와 앙상블 (회귀 · 분류 공통)", summary: "결정트리, 지니 · 엔트로피 · 정보이득, 회귀 트리, 과적합, 랜덤포레스트(배깅), 그래디언트 부스팅 · XGBoost · LightGBM", unit: 20, level: "기본",
     concepts: ["ml.tree", "ml.overfit"],
     lessons: [
     { id: "ml-04-1", title: "결정트리: 스무고개로 예측하기", minutes: 15, concepts: ["ml.tree"],
       quiz: [
         { kind: "choice", q: "결정트리가 첫 질문을 고르는 기준은?", options: ["열 이름의 알파벳 순서", "나눈 뒤 그룹들이 가장 덜 섞이는(불순도가 가장 낮아지는) 질문", "값의 종류가 가장 많은 열", "사람이 정해 준 순서"], answer: 1, explain: "후보 질문마다 나눈 뒤 지니 불순도를 계산해 가장 많이 줄어드는 질문을 고릅니다. 타이타닉에서는 성별이었습니다." },
+      ] },
+    { id: "ml-04-5", title: "숫자도 트리로: 회귀 트리", minutes: 15, concepts: ["ml.tree"],
+      quiz: [
+        { kind: "ox", q: "회귀 트리는 학습 데이터에서 본 가장 큰 정답보다 더 큰 값을 예측할 수 있다.", answer: false, explain: "잎의 예측값은 그 잎에 들어온 학습 정답들의 평균이라, 학습 범위 밖으로 나가지 못합니다(외삽 불가)." },
       ] },
     { id: "ml-04-2", title: "깊어질수록 외운다: 과적합과 과소적합", minutes: 15, concepts: ["ml.overfit"],
       quiz: [
@@ -1058,6 +1151,11 @@ export const COURSES = [
     { id: "ml-04-4", title: "부스팅과 피처 중요도", minutes: 12, concepts: ["ml.tree"],
       quiz: [
         { kind: "choice", q: "앞 트리들이 틀린 부분을 고치도록 트리를 하나씩 차례로 쌓는 방법은?", options: ["랜덤포레스트(배깅)", "부스팅", "교차검증", "PCA"], answer: 1, explain: "배깅은 독립된 트리들의 다수결, 부스팅은 앞 트리의 실수를 차례로 보완합니다." },
+      ] },
+    { id: "ml-04-6", title: "잔차를 차례로 줄이기: 그래디언트 부스팅과 XGBoost · LightGBM", minutes: 18, concepts: ["ml.tree", "ml.boosting"],
+      quiz: [
+        { kind: "choice", q: "회귀용 그래디언트 부스팅에서 두 번째 트리가 맞히도록 학습하는 대상은?", options: ["원래 정답 y", "첫 트리까지의 예측이 남긴 잔차(정답 − 예측)", "무작위로 섞은 정답", "첫 트리의 피처 중요도"], answer: 1, explain: "각 트리는 지금까지 합친 예측이 틀린 만큼(잔차, 손실의 기울기)을 맞히도록 학습합니다." },
+        { kind: "ox", q: "learning_rate를 낮추면 보통 트리 개수(n_estimators)를 더 늘려야 비슷한 성능이 나온다.", answer: true, explain: "한 트리가 반영되는 몫이 작아지니 더 많은 트리가 필요합니다. 대신 과적합에 덜 민감해집니다." },
       ] }] },
   { id: "ml-05", track: "ml", title: "교차검증과 하이퍼파라미터", summary: "K-fold, GridSearchCV, 검증 곡선 · 학습 곡선, 시계열 분할", unit: 35, level: "기본",
     concepts: ["ml.cv", "ml.overfit", "ml.timeseries"],
@@ -1103,26 +1201,6 @@ export const COURSES = [
       quiz: [
         { kind: "choice", q: "어떤 열의 VIF가 10이다. 무슨 뜻일까?", options: ["이 열은 정답과 상관이 0.9다", "나머지 특성들로 이 열을 약 90%(R² 0.9) 설명할 수 있다", "이 열의 중요도가 10위다", "이 열에 빈칸이 10% 있다"], answer: 1, explain: "VIF = 1 / (1 − R²). 다른 특성들로 이 열을 맞힌 R²가 0.9면 VIF는 10입니다. 거의 다른 열의 복사본이라는 뜻입니다." },
       ] }] },
-  { id: "ml-07", track: "ml", title: "비지도 학습", summary: "K-means 군집, 엘보 · 실루엣, DBSCAN · 계층 군집, PCA, 이상 탐지", unit: 37, level: "실무",
-    concepts: ["ml.kmeans", "ml.pca", "ml.anomaly"],
-    lessons: [
-    { id: "ml-07-1", title: "K-means: 정답 없이 묶기", minutes: 15, concepts: ["ml.kmeans"],
-      quiz: [
-        { kind: "ox", q: "회전수(1,000 단위)와 토크(10 단위)를 표준화하지 않고 K-means를 돌리면 거리가 거의 회전수로만 정해진다.", answer: true, explain: "K-means는 거리로 묶기 때문에 숫자가 큰 열이 거리를 독차지합니다. 그래서 표준화가 먼저입니다." },
-        { kind: "ox", q: "K-means는 데이터에 뚜렷한 그룹이 없으면 그룹을 나누지 않는다.", answer: false, explain: "k를 주면 그룹이 없어도 무조건 k개로 나눕니다. 그룹이 의미 있는지는 사람이 확인해야 합니다." },
-      ] },
-    { id: "ml-07-2", title: "k는 몇 개로 할까: 엘보와 실루엣", minutes: 10, concepts: ["ml.kmeans"],
-      quiz: [
-        { kind: "choice", q: "K-means에서 k를 늘리면 inertia(점과 중심 사이 거리 제곱합)는 어떻게 될까?", options: ["거의 항상 줄어든다", "항상 늘어난다", "변하지 않는다", "0이 된다"], answer: 0, explain: "중심이 많아질수록 점이 더 가까운 중심을 찾으니 inertia는 계속 줄어듭니다. 그래서 값 자체보다 줄어드는 폭이 꺾이는 지점(엘보)을 봅니다." },
-      ] },
-    { id: "ml-07-3", title: "PCA: 여러 열을 몇 개로 요약하기", minutes: 15, concepts: ["ml.pca"],
-      quiz: [
-        { kind: "ox", q: "PCA의 첫 번째 주성분은 데이터의 분산이 가장 큰 방향이다.", answer: true, explain: "두 번째는 첫 번째와 직교하면서 남은 분산이 가장 큰 방향입니다." },
-      ] },
-    { id: "ml-07-4", title: "평소와 다른 것 찾기: 이상 탐지", minutes: 15, concepts: ["ml.anomaly"],
-      quiz: [
-        { kind: "ox", q: "IsolationForest가 이상 점수 1등으로 뽑은 설비는 반드시 고장이다.", answer: false, explain: "이상 점수는 '평소와 다르다'는 뜻일 뿐입니다. 실제로 1등 설비는 고장이 아니었고, 상위 1% 중 고장은 34%였습니다. 사람이 먼저 볼 후보로 씁니다." },
-      ] }] },
   { id: "ml-08", track: "ml", title: "불균형 데이터", summary: "정확도의 함정, class_weight, 임계값과 비용, 오버샘플링", unit: 38, level: "실무",
     concepts: ["ml.imbalance"],
     lessons: [
@@ -1141,6 +1219,37 @@ export const COURSES = [
       quiz: [
         { kind: "ox", q: "오버샘플링은 train/test로 나누기 전에 전체 데이터에 해야 한다.", answer: false, explain: "나누기 전에 복사하면 같은 행의 복사본이 시험용에도 들어가 점수가 부풀려집니다. 반드시 나눈 뒤 학습용에만 합니다." },
       ] }] },
+  { id: "ml-07", track: "ml", title: "비지도 학습: 군집", summary: "K-means, 엘보 · 실루엣, DBSCAN · 계층 군집, 가우시안 혼합(GMM)", unit: 37, level: "실무",
+    concepts: ["ml.kmeans", "ml.gmm"],
+    lessons: [
+    { id: "ml-07-1", title: "K-means: 정답 없이 묶기", minutes: 15, concepts: ["ml.kmeans"],
+      quiz: [
+        { kind: "ox", q: "회전수(1,000 단위)와 토크(10 단위)를 표준화하지 않고 K-means를 돌리면 거리가 거의 회전수로만 정해진다.", answer: true, explain: "K-means는 거리로 묶기 때문에 숫자가 큰 열이 거리를 독차지합니다. 그래서 표준화가 먼저입니다." },
+        { kind: "ox", q: "K-means는 데이터에 뚜렷한 그룹이 없으면 그룹을 나누지 않는다.", answer: false, explain: "k를 주면 그룹이 없어도 무조건 k개로 나눕니다. 그룹이 의미 있는지는 사람이 확인해야 합니다." },
+      ] },
+    { id: "ml-07-2", title: "k는 몇 개로 할까: 엘보와 실루엣", minutes: 10, concepts: ["ml.kmeans"],
+      quiz: [
+        { kind: "choice", q: "K-means에서 k를 늘리면 inertia(점과 중심 사이 거리 제곱합)는 어떻게 될까?", options: ["거의 항상 줄어든다", "항상 늘어난다", "변하지 않는다", "0이 된다"], answer: 0, explain: "중심이 많아질수록 점이 더 가까운 중심을 찾으니 inertia는 계속 줄어듭니다. 그래서 값 자체보다 줄어드는 폭이 꺾이는 지점(엘보)을 봅니다." },
+      ] },
+    { id: "ml-07-5", title: "확률로 묶기: 가우시안 혼합(GMM)", minutes: 15, concepts: ["ml.gmm"],
+      quiz: [
+        { kind: "choice", q: "K-means와 비교한 GMM의 특징으로 옳은 것은?", options: ["그룹 수를 자동으로 정한다", "점마다 각 그룹에 속할 확률을 준다", "표준화가 전혀 필요 없다", "정답(y)이 있어야 학습한다"], answer: 1, explain: "GMM은 그룹을 정규분포(타원)로 보고 점마다 소속 확률(predict_proba)을 줍니다. 그룹 수는 BIC 등으로 고릅니다." },
+      ] }] },
+  { id: "ml-13", track: "ml", title: "비지도 학습: 차원 축소와 이상 탐지", summary: "PCA와 설명된 분산, t-SNE로 지도 그리기, IsolationForest 이상 탐지", level: "실무",
+    concepts: ["ml.pca", "ml.tsne", "ml.anomaly"],
+    lessons: [
+    { id: "ml-07-3", title: "PCA: 여러 열을 몇 개로 요약하기", minutes: 15, concepts: ["ml.pca"],
+      quiz: [
+        { kind: "ox", q: "PCA의 첫 번째 주성분은 데이터의 분산이 가장 큰 방향이다.", answer: true, explain: "두 번째는 첫 번째와 직교하면서 남은 분산이 가장 큰 방향입니다." },
+      ] },
+    { id: "ml-13-1", title: "고차원을 한 장의 지도로: t-SNE", minutes: 15, concepts: ["ml.tsne"],
+      quiz: [
+        { kind: "ox", q: "t-SNE 지도에서 두 덩어리 사이의 거리가 멀면, 원래 데이터에서도 두 그룹이 그만큼 멀다고 해석할 수 있다.", answer: false, explain: "t-SNE는 가까운 이웃 관계를 지키는 데 집중해서, 덩어리 사이 거리와 덩어리 크기는 믿을 수 없습니다." },
+      ] },
+    { id: "ml-07-4", title: "평소와 다른 것 찾기: 이상 탐지", minutes: 15, concepts: ["ml.anomaly"],
+      quiz: [
+        { kind: "ox", q: "IsolationForest가 이상 점수 1등으로 뽑은 설비는 반드시 고장이다.", answer: false, explain: "이상 점수는 '평소와 다르다'는 뜻일 뿐입니다. 실제로 1등 설비는 고장이 아니었고, 상위 1% 중 고장은 34%였습니다. 사람이 먼저 볼 후보로 씁니다." },
+      ] }] },
   { id: "ml-09", track: "ml", title: "모델 해석", summary: "피처 중요도, 순열 중요도, 표준화 계수, 부분 의존도, SHAP", unit: 39, level: "실무",
     concepts: ["ml.explain", "ml.shap"],
     lessons: [
@@ -1157,21 +1266,6 @@ export const COURSES = [
       quiz: [
         { kind: "short", q: "기본값(평균 예측)이 0.05이고, 한 설비의 SHAP 값이 토크 +0.60, 공구 마모 +0.20, 나머지 열 합계 −0.05다. 이 설비의 모델 예측 확률은? (소수)", answer: ["0.8", "0.80", ".8"], explain: "기본값 + SHAP 값의 합 = 예측. 0.05 + 0.60 + 0.20 − 0.05 = 0.80." },
         { kind: "ox", q: "어떤 설비에서 토크의 SHAP 값이 가장 크면, 토크를 낮추면 그 설비의 고장이 줄어든다는 것이 증명된 것이다.", answer: false, explain: "SHAP 값은 모델이 그렇게 계산했다는 판단 근거일 뿐, 원인을 증명하지 않습니다. 조치 효과는 현장 실험으로 확인합니다." },
-      ] }] },
-  { id: "ml-10", track: "ml", title: "다른 모델 둘러보기", summary: "KNN, 나이브 베이즈와 라플라스 스무딩, SVM과 커널, 모델 고르기", level: "실무", unit: 47,
-    concepts: ["ml.knn", "ml.nb", "ml.svm"],
-    lessons: [
-    { id: "ml-10-1", title: "KNN: 가까운 이웃에게 묻기", minutes: 15, concepts: ["ml.knn"],
-      quiz: [
-        { kind: "ox", q: "KNN은 거리로 이웃을 고르므로, 운임(0~512)과 성별(0/1)을 표준화 없이 넣으면 운임이 거리를 거의 독차지한다.", answer: true, explain: "표준화 없이 0.698, 표준화 후 0.793이었습니다. 거리를 재는 모델은 스케일링이 꼭 필요합니다." },
-      ] },
-    { id: "ml-10-2", title: "나이브 베이즈: 확률을 곱해서 분류하기", minutes: 15, concepts: ["ml.nb"],
-      quiz: [
-        { kind: "choice", q: "나이브 베이즈에서 한 번도 나오지 않은 단어 때문에 확률 곱 전체가 0이 되는 것을 막는 방법은?", options: ["표준화", "라플라스 스무딩(개수에 1 더하기)", "원-핫 인코딩", "임계값 낮추기"], answer: 1, explain: "모든 개수에 1을 더해 '한 번도 안 나왔다 = 절대 안 나온다'로 단정하지 않게 합니다." },
-      ] },
-    { id: "ml-10-3", title: "SVM: 가장 넓은 길 찾기, 그리고 모델 고르기", minutes: 15, concepts: ["ml.svm"],
-      quiz: [
-        { kind: "choice", q: "새 표 데이터 분류 문제를 받았다. 이 트랙에서 정리한 순서대로라면 가장 먼저 할 일은?", options: ["부스팅 설정값을 GridSearch로 튜닝한다", "기준 모델(찍기) 점수를 확인한다", "SVM 커널을 바꿔 본다", "딥러닝 모델을 만든다"], answer: 1, explain: "기준 모델로 최소선을 확인하고 → 로지스틱 회귀 → 트리 앙상블 순서로 시도합니다." },
       ] }] },
   { id: "ml-11", track: "ml", title: "현장에 내보내기", summary: "모델 저장 · 불러오기, 드리프트 감시, 처음부터 끝까지 미니 프로젝트", level: "실무", unit: 51,
     concepts: ["ml.deploy"],
@@ -1394,14 +1488,19 @@ export const SECTIONS = {
     { id: "describe", label: "요약과 확률", en: "Describe · Probability", blurb: "데이터를 숫자로 요약하고, 확률과 분포로 불확실성 다루기", courses: ["st-01", "st-09", "st-02"] },
     { id: "inference", label: "추론 통계", en: "Inference", blurb: "표본으로 모집단을 추정하고 검정하기", courses: ["st-03", "st-04", "st-05"] },
     { id: "relation", label: "비교와 관계", en: "Comparison · Relation", blurb: "여러 집단 비교, 두 변수의 관계와 회귀", courses: ["st-06", "st-07"] },
+    { id: "tests", label: "검정 도구 상자", en: "Test Toolbox", blurb: "비율 · 분산 · 정규성 · 이원 ANOVA · 대응 · 다중비교 · 상관 검정, 그리고 검정 고르기 지도", courses: ["st-12"] },
     { id: "practice", label: "실무 해석", en: "In Practice", blurb: "A/B 테스트 설계와 흔한 해석 실수", courses: ["st-08", "st-10"] },
+    { id: "quality", label: "품질 통계", en: "Quality (SPC)", blurb: "관리도로 공정을 지켜보고, 공정능력지수로 실력을 재기", courses: ["st-11"] },
   ],
   ml: [
-    { id: "start", label: "시작하기", en: "Start", blurb: "기계가 배운다는 것", courses: ["ml-00"] },
-    { id: "supervised", label: "지도학습 기본", en: "Supervised", blurb: "데이터 준비부터 회귀 · 분류 · 트리 모델과 평가까지", courses: ["ml-01", "ml-02", "ml-03", "ml-04"] },
-    { id: "tuning", label: "모델 다듬기", en: "Tuning", blurb: "교차검증 · 하이퍼파라미터, 피처 엔지니어링과 Pipeline", courses: ["ml-05", "ml-06"] },
-    { id: "beyond", label: "더 넓히기", en: "Beyond", blurb: "비지도 학습 · 이상 탐지, 불균형 데이터, 모델 해석, 다른 모델", courses: ["ml-07", "ml-08", "ml-09", "ml-10"] },
-    { id: "field", label: "현장에 쓰기", en: "In the Field", blurb: "모델 저장 · 드리프트 감시, 처음부터 끝까지 미니 프로젝트", courses: ["ml-11"] },
+    { id: "start", label: "시작하기", en: "Start", blurb: "기계가 배운다는 것, 문제 유형별 모델 지도", courses: ["ml-00"] },
+    { id: "prep", label: "데이터 준비", en: "Data Prep", blurb: "특성과 정답, 결측치 · 인코딩, 학습용과 시험용, 누수", courses: ["ml-01"] },
+    { id: "regression", label: "지도학습 · 회귀", en: "Supervised · Regression", blurb: "숫자를 맞히는 선형 모델: 최소제곱, 경사하강법, 다항회귀, 규제", courses: ["ml-02"] },
+    { id: "classification", label: "지도학습 · 분류", en: "Supervised · Classification", blurb: "종류를 맞히는 모델과 평가: 로지스틱 · 소프트맥스, 지표, KNN · 나이브 베이즈 · SVM", courses: ["ml-12", "ml-03", "ml-10"] },
+    { id: "ensemble", label: "트리와 앙상블", en: "Trees · Ensembles", blurb: "회귀 · 분류에 함께 쓰는 결정트리, 랜덤포레스트, 그래디언트 부스팅", courses: ["ml-04"] },
+    { id: "tuning", label: "모델 다듬기", en: "Tuning", blurb: "교차검증 · 하이퍼파라미터, 피처 엔지니어링, 불균형 데이터", courses: ["ml-05", "ml-06", "ml-08"] },
+    { id: "unsupervised", label: "비지도학습", en: "Unsupervised", blurb: "정답 없이 묶고(군집), 줄이고(차원 축소), 튀는 것 찾기(이상 탐지)", courses: ["ml-07", "ml-13"] },
+    { id: "field", label: "해석과 현장", en: "Explain · Deploy", blurb: "모델이 왜 그렇게 판단했나, 저장 · 드리프트 감시, 미니 프로젝트", courses: ["ml-09", "ml-11"] },
   ],
   dl: [
     { id: "start", label: "시작하기", en: "Start", blurb: "머신러닝과 딥러닝은 무엇이 다른가", courses: ["dl-00"] },

@@ -1158,6 +1158,159 @@ def _():
     return svg(850, 310, b, "미니 프로젝트 7단계")
 
 
+# ---------------- 2026-11-07 재구성: 모델 지도 · 새 모델 레슨 ----------------
+@fig("ml00-model-map")
+def _():
+    b = []
+    b.append(box(360, 10, 180, 44, "머신러닝", fill=SURF3, stroke=INK2, size=17, weight=800))
+    b.append(box(142, 92, 260, 44, "지도학습 · 정답 y가 있다", stroke=ACC, color=ACC, size=15))
+    b.append(box(568, 92, 300, 44, "비지도학습 · 정답 y가 없다", stroke=TRACK, color=TRACK, size=15))
+    b.append(path("M450,54 L450,72 L272,72 L272,90", MUTED, 1.6))
+    b.append(path("M450,72 L718,72 L718,90", MUTED, 1.6))
+    cols = [
+        (10, "회귀 · 숫자", ACC, ["선형회귀 (OLS)", "다항회귀", "Ridge · Lasso", "ElasticNet"], "ml-02"),
+        (190, "분류 · 종류", ACC, ["로지스틱 회귀", "소프트맥스 (다중)", "KNN", "나이브 베이즈", "SVM"], "ml-12 · ml-10"),
+        (370, "회귀 · 분류 공통", CYAN, ["결정트리", "랜덤포레스트", "그래디언트 부스팅", "XGBoost · LightGBM"], "ml-04"),
+        (560, "군집", TRACK, ["K-means", "DBSCAN", "계층 군집", "가우시안 혼합"], "ml-07"),
+        (720, "차원 축소 · 이상 탐지", TRACK, ["PCA", "t-SNE", "IsolationForest"], "ml-13"),
+    ]
+    for i, (_x, title, color, models, _c) in enumerate(cols):
+        x, w = 10 + i * 178, 168
+        top = 136
+        px = 272 if i < 3 else 718
+        b.append(path(f"M{px},{top} L{px},152 L{x + w / 2},152 L{x + w / 2},168", color, 1.4))
+        b.append(rect(x, 168, w, 36, SURF, color, 8, 1.4))
+        b.append(text(x + w / 2, 186, title, 14, color, weight=700))
+        for i, m in enumerate(models):
+            b.append(rect(x + 8, 214 + i * 38, w - 16, 30, SURF3, LINE2, 6))
+            b.append(text(x + w / 2, 229 + i * 38, m, 13, INK, weight=600))
+    b.append(text(450, 420, "아래로 갈수록 더 복잡하고 강력하지만, 설명하기는 어려워집니다", 12, MUTED))
+    return svg(900, 440, b, "머신러닝 모델 지도: 지도학습(회귀, 분류, 공통)과 비지도학습(군집, 차원 축소, 이상 탐지)")
+
+
+@fig("ml02-bias-variance")
+def _():
+    b = []
+    ox, oy, w, h = 70, 30, 520, 250
+    b.append(line(ox, oy + h, ox + w, oy + h, LINE2, 1.4))
+    b.append(line(ox, oy, ox, oy + h, LINE2, 1.4))
+    b.append(text(ox + w / 2, oy + h + 26, "모델 복잡도 (다항식 차수 ↑)", 13, INK2))
+    b.append(text(30, oy + h / 2, "오차", 13, INK2))
+    tr, te = [], []
+    for i in range(0, 101):
+        t = i / 100
+        e_tr = 0.85 * math.exp(-3.2 * t) + 0.05
+        e_te = 0.85 * math.exp(-3.2 * t) + 0.05 + 0.75 * t ** 2.4
+        tr.append((ox + t * w, oy + h - e_tr * h))
+        te.append((ox + t * w, oy + h - min(e_te, 1.0) * h))
+    b.append(path("M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in tr), CYAN, 2.6))
+    b.append(path("M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in te), ORANGE, 2.6))
+    best = min(range(101), key=lambda i: te[i][1] * -1)
+    bx = te[max(range(101), key=lambda i: te[i][1])][0]
+    b.append(line(bx, oy + 10, bx, oy + h, ACC, 1.4, "5 4"))
+    b.append(text(bx, oy + 2, "딱 좋은 복잡도", 12, ACC, weight=700))
+    b.append(text(ox + 95, oy + 40, "과소적합\n편향 ↑", 13, WARN, weight=700))
+    b.append(text(ox + w - 70, oy + 40, "과적합\n분산 ↑", 13, FAIL, weight=700))
+    b.append(text(ox + w + 10, tr[-1][1], "학습 오차", 13, CYAN, "start", 700))
+    b.append(text(ox + w + 10, te[-1][1] + 6, "시험 오차", 13, ORANGE, "start", 700))
+    return svg(690, 320, b, "모델이 복잡해질수록 학습 오차는 계속 줄지만 시험 오차는 U자를 그린다")
+
+
+@fig("ml12-softmax")
+def _():
+    b = []
+    rows = [("Adelie", 2.0, ACC), ("Chinstrap", 0.5, CYAN), ("Gentoo", -1.0, TRACK)]
+    ex = [math.exp(z) for _, z, _ in rows]
+    tot = sum(ex)
+    b.append(text(90, 22, "점수 z", 14, INK2, weight=700))
+    b.append(text(300, 22, "e^z (항상 양수)", 14, INK2, weight=700))
+    b.append(text(560, 22, "합으로 나누기 = 확률", 14, INK2, weight=700))
+    for i, (name, z, col) in enumerate(rows):
+        y = 52 + i * 62
+        b.append(box(20, y, 140, 42, f"{name}\n{z:+.1f}", stroke=col, color=col, size=13))
+        b.append(arrow(166, y + 21, 226, y + 21, MUTED, 1.6))
+        b.append(box(232, y, 136, 42, f"{ex[i]:.2f}", size=14))
+        b.append(arrow(374, y + 21, 434, y + 21, MUTED, 1.6))
+        p = ex[i] / tot
+        b.append(rect(440, y + 6, 240, 30, SURF, LINE2, 6))
+        b.append(rect(440, y + 6, 240 * p, 30, col, "none", 6, op=0.8))
+        b.append(text(694, y + 21, f"{p:.2f}", 14, col, "start", 700))
+    b.append(text(380, 250, f"합계 {tot:.2f}로 나누면 세 확률의 합이 1이 됩니다. 가장 큰 확률(Adelie)을 답으로 고릅니다.", 12, MUTED))
+    return svg(760, 268, b, "소프트맥스: 클래스별 점수를 지수로 바꾸고 합으로 나눠 확률로 만든다")
+
+
+@fig("ml04-regtree")
+def _():
+    b = []
+    ox, oy, w, h = 60, 20, 560, 240
+    b.append(line(ox, oy + h, ox + w, oy + h, LINE2, 1.4))
+    b.append(line(ox, oy, ox, oy + h, LINE2, 1.4))
+    b.append(text(ox + w / 2, oy + h + 24, "x (예: 회전수)", 13, INK2))
+    b.append(text(26, oy + h / 2, "y", 13, INK2))
+    r = pseudo(80, 7)
+    pts = []
+    for i in range(40):
+        t = i / 39
+        yv = 0.75 - 0.55 * t + 0.08 * math.sin(9 * t) + (r[i] - 0.5) * 0.14
+        pts.append((ox + t * w, oy + h - yv * h))
+    for x, y in pts:
+        b.append(circle(x, y, 3.5, INK2, op=0.7))
+    cuts = [0, 0.3, 0.55, 0.8, 1.0]
+    for a, c in zip(cuts[:-1], cuts[1:]):
+        seg = [p for p in pts if ox + a * w <= p[0] <= ox + c * w]
+        my = sum(p[1] for p in seg) / len(seg)
+        b.append(line(ox + a * w, my, ox + c * w, my, ACC, 3))
+        if a > 0:
+            b.append(line(ox + a * w, oy, ox + a * w, oy + h, LINE2, 1, "4 4"))
+    b.append(text(ox + w - 4, oy + 12, "구간마다 평균 = 계단 모양 예측", 12, ACC, "end", 700))
+    return svg(650, 304, b, "회귀 트리는 x를 구간으로 나누고 구간마다 평균값을 예측해 계단 모양이 된다")
+
+
+@fig("ml04-gboost")
+def _():
+    b = []
+    labels = [("트리 1", "y 를 대충 맞힘", "남은 잔차 큼"), ("트리 2", "트리 1의 잔차를 맞힘", "잔차 줄어듦"), ("트리 3", "트리 1+2의 잔차를 맞힘", "잔차 더 줄어듦")]
+    for i, (t, s1, s2) in enumerate(labels):
+        x = 20 + i * 250
+        b.append(box(x, 20, 200, 50, t, stroke=CYAN, color=CYAN, size=15))
+        b.append(text(x + 100, 92, s1, 12, INK2))
+        bars = [0.9, 0.45, 0.18][i]
+        b.append(rect(x + 30, 112, 140, 22, SURF, LINE2, 5))
+        b.append(rect(x + 30, 112, 140 * bars, 22, ORANGE, "none", 5, op=0.85))
+        b.append(text(x + 100, 150, s2, 12, ORANGE, weight=600))
+        if i < 2:
+            b.append(arrow(x + 204, 45, x + 246, 45, ACC, 2, accent=True))
+    b.append(rect(20, 172, 700, 40, SURF3, LINE2, 8))
+    b.append(text(370, 192, "최종 예측 = 기준값 + η × 트리1 + η × 트리2 + η × 트리3 + …   (η = learning_rate)", 13, ACC, weight=700))
+    return svg(740, 224, b, "그래디언트 부스팅은 앞 트리들이 남긴 잔차를 다음 트리가 맞히며 차례로 쌓는다")
+
+
+@fig("ml07-gmm")
+def _():
+    b = []
+    for k, (title, gmm) in enumerate([("K-means: 중심에서의 거리 (원)", False), ("GMM: 정규분포 (타원) + 소속 확률", True)]):
+        ox = 20 + k * 380
+        b.append(rect(ox, 10, 350, 250, SURF, LINE2, 10))
+        b.append(text(ox + 175, 32, title, 14, CYAN if not gmm else ACC, weight=700))
+        r = pseudo(240, 11)
+        for i in range(60):
+            t = (r[i] - 0.5) * 2.2; u = (r[60 + i] - 0.5) * 0.5
+            x = ox + 110 + t * 55 + u * 30; y = 150 - t * 45 + u * 40
+            b.append(circle(x, y, 3, ACC if gmm else CYAN, op=0.7))
+        for i in range(40):
+            x = ox + 255 + (r[120 + i] - 0.5) * 60; y = 150 + (r[160 + i] - 0.5) * 60
+            b.append(circle(x, y, 3, TRACK, op=0.7))
+        if gmm:
+            b.append(f'<ellipse cx="{ox + 110}" cy="150" rx="105" ry="32" transform="rotate(-39 {ox + 110} 150)" fill="none" stroke="{ACC}" stroke-width="2"/>')
+            b.append(f'<ellipse cx="{ox + 255}" cy="150" rx="42" ry="42" fill="none" stroke="{TRACK}" stroke-width="2"/>')
+            b.append(text(ox + 175, 240, "길쭉한 그룹도 한 덩어리로, 경계의 점은 확률 0.6 : 0.4", 11, INK2))
+        else:
+            b.append(circle(ox + 110, 150, 70, "none", CYAN, 2))
+            b.append(circle(ox + 255, 150, 70, "none", TRACK, 2))
+            b.append(text(ox + 175, 240, "둥근 영역만 그려서 길쭉한 그룹의 끝을 놓침", 11, INK2))
+    return svg(760, 270, b, "K-means는 원 모양 그룹을, GMM은 타원 모양 그룹과 소속 확률을 찾는다")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for name, f in FIGS.items():
