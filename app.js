@@ -2,6 +2,7 @@ import { CONFIG } from "./config.js";
 import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, SESSIONS } from "./problems.js";
 import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath, sectionsOf } from "./content/index.js";
 import { conceptName } from "./content/concepts.js";
+import { ADDED_LESSONS } from "./content/added.js";
 import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
 import { render as renderMd } from "./md.js";
 import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
@@ -59,7 +60,15 @@ const courseEntry = (c) => { const l = coreLessons(c).find((x) => !lessonDone(x.
 const courseHref = (c) => { const l = courseEntry(c); return l ? `#/l/${l.id}` : `#/c/${c.id}`; };
 const lessonDone = (lid) => state.lessons[lid]?.status === "passed";
 // 진도 계산과 추천에 쓰는 필수 레슨 (optional: 고르는 레슨은 뺀다)
-const coreLessons = (c) => c.lessons.filter((l) => !l.optional);
+// 나중에 붙인 레슨(content/added.js)은, 붙이기 전에 그 코스의 원래 레슨을 모두 끝낸 학생에게는 선택(보강) 레슨으로 둔다.
+const passedBefore = (lid, at) => { const r = state.lessons[lid]; const t = r?.passed_at || r?.updated_at; return r?.status === "passed" && !!t && new Date(t) < new Date(at); };
+const isBonusLesson = (c, l) => {
+  const at = ADDED_LESSONS[l.id];
+  if (!at || lessonDone(l.id)) return false;
+  const original = c.lessons.filter((x) => !x.optional && !ADDED_LESSONS[x.id]);
+  return original.length > 0 && original.every((x) => passedBefore(x.id, at));
+};
+const coreLessons = (c) => c.lessons.filter((l) => !l.optional && !isBonusLesson(c, l));
 const solved = (pid) => !!state.progress[pid]?.solved;
 const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)" };
 const trackStyle = (t) => `style="--tc:${TRACK_COLOR[t.color] || "var(--track)"}"`;
@@ -1067,7 +1076,7 @@ function viewCourse(c) {
         ${firstLesson && s.lessonsDone < s.lessons ? `<a class="btn primary" href="#/l/${firstLesson.id}">${s.lessonsDone ? "레슨 이어서" : "레슨 시작"} →</a>` : nextP ? `<a class="btn primary" href="#/p/${nextP.id}">문제 풀기 →</a>` : ""}</div>
     </header>
     <section class="part"><h2 class="part-title">레슨</h2>
-      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span>${l.optional ? '<span class="pmark" title="셋 중 하나만 골라 보면 됩니다">선택</span>' : ""}<span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
+      ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span>${l.optional ? '<span class="pmark" title="셋 중 하나만 골라 보면 됩니다">선택</span>' : ""}${isBonusLesson(c, l) ? '<span class="pmark" title="코스를 끝낸 뒤 새로 추가된 레슨입니다. 진도율에는 들어가지 않아요.">새 레슨</span>' : ""}<span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
     ${(c.intro || c.tip) && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
       ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>`}
     <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="${courseHref(prevC)}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="${courseHref(nextC)}">${esc(nextC.title)} →</a>` : ""}</nav>
@@ -1734,7 +1743,7 @@ function dayComplete(c, info) {
   const rankLine = info?.rank ? `<p class="dayend-rank">방금 푼 문제는 <b>${Math.max(info.total, info.rank)}명</b> 중 <b>${info.rank}번째</b>로 맞혔어요.</p>` : "";
   const wrap = document.createElement("div");
   wrap.className = "overlay";
-  wrap.innerHTML = `<div class="celebrate dayend" role="dialog" aria-modal="true" aria-labelledby="day-title">
+  wrap.innerHTML = `<div class="celebrate dayend" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="day-title">
     <div class="dayend-badge"><i>✓</i>Day ${dd(c)} Complete</div>
     <h2 id="day-title"><em>DAY ${dd(c)}</em> 학습이 끝났습니다!${nc ? "<br>다음 일자를 시도해볼까요?" : `<br>${esc(t?.label || "")} 트랙을 완주했어요.`}</h2>
     <p class="dayend-sum">${esc(c.title)} · <b>레슨 ${s.lessonsDone}/${s.lessons}</b>${s.problems ? ` · <b>문제 ${s.solved}/${s.problems}</b>` : ""}</p>
@@ -1748,12 +1757,11 @@ function dayComplete(c, info) {
       <div class="day-chips">${FEEDBACK_REASONS.map((r) => `<button type="button" aria-pressed="false" data-reason="${esc(r)}">${esc(r)}</button>`).join("")}</div>
       <textarea maxlength="1000" placeholder="자세히 적어 주시면 다음 DAY에 반영할게요 (선택)"></textarea>
     </div>
-    <p class="day-thanks" hidden></p>
-    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
+    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary idle" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary idle" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
   </div>`;
   document.body.appendChild(wrap);
   const box = wrap.querySelector(".dayend");
-  const why = box.querySelector(".day-why"), thanks = box.querySelector(".day-thanks");
+  const why = box.querySelector(".day-why");
   const skip = box.querySelector("[data-skip]"), go = box.querySelector("[data-go]");
   const goLabel = go.textContent;
   let score = 0, sentKey = "";
@@ -1771,7 +1779,7 @@ function dayComplete(c, info) {
       toast("응답을 저장하지 못했습니다. " + errorMessage(err));
     });
   };
-  box.querySelectorAll("[data-score]").forEach((b) => b.addEventListener("click", async () => {
+  box.querySelectorAll("[data-score]").forEach((b) => b.addEventListener("click", () => {
     score = Number(b.dataset.score);
     box.querySelectorAll("[data-score]").forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.classList.toggle("low", on && score <= 2); x.setAttribute("aria-checked", String(on)); });
     const low = score <= 2;
@@ -1779,11 +1787,8 @@ function dayComplete(c, info) {
     box.querySelector(".dayend-next")?.toggleAttribute("hidden", low);
     skip.textContent = low ? "건너뛰기" : "닫기";
     go.textContent = low ? (nc ? `보내고 DAY ${dd(nc)} 시작 →` : "보내고 트랙으로 →") : goLabel;
-    thanks.hidden = true;
-    if (low) return void send();
-    await send();
-    thanks.hidden = false;
-    thanks.textContent = "✓ 응답이 저장됐어요. 고마워요!";
+    go.classList.remove("idle");
+    send();
   }));
   box.querySelectorAll("[data-reason]").forEach((b) => b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"))));
   const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
@@ -1791,7 +1796,7 @@ function dayComplete(c, info) {
   document.addEventListener("keydown", onKey);
   skip.addEventListener("click", () => { if (score > 2) send(); close(); });
   go.addEventListener("click", () => { send(); close(); });
-  go.focus();
+  box.focus();
   fireConfetti(true);
 }
 
@@ -2216,7 +2221,7 @@ async function adminRoster(body) {
   const pickGroup = `<p class="muted" style="margin:0;font-size:14px">위쪽 <b>그룹</b>에서 그룹을 먼저 고르세요.</p>`;
   body.innerHTML = `<div class="roster-grid"><div style="display:grid;gap:16px;align-content:start">
     <section class="panel lime card-pad"><h3>그룹 관리</h3>
-      <p class="muted" style="margin:0;font-size:14px">그룹 코드가 곧 회원가입 코드입니다. 수강생이 가입할 때 넣은 코드로 그룹이 나뉘고, 로고 아래에 그룹 이름이 보입니다. 순위('n명 중 k번째')도 같은 그룹 안에서 매깁니다.</p>
+      <p class="muted" style="margin:0;font-size:14px">그룹 코드가 곧 회원가입 코드입니다. 수강생이 가입할 때 넣은 코드로 그룹이 나뉘고, 로고 아래에 그룹 이름이 보입니다. 순위('n명 중 k번째')도 같은 그룹 안에서 매깁니다. 테스트 계정은 명단에서 '순위 제외'를 누르면 순위에 세지 않습니다.</p>
       <div class="table-scroll"><table class="pin-list"><thead><tr><th>코드</th><th>표시 이름</th><th class="num">수강생</th><th></th></tr></thead><tbody>
       ${state.groups.map((x) => `<tr data-code="${esc(x.code)}"><td class="pin">${esc(x.code)}</td><td>${esc(x.label)}</td><td class="num">${x.count}명</td>
         <td class="act"><button class="btn small" data-edit-group>이름 수정</button> <button class="btn small danger" data-del-group>삭제</button></td></tr>`).join("") || `<tr><td colspan="4" class="muted">그룹이 없으면 누구나 코드 없이 가입할 수 있습니다.</td></tr>`}
@@ -2238,8 +2243,8 @@ async function adminRoster(body) {
     </section></div>
     <section class="panel card-pad"><div class="toolbar"><h3>${groupName ? esc(groupName) + " · " : ""}등록된 수강생 ${students.length}명</h3></div>
       ${students.length ? `<div class="table-scroll"><table class="pin-list"><thead><tr><th>이름</th><th>그룹</th><th>등록일</th><th></th></tr></thead><tbody>
-      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
-        <td class="act"><span class="pin-slot"></span> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
+      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}${s.exclude_from_rank ? '<span class="lock-chip rank-off">순위 제외</span>' : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
+        <td class="act"><span class="pin-slot"></span> <button class="btn small ghost" data-rankx title="켜면 이 계정은 다른 수강생의 'N명 중 M번째'에 세지 않습니다">${s.exclude_from_rank ? "순위 포함" : "순위 제외"}</button> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
     </section></div>`;
@@ -2347,12 +2352,29 @@ async function adminRoster(body) {
       try {
         const res = await api.resetPin(state.adminToken, id);
         tr.querySelector(".pin-slot").innerHTML = `<span class="pin">${res.pin}</span>`;
-        tr.querySelector(".lock-chip")?.remove();
+        tr.querySelector(".lock-chip:not(.rank-off)")?.remove();
         toast(`${res.name} 님의 새 번호는 ${res.pin}입니다.`);
       } catch (err) {
         toast(errorMessage(err));
       } finally {
         e.target.disabled = false;
+      }
+    });
+    tr.querySelector("[data-rankx]").addEventListener("click", async (e) => {
+      const btn = e.target;
+      const exclude = !tr.querySelector(".rank-off");
+      btn.disabled = true;
+      try {
+        await api.setRankExclude(state.adminToken, id, exclude);
+        const cell = tr.querySelector("td");
+        if (exclude) cell.insertAdjacentHTML("beforeend", '<span class="lock-chip rank-off">순위 제외</span>');
+        else tr.querySelector(".rank-off")?.remove();
+        btn.textContent = exclude ? "순위 포함" : "순위 제외";
+        toast(exclude ? "이 계정은 이제 반 순위에 세지 않습니다." : "이 계정을 다시 반 순위에 셉니다.");
+      } catch (err) {
+        toast(errorMessage(err));
+      } finally {
+        btn.disabled = false;
       }
     });
     const del = tr.querySelector("[data-del]");
