@@ -13,6 +13,7 @@ import { SM2_UNITS, SM2_PROBLEMS, SM2_QUIZZES } from "./problems-stats-ml2.js";
 import { ML3_UNITS, ML3_PROBLEMS, ML3_QUIZZES } from "./problems-ml3.js";
 import { ML4_UNITS, ML4_PROBLEMS, ML4_QUIZZES } from "./problems-ml4.js";
 import { ST3_UNITS, ST3_PROBLEMS, ST3_QUIZZES } from "./problems-stats3.js";
+import { STEEL_PROBLEMS } from "./problems-steel.js";
 
 // 커리큘럼(트랙 > 코스 > 레슨)은 content/index.js 에 있고, 코스는 unit 번호로 이 파일의 문제와 이어진다.
 // domain: "mfg"(제조·품질 소재, 기본값) | "general"(일반 데이터 소재). QAQC 과정은 mfg, 기본 데이터 과정은 general 문제를 보여준다.
@@ -1107,7 +1108,7 @@ const QUIZZES = [
   },
 ];
 PROBLEMS.unshift(...DAY1_PROBLEMS);
-PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES, ...SM_PROBLEMS, ...SM_QUIZZES, ...PB_PROBLEMS, ...PB_QUIZZES, ...PBS_PROBLEMS, ...PBS_QUIZZES, ...GEN_PROBLEMS, ...DA_PROBLEMS, ...DA_QUIZZES, ...SM2_PROBLEMS, ...SM2_QUIZZES, ...ML3_PROBLEMS, ...ML3_QUIZZES, ...ML4_PROBLEMS, ...ML4_QUIZZES, ...ST3_PROBLEMS, ...ST3_QUIZZES);
+PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES, ...SM_PROBLEMS, ...SM_QUIZZES, ...PB_PROBLEMS, ...PB_QUIZZES, ...PBS_PROBLEMS, ...PBS_QUIZZES, ...GEN_PROBLEMS, ...DA_PROBLEMS, ...DA_QUIZZES, ...SM2_PROBLEMS, ...SM2_QUIZZES, ...ML3_PROBLEMS, ...ML3_QUIZZES, ...ML4_PROBLEMS, ...ML4_QUIZZES, ...ST3_PROBLEMS, ...ST3_QUIZZES, ...STEEL_PROBLEMS);
 // 단원 순서, 단원 안에서는 개념 퀴즈 → 기본 → 도전 (sort는 안정 정렬이라 원래 순서 유지)
 const order = (p) => (p.type === "quiz" ? 0 : p.challenge ? 2 : 1);
 PROBLEMS.sort((a, b) => a.unit - b.unit || order(a) - order(b));
