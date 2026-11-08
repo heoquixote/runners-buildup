@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install numpy scipy scikit-learn pandas matplotlib seaborn
+      - run: pip install numpy scipy scikit-learn pandas matplotlib seaborn statsmodels
       - run: node scripts/verify.mjs
 
   deploy:
