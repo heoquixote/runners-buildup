@@ -3,6 +3,7 @@
 import builtins
 import contextlib
 import copy
+import importlib
 import io
 import json
 import math
@@ -235,10 +236,21 @@ def _workdir(problem, test=None):
                 f.write(text)
         _link_datasets(path, files)
         os.chdir(path)
+        # 학생이 작업 폴더에 만든 .py 모듈(import qaqc)을 새로 찾도록 import 캐시를 비운다
+        importlib.invalidate_caches()
         yield path
     finally:
         os.chdir(old)
+        _forget_modules(path)
         shutil.rmtree(path, ignore_errors=True)
+
+
+def _forget_modules(path):
+    """작업 폴더에서 import한 모듈을 잊는다. 남겨 두면 다음 실행에서 파일을 고쳐도 옛 모듈이 그대로 쓰인다."""
+    for name, module in list(sys.modules.items()):
+        file = getattr(module, "__file__", None) or ""
+        if file.startswith(path + os.sep):
+            del sys.modules[name]
 
 
 def _grade_io(problem, code):

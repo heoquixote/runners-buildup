@@ -1,11 +1,12 @@
 import { CONFIG } from "./config.js";
 import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, SESSIONS } from "./problems.js";
-import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath } from "./content/index.js";
+import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath, sectionsOf } from "./content/index.js";
 import { conceptName } from "./content/concepts.js";
 import { VIDEOS, videoById, VIDEO_STATUS } from "./content/videos.js";
 import { render as renderMd } from "./md.js";
 import { api, ApiError, DEMO_ADMIN_PASSWORD, resetDemo } from "./api.js";
 import { runCode, gradeCode, preload, onRunnerState } from "./runner.js";
+import { MEDALS, CATEGORIES, TIERS, COLOR_HEX, medalById, medalSvg, medalContext, qualifiedMedals } from "./medals.js";
 import { sqlProgram, parseSqlOutput, sqlResultHtml, sqlResultText, sameSqlResult, sqlOrdered } from "./sql.js";
 
 // 두 가지 보기 방식이 있다.
@@ -149,6 +150,8 @@ const state = {
   groups: [],
   today: [],
   runner: "idle",
+  medals: {}, // {medalId: earned_at}
+  medalsOn: false, // 메달 테이블을 불러왔을 때만 켠다 (마이그레이션 전이면 기능을 숨김)
 };
 let editor = null;
 let cleanupView = null;
@@ -177,7 +180,9 @@ async function loadProgress() {
       store.set(SESSION_KEY, state.session);
     }
     try { state.today = (await api.getToday(state.session.token)).ids || []; } catch { state.today = []; }
+    try { state.medals = (await api.medals(state.session.token)).medals || {}; state.medalsOn = true; } catch { state.medals = {}; state.medalsOn = false; }
     state.progressLoaded = true;
+    awardMedals({ silent: true });
   } catch (err) {
     if (err.code === "session") logout(true);
     else toast(errorMessage(err));
@@ -189,6 +194,8 @@ function logout(expired) {
   state.progress = {};
   state.lessons = {};
   state.activity = {};
+  state.medals = {};
+  state.medalsOn = false;
   state.progressLoaded = false;
   store.set(SESSION_KEY, null);
   if (expired) toast("로그인이 만료되었습니다. 다시 로그인해 주세요.");
@@ -202,7 +209,7 @@ function topbar({ admin = false } = {}) {
   const right = admin
     ? `<a class="btn ghost small" href="#/">수강생 화면</a><button class="btn small" data-act="admin-logout">어드민 로그아웃</button>`
     : state.session
-      ? `<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
+      ? `${state.medalsOn ? `<a class="btn small medal-link" href="#/medals" aria-label="내 메달함 (메달 ${Object.keys(state.medals).length}개)">${MEDAL_ICON}메달 <b>${Object.keys(state.medals).length}</b></a>` : ""}<a class="btn ghost small" href="#/guide">사용 방법</a><span class="who"><b>${esc(state.session.student.name)}</b> 님</span><button class="btn ghost small" data-act="logout">로그아웃</button>`
       : `<a class="btn ghost small" href="#/guide">사용 방법</a><button class="btn small" data-act="login">로그인</button><a class="btn small primary" href="#/signup">회원가입</a>`;
   return `<header class="topbar"><div class="topbar-inner">
     <div class="brand-block">
@@ -269,6 +276,7 @@ async function route() {
   const t = hash.match(/^#\/t\/([\w-]+)/);
   if (t && trackById[t[1]]) return viewTrack(trackById[t[1]]);
   if (hash.startsWith("#/videos")) return viewVideos();
+  if (hash.startsWith("#/medals")) return state.session && state.medalsOn ? viewMedals() : (location.hash = "#/");
   const u = hash.match(/^#\/u\/(\d+)/);
   const unit = u && UNITS.find((x) => x.id === Number(u[1]));
   return unit ? viewUnit(unit) : viewHome();
@@ -386,9 +394,10 @@ function viewGuide() {
   const back = `<a class="btn small" href="#/">홈으로</a>`;
   $app.innerHTML = `${topbar()}<main class="page guide">
     <div class="hero"><div><div class="eyebrow">Guide</div><h1>사용 방법과 코드 작성법</h1>
-      <p>문제는 세 가지 유형이 있습니다. 유형마다 답을 내는 방법이 다르니 처음 한 번만 읽어 보세요.</p></div>${back}</div>
+      <p>처음이라면 <b>시작하기</b>부터 읽어 보세요. 가입부터 첫 레슨, 첫 문제 제출까지 순서대로 안내합니다.</p></div>${back}</div>
 
     <nav class="guide-toc panel flat" aria-label="목차">
+      <a href="#/guide/start" data-jump="g-start">시작하기</a>
       <a href="#/guide" data-jump="g-use">사이트 사용법</a>
       <a href="#/guide" data-jump="g-io">입출력형</a>
       <a href="#/guide" data-jump="g-fn">함수형</a>
@@ -396,7 +405,43 @@ function viewGuide() {
       <a href="#/guide" data-jump="g-mistakes">자주 하는 실수</a>
     </nav>
 
-    <section class="panel lime guide-sec" id="g-use"><div class="eyebrow">01 · Basics</div><h2>사이트 사용법</h2>
+    <section class="panel lime guide-sec" id="g-start"><div class="eyebrow">00 · Start</div><h2>시작하기: 회원가입부터 첫 문제까지</h2>
+      <p>레슨 읽기와 예제 실행은 로그인 없이도 됩니다. <b>진도 저장, 오늘의 학습, 연습문제 제출</b>은 가입하고 로그인해야 열립니다.</p>
+      <ol class="guide-steps">
+        <li><h3>회원가입</h3>
+          <ul><li>오른쪽 위 <b>회원가입</b>을 누릅니다.</li>
+          <li><b>이름</b>: 실명으로 적으세요. 강사님이 제출 현황을 이 이름으로 확인합니다.</li>
+          <li><b>4자리 번호</b>: 로그인할 때 쓰는 비밀번호입니다. 직접 정하고, 확인 칸에 한 번 더 적습니다.</li>
+          <li><b>가입 코드</b>: 수업 시간에 강사님이 알려 준 코드를 그대로 적습니다. 대소문자는 구분하지 않습니다.</li>
+          <li><b>가입하고 시작하기</b>를 누르면 바로 로그인된 상태로 홈으로 갑니다.</li></ul></li>
+        <li><h3>다음부터는 로그인</h3>
+          <ul><li>오른쪽 위 <b>로그인</b>에서 가입한 이름과 4자리 번호를 넣습니다.</li>
+          <li>로그인은 이 브라우저에 유지됩니다. 다른 컴퓨터나 휴대폰에서도 같은 이름과 번호로 들어오면 진도가 그대로 이어집니다.</li>
+          <li>공용 컴퓨터라면 끝날 때 <b>로그아웃</b>을 눌러 주세요.</li></ul></li>
+        <li><h3>홈에서 오늘 할 일 고르기</h3>
+          <ul><li><b>오늘의 학습</b>: 매일 레슨 1개와 연습문제 몇 개를 골라 줍니다. 위에서부터 하나씩 끝내면 체크됩니다.</li>
+          <li><b>내 트랙</b>: 최근 공부한 트랙의 진행률입니다. <b>이어서 달리기</b>를 누르면 멈춘 레슨으로 갑니다.</li>
+          <li>처음이라면 <b>파이썬 기초</b> 트랙의 Day 1부터 시작하세요.</li></ul></li>
+        <li><h3>레슨 한 개를 끝내는 순서</h3>
+          <ul><li>본문을 읽고, 예제 코드 칸의 <b>실행</b>을 눌러 결과를 직접 확인합니다. 코드를 고쳐서 다시 실행해도 됩니다.</li>
+          <li>영상이 있는 레슨은 본문 중간에서 바로 재생됩니다.</li>
+          <li>맨 아래 <b>체크 퀴즈</b>를 모두 맞히면 레슨이 완료(✓)됩니다.</li>
+          <li>코스의 마지막 레슨을 마치면 <b>연습문제 풀기</b>로 넘어갑니다.</li></ul></li>
+        <li><h3>연습문제 풀고 제출하기</h3>
+          <ul><li>코드를 쓰고 <b>실행</b>으로 확인한 뒤 <b>제출</b>을 누르면 채점됩니다.</li>
+          <li>처음 맞히면 몇 번째로 맞혔는지 알려 줍니다. 틀려도 몇 번이든 다시 제출할 수 있습니다.</li>
+          <li>문제 유형별 답 내는 법은 아래 <a href="#/guide" data-jump="g-io">입출력형</a>, <a href="#/guide" data-jump="g-fn">함수형</a>, <a href="#/guide" data-jump="g-steps">단계 실습형</a>을 참고하세요.</li></ul></li>
+      </ol>
+      <div class="table-scroll"><table class="ex-table guide-table"><thead><tr><th>가입 · 로그인할 때 이런 메시지가 뜨면</th><th>이렇게 하세요</th></tr></thead><tbody>
+        <tr><td>이미 가입된 이름입니다</td><td>본인이면 <b>로그인</b>으로 들어가세요. 동명이인이면 이름 뒤에 숫자를 붙여 가입합니다 (예: 김민수2).</td></tr>
+        <tr><td>가입 코드가 맞지 않습니다</td><td>강사님이 알려 준 코드를 다시 확인하세요. 앞뒤 공백은 신경 쓰지 않아도 됩니다.</td></tr>
+        <tr><td>이름 또는 번호가 맞지 않습니다</td><td>가입할 때 쓴 이름을 띄어쓰기까지 똑같이 적었는지 확인하세요.</td></tr>
+        <tr><td>5번 틀려서 잠시 잠겼습니다</td><td>5분 뒤에 다시 시도하세요. 번호가 기억나지 않으면 강사님께 재발급을 요청합니다.</td></tr>
+        <tr><td>로그인이 만료되었습니다</td><td>다시 로그인하면 됩니다. 저장된 진도는 사라지지 않습니다.</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section class="panel guide-sec" id="g-use"><div class="eyebrow">01 · Basics</div><h2>사이트 사용법</h2>
       <div class="guide-grid">
         <div><h3>실행과 제출의 차이</h3>
           <ul><li><b>실행</b>: 코드를 돌려 출력만 보여 줍니다. 채점도 기록도 하지 않습니다.</li>
@@ -489,6 +534,9 @@ daily_defect_rate = np.round(
       document.getElementById(a.dataset.jump)?.scrollIntoView({ behavior: "smooth", block: "start" });
     })
   );
+  // #/guide/start 처럼 들어오면 그 절로 바로 이동 (수강생에게 링크로 안내할 때)
+  const jump = { start: "g-start" }[(location.hash.match(/^#\/guide\/(\w+)/) || [])[1]];
+  if (jump) requestAnimationFrame(() => document.getElementById(jump)?.scrollIntoView({ block: "start" }));
 }
 
 // ── 회원가입 ─────────────────────────────────────────────
@@ -505,7 +553,7 @@ async function viewSignup() {
     <p class="form-error" id="su-error"></p>
     <button class="btn primary block" type="submit" id="su-btn">가입하고 시작하기</button>
     <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
-    <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요.</span><a href="#/admin">강사 로그인</a></div>
+    <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#signup-form");
   const pins = [form.querySelector("#su-pin"), form.querySelector("#su-pin2")];
@@ -801,15 +849,33 @@ function courseRow(c, i) {
   </li>`;
 }
 
+// 트랙 페이지의 구역 하나: 머리글(번호 · 이름 · DAY 범위 · 진도) + 그 구역의 DAY 목록
+function sectionBlock(g, i, all) {
+  const rows = `<ol class="clist panel">${g.courses.map(courseRow).join("")}</ol>`;
+  if (!g.section || all.length < 2) return `<section class="csec">${rows}</section>`;
+  const days = g.courses.map(dayNo);
+  const range = days.length > 1 ? `DAY ${dd2(days[0])}–${dd2(days[days.length - 1])}` : `DAY ${dd2(days[0])}`;
+  const st = g.courses.map(courseStats).reduce((a, s) => ({ done: a.done + s.lessonsDone + s.solved, all: a.all + s.lessons + s.problems }), { done: 0, all: 0 });
+  const sec = g.section;
+  return `<section class="csec" id="sec-${esc(sec.id)}">
+    <header class="csec-head">
+      <span class="csec-no">PART ${i + 1}</span>
+      <div class="csec-title"><h2>${esc(sec.label)}</h2>${sec.blurb ? `<p class="muted">${esc(sec.blurb)}</p>` : ""}</div>
+      <div class="csec-meta"><span>${range}</span><span class="meter-bar"><span style="width:${pct(st.done, st.all)}%"></span></span></div>
+    </header>
+    ${rows}
+  </section>`;
+}
+const dd2 = (n) => String(n).padStart(2, "0");
+
 function viewTrack(t) {
-  const list = coursesOf(t.id);
   const s = trackStats(t);
   $app.innerHTML = `${topbar()}<main class="page track-page" ${trackStyle(t)}>
     <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">${esc(t.label)}</span></nav>
     <header class="unit-hero"><span class="tcard-en">${esc(t.en)}</span><h1>${esc(t.label)}</h1><p class="muted">${esc(t.blurb)}</p>
       <div class="unit-actions"><span class="ucard-count">${s.ready} / ${s.courses} 코스 열림 · 레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span></div></header>
     ${t.ready ? "" : `<div class="panel soon-panel"><h2>이 트랙은 준비 중입니다</h2><p class="muted">아래는 예정된 코스 순서입니다. 레슨과 문제가 준비되는 대로 하나씩 열립니다.</p></div>`}
-    <ol class="clist panel">${list.map(courseRow).join("")}</ol>
+    <div class="csecs">${sectionsOf(t.id).map(sectionBlock).join("")}</div>
   </main>`;
   bindTopbar();
 }
@@ -821,6 +887,150 @@ function videoRow(v) {
     <div class="vrow-main"><b>${esc(v.title)}</b><span class="muted">${esc(v.brief)}</span>
       <div class="crow-meta"><span>${esc(v.length)}</span><span class="${ready ? "ok" : "soon"}">${VIDEO_STATUS[v.status]}</span>${v.concepts.map((c) => `<span class="concept">${esc(conceptName(c))}</span>`).join("")}</div></div>
     ${ready ? `<a class="btn small" href="https://www.youtube.com/watch?v=${esc(ready)}" target="_blank" rel="noopener">보기</a>` : lessons[0] ? `<a class="btn small ghost" href="#/l/${lessons[0].id}">레슨</a>` : ""}</li>`;
+}
+
+// ── 업적 · 메달 ──────────────────────────────────────────
+// 조건은 medals.js 가 진도 기록으로 계산하고, 새로 채운 메달만 서버에 저장한 뒤 배너로 알린다.
+// 정답 · DAY 완료 팝업(컨페티)이 떠 있으면 배너는 팝업이 닫힌 뒤 차례로 나온다.
+const MEDAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5h3.2l1.6 6M16 2.5h-3.2"/><circle cx="12" cy="15" r="6.5"/><path d="m12 11.8 1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z" fill="currentColor" stroke="none"/></svg>`;
+const medalHelpers = () => ({ TRACKS, coursesOf, isReady, coreLessons, courseProblems, lessonDone, solved, byId, lessonById, courseById });
+const medalColor = (m) => (m.track ? COLOR_HEX[trackById[m.track]?.color] || TIERS[m.tier].ink : TIERS[m.tier].ink);
+const medalArt = (m, opts = {}) => medalSvg(m, { trackColor: m.track ? medalColor(m) : null, ...opts });
+const medalDate = (iso, time = false) => {
+  const d = new Date(iso);
+  const f = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", ...(time ? { hour: "2-digit", minute: "2-digit", hourCycle: "h23" } : {}) }).formatToParts(d);
+  const v = Object.fromEntries(f.map((x) => [x.type, x.value]));
+  return `${v.year}.${v.month}.${v.day}${time ? ` ${v.hour}:${v.minute}` : ""}`;
+};
+
+let medalBusy = Promise.resolve();
+// ev: { silent } 로그인 직후 동기화(배너 대신 한 줄 안내) / { rank } 방금 처음 맞힌 문제의 순위
+function awardMedals(ev = {}) {
+  medalBusy = medalBusy.then(() => awardMedalsNow(ev)).catch(() => {});
+  return medalBusy;
+}
+async function awardMedalsNow(ev) {
+  if (!state.session || !state.medalsOn) return;
+  const ids = qualifiedMedals(medalContext(state, medalHelpers()));
+  if (ev.rank === 1) ids.push("first-runner");
+  const plan = todayPlan();
+  if (plan.length && plan.every(planDone)) ids.push("daily-clear");
+  const fresh = [...new Set(ids)].filter((id) => !state.medals[id]);
+  if (!fresh.length) return;
+  const res = await api.awardMedals(state.session.token, fresh);
+  state.medals = res.medals || state.medals;
+  refreshMedalLink();
+  if (ev.silent) {
+    toast(`지금까지의 학습으로 메달 ${fresh.length}개를 받았어요. 상단 '메달'에서 확인해 보세요.`);
+    return;
+  }
+  // 낮은 티어부터, 트랙 완주는 마지막에
+  const order = { bronze: 0, silver: 1, gold: 2, special: 3 };
+  fresh.map((id) => medalById[id]).sort((a, b) => order[a.tier] - order[b.tier]).forEach(queueMedalBanner);
+}
+function refreshMedalLink() {
+  const n = Object.keys(state.medals).length;
+  const a = document.querySelector(".medal-link");
+  if (a) { a.querySelector("b").textContent = n; a.setAttribute("aria-label", `내 메달함 (메달 ${n}개)`); }
+}
+
+const medalQueue = [];
+let medalTimer = null;
+function queueMedalBanner(m) {
+  medalQueue.push(m);
+  if (!medalTimer) medalTimer = setInterval(pumpMedalBanners, 400);
+  pumpMedalBanners();
+}
+function pumpMedalBanners() {
+  if (document.querySelector(".overlay")) return; // 정답 · DAY 완료 팝업을 닫을 때까지 기다린다
+  let stack = document.querySelector(".ach-stack");
+  if (!stack) { stack = document.createElement("div"); stack.className = "ach-stack"; stack.setAttribute("role", "status"); document.body.appendChild(stack); }
+  while (medalQueue.length && stack.children.length < 3) {
+    const m = medalQueue.shift();
+    const kicker = m.cat === "track" && m.track ? "Track Complete" : m.hidden ? "Secret Unlocked" : "Achievement Unlocked";
+    const el = document.createElement("div");
+    el.className = "ach";
+    el.style.setProperty("--mc", medalColor(m));
+    el.innerHTML = `${medalArt(m, { size: 52 })}<div class="ach-body"><span class="ach-kicker">${kicker} · ${TIERS[m.tier].label}</span><span class="ach-name">${esc(m.name)}</span><span class="ach-desc">${esc(m.desc)}</span></div><a href="#/medals">메달함 →</a>`;
+    stack.appendChild(el);
+    const out = () => { el.classList.add("out"); setTimeout(() => el.remove(), 320); };
+    const delay = 4500 + stack.children.length * 600;
+    setTimeout(out, delay);
+    el.querySelector("a").addEventListener("click", out);
+  }
+  if (!medalQueue.length) { clearInterval(medalTimer); medalTimer = null; }
+}
+
+function medalProgress(m, ctx) {
+  if (!m.stat || !m.goal) return null;
+  const v = Math.min(m.stat(ctx), m.goal);
+  return { v, goal: m.goal, p: pct(v, m.goal), label: `${v}${m.unit || ""}/${m.goal}${m.unit || ""}` };
+}
+function medalCard(m, ctx, seen) {
+  const at = state.medals[m.id];
+  const hid = m.hidden && !at;
+  const pr = !at && !hid && m.goal > 1 ? medalProgress(m, ctx) : null;
+  return `<button type="button" class="mcard ${at ? "earned" : "locked"}" data-medal="${m.id}" style="--mc:${medalColor(m)}" aria-label="${esc(hid ? "숨은 업적" : m.name)}${at ? " 획득" : " 미획득"}">${at && at > seen ? '<span class="mnew">NEW</span>' : ""}
+    ${medalArt(m, { locked: !at, size: 72 })}
+    <span class="mname">${hid ? "???" : esc(m.name)}</span>
+    <span class="mhow">${hid ? "숨은 업적" : esc(m.how)}</span>
+    ${at ? `<span class="mdate">${medalDate(at)} 획득</span>` : pr ? `<span class="mprog"><span class="bar"><span style="width:${pr.p}%"></span></span>${pr.label}</span>` : ""}
+  </button>`;
+}
+
+function viewMedals() {
+  const ctx = medalContext(state, medalHelpers());
+  const seenKey = `rb-medals-seen:${state.session.student.id}`;
+  const seen = store.get(seenKey) || "";
+  store.set(seenKey, new Date().toISOString());
+  const n = Object.keys(state.medals).filter((id) => medalById[id]).length;
+  const tierN = (t) => MEDALS.filter((m) => m.tier === t && state.medals[m.id]).length;
+  const next = MEDALS.filter((m) => !state.medals[m.id] && !m.hidden && !m.event && m.stat)
+    .map((m) => ({ m, pr: medalProgress(m, ctx) }))
+    .filter((x) => x.pr.v > 0)
+    .sort((a, b) => b.pr.p - a.pr.p || a.pr.goal - b.pr.goal)
+    .slice(0, 3);
+  $app.innerHTML = `${topbar()}<main class="page medals">
+    <div class="mhead"><div><span class="eyebrow">Achievements</span><h1>내 메달함</h1><p class="muted" style="margin:6px 0 0">학습을 이어 가며 메달을 모아 보세요. 숨은 업적은 받기 전까지 조건이 가려져 있어요.</p></div>
+      <div class="msum"><div class="mcount">${n}<small> / ${MEDALS.length}</small></div>
+        <div class="mtiers">${["gold", "silver", "bronze", "special"].map((t) => `<span><i style="background:${TIERS[t].ink}"></i>${TIERS[t].label} <b>${tierN(t)}</b></span>`).join("")}</div>
+        <div class="mtotal-bar"><span style="width:${pct(n, MEDALS.length)}%"></span></div></div></div>
+    ${next.length ? `<section class="panel lime mnext"><div class="mnext-title"><span class="eyebrow">Next</span><b>곧 받을 수 있는 메달</b></div>
+      <div class="mnext-list">${next.map(({ m, pr }) => `<button type="button" class="mnext-item" data-medal="${m.id}">${medalArt(m, { locked: true, size: 44 })}<span class="mi-body"><b>${esc(m.name)}</b><span class="muted">${esc(m.how)}</span><span class="mprog"><span class="bar"><span style="width:${pr.p}%;background:var(--accent)"></span></span>${pr.label}</span></span></button>`).join("")}</div></section>` : ""}
+    ${CATEGORIES.map((c) => {
+      const ms = MEDALS.filter((m) => m.cat === c.id);
+      return `<section class="mcat"><div class="mcat-head"><h2>${esc(c.label)}</h2><span class="en">${esc(c.en)}</span><span class="n">${ms.filter((m) => state.medals[m.id]).length} / ${ms.length}</span></div>
+        <div class="mgrid">${ms.map((m) => medalCard(m, ctx, seen)).join("")}</div></section>`;
+    }).join("")}
+  </main>`;
+  bindTopbar();
+  $app.querySelector("main").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-medal]");
+    if (b) medalDetail(medalById[b.dataset.medal], ctx);
+  });
+}
+
+function medalDetail(m, ctx) {
+  const at = state.medals[m.id];
+  const hid = m.hidden && !at;
+  const pr = !at && !hid ? medalProgress(m, ctx) : null;
+  const cat = CATEGORIES.find((c) => c.id === m.cat);
+  const wrap = document.createElement("div");
+  wrap.className = "overlay";
+  wrap.innerHTML = `<div class="mdetail" role="dialog" aria-modal="true" aria-labelledby="md-title" style="--mc:${medalColor(m)}">
+    ${medalArt(m, { locked: !at, size: 96 })}
+    <span class="mtier"${at ? "" : ' style="color:var(--muted)"'}>${TIERS[m.tier].label} · ${esc(cat?.label || "")}${at ? "" : " · 미획득"}</span>
+    <h2 id="md-title">${hid ? "숨은 업적" : esc(m.name)}</h2>
+    <p>${hid ? "조건을 채우면 이름과 설명이 공개돼요. 평소와 다른 방식으로 학습해 보세요." : esc(m.desc)}</p>
+    ${hid ? "" : `<div class="mcond"><span>달성 조건 <b>${esc(m.how)}</b></span>${at ? `<span>획득 <b>${medalDate(at, true)}</b></span>` : pr ? `<span class="mprog"><span class="bar"><span style="width:${pr.p}%;background:var(--accent)"></span></span>${pr.label}</span>` : ""}</div>`}
+    <div class="btns"><button type="button" class="btn small" data-close>닫기</button></div>
+  </div>`;
+  document.body.appendChild(wrap);
+  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
+  function onKey(e) { if (e.key === "Escape") close(); }
+  document.addEventListener("keydown", onKey);
+  wrap.addEventListener("click", (e) => { if (e.target === wrap || e.target.closest("[data-close]")) close(); });
+  wrap.querySelector("[data-close]").focus();
 }
 
 function viewVideos() {
@@ -880,10 +1090,8 @@ function videoBlock(attrs) {
   const q = new URLSearchParams({ rel: "0", modestbranding: "1" });
   if (attrs.start) q.set("start", attrs.start);
   if (attrs.end) q.set("end", attrs.end);
-  const span = attrs.start || attrs.end ? ` · ${fmtSec(attrs.start)}–${fmtSec(attrs.end)}` : "";
-  return `<details class="video-block"><summary><span class="video-ico" aria-hidden="true">▶</span><span><span class="eyebrow">Video · 데이터러너즈</span><b>${esc(v.title)}</b><span class="muted">${esc(v.length)}${span}</span></span></summary>
-    <div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${esc(yt)}?${q}" title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-    <a class="muted" style="font-size:13px" href="https://www.youtube.com/watch?v=${esc(yt)}" target="_blank" rel="noopener">유튜브에서 전체 영상 보기</a></details>`;
+  // 토글 없이 유튜브 플레이어를 바로 보여 준다(제목·채널은 플레이어가 표시).
+  return `<div class="video-block video-embed"><div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${esc(yt)}?${q}" title="${esc(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div>`;
 }
 // youtube_id가 없어도 release_url(유튜브 주소)만 채우면 재생된다.
 function youtubeId(v) {
@@ -891,7 +1099,6 @@ function youtubeId(v) {
   const m = String(v.release_url || "").match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/);
   return m ? m[1] : null;
 }
-const fmtSec = (s) => { s = Number(s) || 0; return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
 // 레슨 본문: 설명 → 실행 셀 → 설명 → 실행 셀 순서로, 셀은 마크다운에 놓인 자리에 그대로 들어간다.
 function runCellHtml(code, i, lang = "python", topic = "", note = "") {
@@ -957,13 +1164,15 @@ async function viewLesson(l) {
   async function run(i) {
     const btn = practice.querySelector(`[data-run="${i}"]`);
     const out = practice.querySelector(`[data-out="${i}"]`);
-    if (btn.disabled) return;
+    // 실행 중에 다시 누르면(Ctrl+Enter 포함) 버리지 않고, 끝난 뒤 최신 코드로 한 번 더 돌린다
+    if (btn.disabled) { cells[i].again = true; return; }
     btn.disabled = true;
+    cells[i].again = false;
     out.hidden = false;
     out.className = "console run-out";
     showImages(out, []);
     out.textContent = state.runner === "ready" ? "실행 중…" : `${cells[i].lang === "sql" ? "SQL 엔진(브라우저 SQLite)" : "파이썬"}을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…`;
-    if (cells[i].lang === "sql") return runSql(i, btn, out);
+    if (cells[i].lang === "sql") return runSql(i, btn, out).finally(() => rerun(i));
     try {
       const res = await runCode({ type: "io", tests: [] }, cells[i].cm.getValue(), "");
       if (res.timeout) { out.className += " err"; out.textContent = "실행이 너무 오래 걸려 멈췄습니다. 반복문이 끝나는지 확인하세요."; }
@@ -971,8 +1180,9 @@ async function viewLesson(l) {
       else out.textContent = res.stdout || (res.images?.length ? "(그래프만 그렸습니다)" : "(출력 없음 — print()로 값을 확인해 보세요)");
       showImages(out, res.images);
     } catch (err) { out.className += " err"; out.textContent = "실행하지 못했습니다: " + err.message; }
-    finally { btn.disabled = false; }
+    finally { btn.disabled = false; rerun(i); }
   }
+  const rerun = (i) => { if (cells[i].again) { cells[i].again = false; run(i); } };
   // SQL 셀: 결과를 표로 보여 준다
   async function runSql(i, btn, out) {
     try {
@@ -988,6 +1198,7 @@ async function viewLesson(l) {
   practice.querySelectorAll("[data-reset]").forEach((b) => b.addEventListener("click", () => { const i = Number(b.dataset.reset); cells[i].cm.setValue(cells[i].starter); }));
   if (cells.length) preload();
 
+  const lc = courseById[l.course];
   // 읽기 시작 기록
   if (!state.lessons[l.id]) {
     state.lessons[l.id] = { status: "viewed", updated_at: new Date().toISOString() };
@@ -1007,11 +1218,12 @@ async function viewLesson(l) {
     quizEl.innerHTML = `<div class="quiz-actions"><span class="muted">퀴즈 없이 읽고 넘어가는 레슨입니다.</span><span class="spacer"></span><button class="btn primary" id="lq-read">다 읽었어요 · 레슨 완료</button></div>`;
     quizEl.querySelector("#lq-read").addEventListener("click", async () => {
       const now = new Date().toISOString();
+      const dayWas = courseDone(lc);
       state.lessons[l.id] = { status: "passed", quiz_score: null, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
       bumpActivity();
       doneRead();
       if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
-      try { await api.lessonSet(state.session.token, l.id, "passed"); toast(planToast(l.id) || "레슨을 완료했습니다."); }
+      try { await api.lessonSet(state.session.token, l.id, "passed"); if (!dayWas && courseDone(lc)) dayComplete(lc); else toast(planToast(l.id) || "레슨을 완료했습니다."); awardMedals(); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     });
     return;
@@ -1041,11 +1253,12 @@ async function viewLesson(l) {
     render();
     if (ok === qs.length) {
       const was = lessonDone(l.id);
+      const dayWas = courseDone(lc);
       const now = new Date().toISOString();
       state.lessons[l.id] = { status: "passed", quiz_score: ok, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
       bumpActivity();
       if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
-      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!was) toast(planToast(l.id) || "레슨을 완료했습니다."); }
+      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!dayWas && courseDone(lc)) dayComplete(lc); else if (!was) toast(planToast(l.id) || "레슨을 완료했습니다."); awardMedals(); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     } else {
       if (state.session) api.lessonSet(state.session.token, l.id, "viewed", ok).catch(() => {});
@@ -1070,7 +1283,7 @@ function questionHtml(q, i, a, graded) {
     const code = a ?? writeStarter(q);
     const sql = q.lang === "sql";
     const r = graded ? writeCache.get(writeKey(q, code)) : null;
-    input = `<div class="wq"><textarea class="wq-code" data-i="${i}" rows="${Math.max(3, code.split("\n").length + 1)}" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="${sql ? "SELECT ..." : "print(...)"}" ${graded ? "disabled" : ""}>${esc(code)}</textarea>
+    input = `<div class="wq"><textarea class="wq-code" data-i="${i}" data-lang="${sql ? "sql" : "python"}" rows="${Math.max(3, code.split("\n").length + 1)}" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="${sql ? "SELECT ..." : "print(...)"}" ${graded ? "disabled" : ""}>${esc(code)}</textarea>
       <div class="wq-bar">${graded ? "" : `<button type="button" class="btn small run-btn" data-wrun="${i}" data-lang="${sql ? "sql" : "python"}">▶ 실행</button><span class="run-key">Ctrl ↵</span>`}<span class="muted">${graded ? "" : sql ? "실행해서 결과 표를 확인한 뒤 채점하세요." : "실행해서 출력을 확인한 뒤 채점하세요."}</span></div>
       ${sql ? `<div class="console run-out sql-out${r?.error ? " err" : ""}" data-wout="${i}" ${r ? "" : "hidden"}>${r ? writeOutHtml(q, r) : ""}</div>`
         : `<pre class="console run-out${r?.error ? " err" : ""}" data-wout="${i}" ${r ? "" : "hidden"}>${r ? esc(r.error || r.stdout || "(출력 없음)") : ""}</pre>`}</div>`;
@@ -1080,12 +1293,12 @@ function questionHtml(q, i, a, graded) {
   const answerText = q.kind === "ox" ? (q.answer ? "O" : "X") : q.kind === "choice" ? `${q.answer + 1}. ${q.options[q.answer]}` : q.kind === "write" ? "" : (Array.isArray(q.answer) ? q.answer[0] : q.answer);
   const feedback = !graded ? "" : q.kind === "write"
     ? `<div class="quiz-feedback ${ok ? "ok" : "no"}"><b>${ok ? "✓ 정답" : `✗ ${esc(writeWhy(q, a ?? writeStarter(q)))}`}</b><span>${esc(q.explain)}</span>
-        <span class="muted" style="font-size:13px">예시 답안</span><pre class="guide-code"><code>${esc(q.solution)}</code></pre></div>`
+        <span class="muted" style="font-size:13px">예시 답안</span><pre class="guide-code" data-lang="${q.lang === "sql" ? "sql" : "python"}"><code>${esc(q.solution)}</code></pre></div>`
     : `<div class="quiz-feedback ${ok ? "ok" : "no"}"><b>${ok ? "✓ 정답" : `✗ 정답: ${esc(answerText)}`}</b><span>${esc(q.explain)}</span></div>`;
   return `<li class="quiz-q panel${graded ? (ok ? " ok" : " no") : ""}">
     <div class="quiz-q-head"><span class="quiz-no">Q${i + 1}</span><span class="tag">${{ ox: "OX", choice: "객관식", short: q.code ? "출력 예측" : "단답", write: "코드 작성" }[q.kind]}</span></div>
     <p class="quiz-text">${esc(q.q)}</p>
-    ${q.code ? `<pre class="guide-code"><code>${esc(q.code)}</code></pre>` : ""}
+    ${q.code ? `<pre class="guide-code" data-lang="${q.lang === "sql" ? "sql" : "python"}"><code>${esc(q.code)}</code></pre>` : ""}
     ${input}${feedback}</li>`;
 }
 function bindQuestionInputs(root, answers, onChange, onEnter) {
@@ -1095,28 +1308,58 @@ function bindQuestionInputs(root, answers, onChange, onEnter) {
     onChange();
   }));
   root.querySelectorAll('input[type="radio"]').forEach((r) => r.addEventListener("change", () => { answers[r.dataset.i] = Number(r.value); onChange(); }));
+  // 문항 코드·예시 답안에도 같은 문법 색을 입힌다
+  if (window.CodeMirror?.runMode) root.querySelectorAll("pre.guide-code[data-lang]").forEach((pre) => {
+    const el = pre.querySelector("code");
+    pre.classList.add("cm-s-default");
+    window.CodeMirror.runMode(el.textContent, pre.dataset.lang === "sql" ? "text/x-sqlite" : "python", el);
+  });
+  // 코드 작성 칸: 레슨 실행 셀과 같은 CodeMirror 편집기로 바꿔 문법 색을 입힌다
+  const editors = {}, runs = {};
   root.querySelectorAll("textarea.wq-code").forEach((t) => {
     const i = t.dataset.i;
-    t.addEventListener("input", () => { answers[i] = t.value; t.rows = Math.max(3, t.value.split("\n").length + 1); onChange(); });
-    t.addEventListener("keydown", (e) => {
-      if (e.key === "Tab") { e.preventDefault(); t.setRangeText("    ", t.selectionStart, t.selectionEnd, "end"); t.dispatchEvent(new Event("input")); }
-      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); root.querySelector(`[data-wrun="${i}"]`)?.click(); }
-    });
+    const run = () => runs[i]?.();
+    if (!window.CodeMirror) {
+      editors[i] = { getValue: () => t.value };
+      t.addEventListener("input", () => { answers[i] = t.value; t.rows = Math.max(3, t.value.split("\n").length + 1); onChange(); });
+      t.addEventListener("keydown", (e) => {
+        if (e.key === "Tab") { e.preventDefault(); t.setRangeText("    ", t.selectionStart, t.selectionEnd, "end"); t.dispatchEvent(new Event("input")); }
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); run(); }
+      });
+      return;
+    }
+    const cm = window.CodeMirror.fromTextArea(t, { mode: t.dataset.lang === "sql" ? "text/x-sqlite" : "python", indentUnit: 4, tabSize: 4, indentWithTabs: false,
+      matchBrackets: true, viewportMargin: Infinity, readOnly: t.disabled ? "nocursor" : false, placeholder: t.placeholder,
+      extraKeys: { Tab: (x) => x.replaceSelection("    ", "end"), "Ctrl-Enter": run, "Cmd-Enter": run } });
+    cm.getWrapperElement().classList.add("wq-cm");
+    if (t.disabled) cm.getWrapperElement().classList.add("is-disabled");
+    cm.on("change", () => { answers[i] = cm.getValue(); onChange(); });
+    editors[i] = cm;
   });
-  root.querySelectorAll("[data-wrun]").forEach((b) => b.addEventListener("click", async () => {
+  root.querySelectorAll("[data-wrun]").forEach((b) => {
     const i = b.dataset.wrun;
-    const code = root.querySelector(`textarea.wq-code[data-i="${i}"]`).value;
     const out = root.querySelector(`[data-wout="${i}"]`);
     const lang = b.dataset.lang || "python";
     const base = "console run-out" + (lang === "sql" ? " sql-out" : "");
-    b.disabled = true; out.hidden = false; out.className = base;
-    out.textContent = state.runner === "ready" ? "실행 중…" : "파이썬을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…";
-    const r = await runWrite(code, lang);
-    out.className = base + (r.error ? " err" : "");
-    if (lang === "sql") out.innerHTML = writeOutHtml({ lang }, r);
-    else out.textContent = r.error || r.stdout || "(출력 없음 — print()로 값을 출력하세요)";
-    b.disabled = false;
-  }));
+    let busy = false, again = false;
+    // 실행 중에 다시 누르면(파이썬을 처음 불러오는 몇 초 동안 Ctrl+Enter 등) 버리지 않고,
+    // 끝난 뒤 최신 코드로 다시 돌린다. 예전에는 이 입력이 무시되어 옛 코드의 결과("출력 없음")가 남았다.
+    runs[i] = async () => {
+      if (busy) { again = true; return; }
+      busy = true; b.disabled = true; out.hidden = false; out.className = base;
+      let r;
+      do {
+        again = false;
+        out.textContent = state.runner === "ready" ? "실행 중…" : "파이썬을 불러오는 중입니다. 처음 한 번은 몇 초 걸립니다…";
+        r = await runWrite(editors[i].getValue(), lang);
+      } while (again);
+      out.className = base + (r.error ? " err" : "");
+      if (lang === "sql") out.innerHTML = writeOutHtml({ lang }, r);
+      else out.textContent = r.error ? (r.stdout ? r.stdout + "\n" : "") + r.error : r.stdout || "(출력 없음 — print()로 값을 출력하세요)";
+      busy = false; b.disabled = false;
+    };
+    b.addEventListener("click", runs[i]);
+  });
   root.querySelectorAll("input.short").forEach((t) => {
     t.addEventListener("input", () => { answers[t.dataset.i] = t.value; onChange(); });
     t.addEventListener("keydown", (e) => { if (e.key === "Enter") onEnter?.(); });
@@ -1299,13 +1542,15 @@ function viewQuiz(p) {
     listEl.querySelector(".quiz-q.no")?.scrollIntoView({ behavior: "smooth", block: "center" });
     try {
       const saved = await api.submit(state.session.token, p.id, JSON.stringify(answers), result);
+      const dayWas = courseDone(courseOf(p));
       const prog = (state.progress[p.id] ||= { attempts: 0, solved: false });
       prog.attempts++;
       if (result.passed && !prog.solved_at) prog.solved_at = new Date().toISOString();
       prog.solved ||= result.passed;
       bumpActivity();
-      if (saved.first_solve) celebrate(p, saved);
+      if (saved.first_solve) !dayWas && courseDone(courseOf(p)) ? dayComplete(courseOf(p), saved) : celebrate(p, saved);
       else if (result.passed) toast("모두 맞혔습니다. 이미 맞힌 퀴즈라 순위는 그대로입니다.");
+      if (saved.first_solve) awardMedals({ rank: saved.rank });
     } catch (err) {
       if (err.code === "session") return logout(true);
       toast("채점은 됐지만 기록을 저장하지 못했습니다. " + errorMessage(err));
@@ -1450,6 +1695,103 @@ function renderGrade(res, p) {
     <div class="result-body">${errorBox(res.error)}<div class="cases">${cases}</div>${out}</div>`;
 }
 
+// DAY(코스)의 필수 레슨과 연습문제를 모두 끝냈는지
+const courseDone = (c) => { if (!c) return false; const s = courseStats(c); return s.lessons + s.problems > 0 && s.lessonsDone === s.lessons && s.solved === s.problems; };
+const nextDay = (c) => { const list = coursesOf(c.track); return list.slice(list.indexOf(c) + 1).find(isReady) || null; };
+const dd = (c) => String(dayNo(c)).padStart(2, "0");
+
+function fireConfetti(big) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || typeof window.confetti !== "function") return;
+  const colors = ["#c8ff3d", "#a896ff", "#66dbff", "#61db9c", "#ffcf4a", "#f5f7f2"];
+  const fire = (ratio, opts) => window.confetti({ origin: { y: 0.65 }, zIndex: 70, colors, particleCount: Math.floor(220 * ratio), ...opts });
+  fire(0.25, { spread: 26, startVelocity: 55 });
+  fire(0.2, { spread: 60 });
+  fire(0.35, { spread: 100, decay: 0.91, scalar: 0.9 });
+  if (big) {
+    const end = Date.now() + 1400;
+    (function frame() {
+      window.confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0 }, zIndex: 70, colors });
+      window.confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1 }, zIndex: 70, colors });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+  }
+}
+
+// DAY 완료 팝업 + 만족도 조사 (1~2점이면 아쉬운 점을 묻는다)
+const RATE_WORDS = ["별로예요", "아쉬워요", "보통이에요", "좋아요", "최고예요"];
+const FEEDBACK_REASONS = ["설명이 어려워요", "분량이 많아요", "문제가 너무 어려워요", "예제가 와닿지 않아요", "오류·버그가 있어요", "기타"];
+function dayComplete(c, info) {
+  const s = courseStats(c);
+  const nc = nextDay(c);
+  const t = trackById[c.track];
+  const ncLessons = nc ? coreLessons(nc) : [];
+  const ncMin = ncLessons.reduce((a, l) => a + (lessonById[l.id]?.minutes || 0), 0);
+  const ncProbs = nc ? courseProblems(nc).length : 0;
+  const rankLine = info?.rank ? `<p class="dayend-rank">방금 푼 문제는 <b>${Math.max(info.total, info.rank)}명</b> 중 <b>${info.rank}번째</b>로 맞혔어요.</p>` : "";
+  const wrap = document.createElement("div");
+  wrap.className = "overlay";
+  wrap.innerHTML = `<div class="celebrate dayend" role="dialog" aria-modal="true" aria-labelledby="day-title">
+    <div class="dayend-badge"><i>✓</i>Day ${dd(c)} Complete</div>
+    <h2 id="day-title"><em>DAY ${dd(c)}</em> 학습이 끝났습니다!${nc ? "<br>다음 일자를 시도해볼까요?" : `<br>${esc(t?.label || "")} 트랙을 완주했어요.`}</h2>
+    <p class="dayend-sum">${esc(c.title)} · <b>레슨 ${s.lessonsDone}/${s.lessons}</b>${s.problems ? ` · <b>문제 ${s.solved}/${s.problems}</b>` : ""}</p>
+    ${rankLine}
+    ${nc ? `<div class="dayend-next"><div class="d">DAY<b>${dd(nc)}</b></div><div class="t">${esc(nc.title)}<small>레슨 ${ncLessons.length}개${ncProbs ? ` · 문제 ${ncProbs}개` : ""}${ncMin ? ` · 약 ${ncMin}분` : ""}</small></div></div>` : ""}
+    <hr>
+    <p class="dayend-q">이번 DAY는 어땠나요? <span>선택</span></p>
+    <div class="rate" role="radiogroup" aria-label="만족도">${RATE_WORDS.map((w, i) => `<button type="button" role="radio" aria-checked="false" data-score="${i + 1}"><span class="n">${i + 1}</span><span class="w">${w}</span></button>`).join("")}</div>
+    <div class="day-why" hidden>
+      <p class="day-wq">어떤 점이 아쉬웠나요?<span>여러 개 선택 가능</span></p>
+      <div class="day-chips">${FEEDBACK_REASONS.map((r) => `<button type="button" aria-pressed="false" data-reason="${esc(r)}">${esc(r)}</button>`).join("")}</div>
+      <textarea maxlength="1000" placeholder="자세히 적어 주시면 다음 DAY에 반영할게요 (선택)"></textarea>
+    </div>
+    <p class="day-thanks" hidden></p>
+    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
+  </div>`;
+  document.body.appendChild(wrap);
+  const box = wrap.querySelector(".dayend");
+  const why = box.querySelector(".day-why"), thanks = box.querySelector(".day-thanks");
+  const skip = box.querySelector("[data-skip]"), go = box.querySelector("[data-go]");
+  const goLabel = go.textContent;
+  let score = 0, sentKey = "";
+  const reasons = () => [...box.querySelectorAll("[data-reason][aria-pressed=true]")].map((b) => b.dataset.reason);
+  const comment = () => (score <= 2 ? box.querySelector("textarea").value.trim() : "");
+  const send = () => {
+    if (!score || !state.session) return Promise.resolve();
+    const rs = score <= 2 ? reasons() : [];
+    const key = JSON.stringify([score, rs, comment()]);
+    if (key === sentKey) return Promise.resolve();
+    sentKey = key;
+    return api.dayFeedback(state.session.token, c.id, score, rs, comment()).catch((err) => {
+      sentKey = "";
+      if (err.code === "session") return;
+      toast("응답을 저장하지 못했습니다. " + errorMessage(err));
+    });
+  };
+  box.querySelectorAll("[data-score]").forEach((b) => b.addEventListener("click", async () => {
+    score = Number(b.dataset.score);
+    box.querySelectorAll("[data-score]").forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.classList.toggle("low", on && score <= 2); x.setAttribute("aria-checked", String(on)); });
+    const low = score <= 2;
+    why.hidden = !low;
+    box.querySelector(".dayend-next")?.toggleAttribute("hidden", low);
+    skip.textContent = low ? "건너뛰기" : "닫기";
+    go.textContent = low ? (nc ? `보내고 DAY ${dd(nc)} 시작 →` : "보내고 트랙으로 →") : goLabel;
+    thanks.hidden = true;
+    if (low) return void send();
+    await send();
+    thanks.hidden = false;
+    thanks.textContent = "✓ 응답이 저장됐어요. 고마워요!";
+  }));
+  box.querySelectorAll("[data-reason]").forEach((b) => b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"))));
+  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
+  function onKey(e) { if (e.key === "Escape") { send(); close(); } }
+  document.addEventListener("keydown", onKey);
+  skip.addEventListener("click", () => { if (score > 2) send(); close(); });
+  go.addEventListener("click", () => { send(); close(); });
+  go.focus();
+  fireConfetti(true);
+}
+
 function celebrate(p, info) {
   const rank = info.rank;
   const total = Math.max(info.total, rank);
@@ -1475,21 +1817,7 @@ function celebrate(p, info) {
   document.addEventListener("keydown", function onKey(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", onKey); } });
   wrap.querySelector("[data-close]").focus();
 
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduce || typeof window.confetti !== "function") return;
-  const colors = ["#c8ff3d", "#a896ff", "#66dbff", "#61db9c", "#ffcf4a", "#f5f7f2"];
-  const fire = (ratio, opts) => window.confetti({ origin: { y: 0.65 }, zIndex: 70, colors, particleCount: Math.floor(220 * ratio), ...opts });
-  fire(0.25, { spread: 26, startVelocity: 55 });
-  fire(0.2, { spread: 60 });
-  fire(0.35, { spread: 100, decay: 0.91, scalar: 0.9 });
-  if (rank <= 3) {
-    const end = Date.now() + 1400;
-    (function frame() {
-      window.confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0 }, zIndex: 70, colors });
-      window.confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1 }, zIndex: 70, colors });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    })();
-  }
+  fireConfetti(rank <= 3);
 }
 
 function viewProblem(p) {
@@ -1615,13 +1943,15 @@ function viewProblem(p) {
       const result = res.timeout ? { passed: false, passed_count: 0, total_count: (p.tests || p.checks).length, cases: [] } : res;
       try {
         const saved = await api.submit(state.session.token, p.id, code, result);
+        const dayWas = courseDone(courseOf(p));
         const prog = (state.progress[p.id] ||= { attempts: 0, solved: false });
         prog.attempts++;
         if (result.passed && !prog.solved_at) prog.solved_at = new Date().toISOString();
         prog.solved ||= result.passed;
         bumpActivity();
         if (saved.first_solve) {
-          celebrate(p, saved);
+          if (!dayWas && courseDone(courseOf(p))) dayComplete(courseOf(p), saved); else celebrate(p, saved);
+          awardMedals({ rank: saved.rank });
           if ($app.querySelector('.tab[data-tab="problem"]')?.getAttribute("aria-selected") === "true") showTab("problem");
         } else if (result.passed) toast("정답입니다. 이미 맞힌 문제라 순위는 그대로입니다.");
       } catch (err) {
@@ -1643,7 +1973,7 @@ function viewProblem(p) {
 function routeAdmin(hash) {
   if (!state.adminToken) return viewAdminLogin();
   const section = hash.split("/")[2] || "matrix";
-  const tabs = [["matrix", "회차 과제"], ["progress", "학습 현황"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
+  const tabs = [["matrix", "회차 과제"], ["progress", "학습 현황"], ["feedback", "만족도"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
   $app.innerHTML = `${topbar({ admin: true })}<main class="page wide">
     <div class="admin-bar"><nav class="admin-tabs">${tabs.map(([k, l]) => `<a href="#/admin/${k}" ${k === section ? 'aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
       <label class="group-select"><span>그룹</span><select id="group-select"><option value="">전체</option></select></label></div>
@@ -1664,6 +1994,7 @@ function routeAdmin(hash) {
     if (section === "roster") return adminRoster(body).catch(fail);
     if (section === "progress") return adminProgress(body).catch(fail);
     if (section === "stats") return adminStats(body).catch(fail);
+    if (section === "feedback") return adminFeedback(body).catch(fail);
     return adminMatrix(body).catch(fail);
   };
   api.groups(state.adminToken).then((res) => {
@@ -1882,7 +2213,7 @@ async function adminRoster(body) {
   const pickGroup = `<p class="muted" style="margin:0;font-size:14px">위쪽 <b>그룹</b>에서 그룹을 먼저 고르세요.</p>`;
   body.innerHTML = `<div class="roster-grid"><div style="display:grid;gap:16px;align-content:start">
     <section class="panel lime card-pad"><h3>그룹 관리</h3>
-      <p class="muted" style="margin:0;font-size:14px">그룹 코드가 곧 회원가입 코드입니다. 수강생이 가입할 때 넣은 코드로 그룹이 나뉘고, 로고 아래에 그룹 이름이 보입니다. 순위('n명 중 k번째')도 같은 그룹 안에서 매깁니다.</p>
+      <p class="muted" style="margin:0;font-size:14px">그룹 코드가 곧 회원가입 코드입니다. 수강생이 가입할 때 넣은 코드로 그룹이 나뉘고, 로고 아래에 그룹 이름이 보입니다. 순위('n명 중 k번째')도 같은 그룹 안에서 매깁니다. 테스트 계정은 명단에서 '순위 제외'를 누르면 순위에 세지 않습니다.</p>
       <div class="table-scroll"><table class="pin-list"><thead><tr><th>코드</th><th>표시 이름</th><th class="num">수강생</th><th></th></tr></thead><tbody>
       ${state.groups.map((x) => `<tr data-code="${esc(x.code)}"><td class="pin">${esc(x.code)}</td><td>${esc(x.label)}</td><td class="num">${x.count}명</td>
         <td class="act"><button class="btn small" data-edit-group>이름 수정</button> <button class="btn small danger" data-del-group>삭제</button></td></tr>`).join("") || `<tr><td colspan="4" class="muted">그룹이 없으면 누구나 코드 없이 가입할 수 있습니다.</td></tr>`}
@@ -1904,8 +2235,8 @@ async function adminRoster(body) {
     </section></div>
     <section class="panel card-pad"><div class="toolbar"><h3>${groupName ? esc(groupName) + " · " : ""}등록된 수강생 ${students.length}명</h3></div>
       ${students.length ? `<div class="table-scroll"><table class="pin-list"><thead><tr><th>이름</th><th>그룹</th><th>등록일</th><th></th></tr></thead><tbody>
-      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
-        <td class="act"><span class="pin-slot"></span> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
+      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}${s.exclude_from_rank ? '<span class="lock-chip rank-off">순위 제외</span>' : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
+        <td class="act"><span class="pin-slot"></span> <button class="btn small ghost" data-rankx title="켜면 이 계정은 다른 수강생의 'N명 중 M번째'에 세지 않습니다">${s.exclude_from_rank ? "순위 포함" : "순위 제외"}</button> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
     </section></div>`;
@@ -2013,12 +2344,29 @@ async function adminRoster(body) {
       try {
         const res = await api.resetPin(state.adminToken, id);
         tr.querySelector(".pin-slot").innerHTML = `<span class="pin">${res.pin}</span>`;
-        tr.querySelector(".lock-chip")?.remove();
+        tr.querySelector(".lock-chip:not(.rank-off)")?.remove();
         toast(`${res.name} 님의 새 번호는 ${res.pin}입니다.`);
       } catch (err) {
         toast(errorMessage(err));
       } finally {
         e.target.disabled = false;
+      }
+    });
+    tr.querySelector("[data-rankx]").addEventListener("click", async (e) => {
+      const btn = e.target;
+      const exclude = !tr.querySelector(".rank-off");
+      btn.disabled = true;
+      try {
+        await api.setRankExclude(state.adminToken, id, exclude);
+        const cell = tr.querySelector("td");
+        if (exclude) cell.insertAdjacentHTML("beforeend", '<span class="lock-chip rank-off">순위 제외</span>');
+        else tr.querySelector(".rank-off")?.remove();
+        btn.textContent = exclude ? "순위 포함" : "순위 제외";
+        toast(exclude ? "이 계정은 이제 반 순위에 세지 않습니다." : "이 계정을 다시 반 순위에 셉니다.");
+      } catch (err) {
+        toast(errorMessage(err));
+      } finally {
+        btn.disabled = false;
       }
     });
     const del = tr.querySelector("[data-del]");
@@ -2046,6 +2394,56 @@ async function adminRoster(body) {
     store.set(ADMIN_KEY, null);
     toast("데모 데이터를 처음 상태로 되돌렸습니다.");
     route();
+  });
+}
+
+// 만족도: DAY 완료 팝업에서 받은 응답. DAY별 요약 + 응답 목록 (1~2점은 아쉬운 점 · 의견 포함)
+const SCORE_COLORS = ["var(--fail)", "var(--orange)", "var(--subtle)", "var(--pass)", "var(--accent)"];
+async function adminFeedback(body) {
+  const [roster, fb] = await Promise.all([api.roster(state.adminToken), api.adminDayFeedback(state.adminToken)]);
+  const students = new Map(roster.students.filter(inGroup).map((s) => [s.id, s]));
+  const rows = (fb.rows || []).filter((r) => students.has(r.student_id) && courseById[r.course_id]);
+  if (!rows.length) {
+    body.innerHTML = `<div class="panel empty-state"><b>아직 만족도 응답이 없습니다.</b>수강생이 한 DAY의 레슨과 문제를 모두 끝내면 완료 팝업에서 만족도(1~5점)를 받습니다.</div>`;
+    return;
+  }
+  const dayLabel = (c) => `${trackById[c.track]?.label || c.track} · DAY ${String(dayNo(c)).padStart(2, "0")}`;
+  const avgOf = (list) => (list.reduce((a, r) => a + r.score, 0) / list.length).toFixed(1);
+  const low = rows.filter((r) => r.score <= 2);
+  const byCourse = new Map();
+  for (const r of rows) (byCourse.get(r.course_id) || byCourse.set(r.course_id, []).get(r.course_id)).push(r);
+  const order = (id) => { const c = courseById[id]; return TRACKS.findIndex((t) => t.id === c.track) * 1000 + dayNo(c); };
+  const days = [...byCourse.entries()].sort((a, b) => order(a[0]) - order(b[0]));
+  const dist = (list) => `<div class="fb-dist" title="${[1, 2, 3, 4, 5].map((n) => `${n}점 ${list.filter((r) => r.score === n).length}명`).join(" · ")}">${[1, 2, 3, 4, 5].map((n) => { const k = list.filter((r) => r.score === n).length; return k ? `<span style="width:${(k / list.length) * 100}%;background:${SCORE_COLORS[n - 1]}"></span>` : ""; }).join("")}</div>`;
+  const scoreChip = (n) => `<span class="fb-score ${n <= 2 ? "low" : n >= 4 ? "high" : ""}">${n}</span>`;
+  let lowOnly = store.get("rb-fb-low") === true;
+  const listHtml = () => {
+    const list = lowOnly ? low : rows;
+    return list.length ? list.map((r) => { const c = courseById[r.course_id]; return `<tr><td class="muted" style="white-space:nowrap">${esc(fmtTime(r.updated_at))}</td><td>${esc(students.get(r.student_id).name)}</td><td style="white-space:nowrap"><span class="muted">${esc(dayLabel(c))}</span> ${esc(c.title)}</td><td>${scoreChip(r.score)}</td><td>${(r.reasons || []).length ? `<div class="fb-reasons">${r.reasons.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : '<span class="muted">–</span>'}</td><td class="fb-comment">${r.comment ? esc(r.comment) : '<span class="muted">–</span>'}</td></tr>`; }).join("")
+      : `<tr><td colspan="6" class="muted">1~2점 응답이 없습니다.</td></tr>`;
+  };
+  body.innerHTML = `<div style="display:grid;gap:16px">
+    <div class="kpis">
+      <div class="panel kpi"><span class="k">응답</span><span class="v">${rows.length}건</span></div>
+      <div class="panel kpi"><span class="k">평균 만족도</span><span class="v">${avgOf(rows)}</span></div>
+      <div class="panel kpi"><span class="k">1~2점 응답</span><span class="v" style="color:${low.length ? "var(--fail)" : "inherit"}">${low.length}건</span></div>
+      <div class="panel kpi"><span class="k">응답한 수강생</span><span class="v">${new Set(rows.map((r) => r.student_id)).size}명</span></div>
+    </div>
+    <h2 class="part-title" style="margin:8px 0 0">DAY별 만족도</h2>
+    <div class="panel table-scroll"><table class="stats-table"><thead><tr><th>DAY</th><th>코스</th><th class="num">응답</th><th class="num">평균</th><th>분포 (1→5점)</th><th class="num">1~2점</th></tr></thead><tbody>
+    ${days.map(([id, list]) => { const c = courseById[id], n = list.filter((r) => r.score <= 2).length; return `<tr><td class="muted" style="white-space:nowrap">${esc(dayLabel(c))}</td><td>${esc(c.title)}</td><td class="num">${list.length}</td><td class="num"><b>${avgOf(list)}</b></td><td>${dist(list)}</td><td class="num" style="${n ? "color:var(--fail);font-weight:600" : ""}">${n || "·"}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <div class="toolbar"><h2 class="part-title" style="margin:8px 0 0">응답 목록</h2><span class="spacer"></span>
+      <label class="muted" style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="fb-low" ${lowOnly ? "checked" : ""}>1~2점만 보기</label>
+      <button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
+    <div class="panel table-scroll"><table class="stats-table"><thead><tr><th>시각</th><th>이름</th><th>DAY</th><th>점수</th><th>아쉬운 점</th><th>의견</th></tr></thead><tbody id="fb-list">${listHtml()}</tbody></table></div>
+  </div>`;
+  body.querySelector("#fb-low").addEventListener("change", (e) => { lowOnly = e.target.checked; store.set("rb-fb-low", lowOnly); body.querySelector("#fb-list").innerHTML = listHtml(); });
+  body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/feedback"));
+  body.querySelector("#csv").addEventListener("click", () => {
+    const head = ["시각", "이름", "그룹", "트랙", "DAY", "코스", "점수", "아쉬운 점", "의견"];
+    const lines = rows.map((r) => { const c = courseById[r.course_id], s = students.get(r.student_id); return [fmtTime(r.updated_at), s.name, groupLabel(s.group), trackById[c.track]?.label || c.track, dayNo(c), c.title, r.score, (r.reasons || []).join(" / "), r.comment || ""]; });
+    downloadCsv("만족도.csv", [head, ...lines]);
   });
 }
 

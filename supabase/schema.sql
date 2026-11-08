@@ -638,5 +638,211 @@ begin
 end;
 $$;
 
+-- ── DAY 만족도 조사 (2026-11-07) ─────────────────────────
+
+-- DAY(코스)마다 수강생 한 줄. 다시 평가하면 덮어쓴다.
+create table if not exists public.day_feedback (
+  student_id uuid not null references public.students(id) on delete cascade,
+  course_id text not null,
+  score int not null check (score between 1 and 5),
+  reasons text[] not null default '{}',
+  comment text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (student_id, course_id)
+);
+alter table public.day_feedback enable row level security;
+revoke all on public.day_feedback from anon, authenticated;
+
+-- 수강생: 만족도 저장 (1~5점, 1~2점이면 불만 선택지 · 자유 입력)
+create or replace function public.day_feedback_set(p_token uuid, p_course_id text, p_score int, p_reasons text[], p_comment text)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_sid uuid := _student_of(p_token);
+begin
+  if v_sid is null then return json_build_object('ok', false, 'error', 'session'); end if;
+  if p_course_id !~ '^[a-z0-9-]{1,40}$' or p_score is null or p_score not between 1 and 5 then
+    return json_build_object('ok', false, 'error', 'not_found');
+  end if;
+  insert into day_feedback (student_id, course_id, score, reasons, comment)
+  values (
+    v_sid, p_course_id, p_score,
+    coalesce((select array_agg(left(r, 40)) from unnest(p_reasons[1:10]) r where r <> ''), '{}'),
+    nullif(left(trim(coalesce(p_comment, '')), 1000), '')
+  )
+  on conflict (student_id, course_id) do update set
+    score = excluded.score, reasons = excluded.reasons, comment = excluded.comment, updated_at = now();
+  return json_build_object('ok', true);
+end;
+$$;
+
+-- 어드민: 전체 응답 (그룹 필터 · DAY별 집계는 화면에서)
+create or replace function public.admin_day_feedback(p_token uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  return json_build_object('ok', true, 'rows', coalesce((
+    select json_agg(json_build_object(
+      'student_id', f.student_id, 'course_id', f.course_id, 'score', f.score,
+      'reasons', f.reasons, 'comment', f.comment, 'updated_at', f.updated_at
+    ) order by f.updated_at desc)
+    from day_feedback f
+  ), '[]'::json));
+end;
+$$;
+
+revoke execute on function public.day_feedback_set(uuid, text, int, text[], text) from public;
+revoke execute on function public.admin_day_feedback(uuid) from public;
+grant execute on function
+  public.day_feedback_set(uuid, text, int, text[], text),
+  public.admin_day_feedback(uuid)
+to anon;
+
+-- ── 업적 · 메달 (2026-11-07) ──
+-- 메달 조건은 화면이 진도 기록으로 계산하고, 받은 메달과 획득 시각만 여기에 저장한다.
+-- 한 번 받은 메달은 지워지지 않는다 (같은 메달을 다시 보내도 처음 시각이 유지됨).
+
+create table if not exists public.student_medals (
+  student_id uuid not null references public.students(id) on delete cascade,
+  medal_id text not null,
+  earned_at timestamptz not null default now(),
+  primary key (student_id, medal_id)
+);
+alter table public.student_medals enable row level security;
+revoke all on public.student_medals from anon, authenticated;
+
+-- 내 메달 목록: {"medals": {"first-lesson": "2026-11-07T…", …}}
+create or replace function public.student_medals_get(p_token uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+declare
+  v_sid uuid := _student_of(p_token);
+begin
+  if v_sid is null then return json_build_object('ok', false, 'error', 'session'); end if;
+  return json_build_object('ok', true, 'medals', coalesce((
+    select json_object_agg(medal_id, earned_at) from student_medals where student_id = v_sid
+  ), '{}'::json));
+end;
+$$;
+
+-- 메달 받기: 새로 받은 것만 저장하고 전체 목록을 돌려준다
+create or replace function public.student_medals_award(p_token uuid, p_ids text[])
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_sid uuid := _student_of(p_token);
+begin
+  if v_sid is null then return json_build_object('ok', false, 'error', 'session'); end if;
+  insert into student_medals (student_id, medal_id)
+  select v_sid, m from unnest(p_ids[1:60]) m where m ~ '^[a-z0-9-]{1,40}$'
+  on conflict (student_id, medal_id) do nothing;
+  return student_medals_get(p_token);
+end;
+$$;
+
+-- 어드민: 수강생별 메달 (명단 · 통계에서 쓸 수 있게)
+create or replace function public.admin_medals(p_token uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  return json_build_object('ok', true, 'rows', coalesce((
+    select json_agg(json_build_object('student_id', student_id, 'medal_id', medal_id, 'earned_at', earned_at))
+    from student_medals
+  ), '[]'::json));
+end;
+$$;
+
+revoke execute on function public.student_medals_get(uuid) from public;
+revoke execute on function public.student_medals_award(uuid, text[]) from public;
+revoke execute on function public.admin_medals(uuid) from public;
+grant execute on function
+  public.student_medals_get(uuid),
+  public.student_medals_award(uuid, text[]),
+  public.admin_medals(uuid)
+to anon;
+
+-- ── 순위 제외 계정 (2026-11-08) ─────────────────────────────
+-- students.exclude_from_rank = true 인 계정은
+--   · 다른 수강생의 'N명 중 M번째' 에서 분모(N)와 순위(M) 모두에 세지 않는다.
+--   · 본인이 문제를 풀면 '자기가 끼었다면 몇 번째였을지'를 그대로 보여 준다 (화면 테스트용).
+-- 어드민 > 명단 에서 '순위 제외' 버튼으로 켜고 끌 수 있다.
+
+alter table public.students add column if not exists exclude_from_rank boolean not null default false;
+
+-- 지금 있는 테스트 계정은 바로 제외
+update public.students set exclude_from_rank = true where name = '허진성_테스트';
+
+create or replace function public.student_submit(
+  p_token uuid, p_problem_id text, p_code text,
+  p_passed boolean, p_passed_count int, p_total_count int, p_case_results jsonb
+)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  v_sid uuid := _student_of(p_token);
+  v_group text;
+  v_already boolean;
+  v_rank int;
+  v_total int;
+begin
+  if v_sid is null then return json_build_object('ok', false, 'error', 'session'); end if;
+  select join_code into v_group from students where id = v_sid;
+
+  select exists (
+    select 1 from submissions where student_id = v_sid and problem_id = p_problem_id and passed
+  ) into v_already;
+
+  insert into submissions (student_id, problem_id, code, passed, passed_count, total_count, case_results)
+  values (v_sid, p_problem_id, p_code, p_passed, p_passed_count, p_total_count, p_case_results);
+
+  if not p_passed or v_already then
+    return json_build_object('ok', true, 'first_solve', false);
+  end if;
+
+  -- 순위 = 같은 그룹 안에서 이 문제를 처음 맞힌 시각이 나보다 같거나 빨랐던 학생 수
+  -- 순위 제외 계정(exclude_from_rank)은 본인 말고는 세지 않는다
+  select count(*) into v_rank from (
+    select min(sub.created_at) as t
+    from submissions sub join students st on st.id = sub.student_id
+    where sub.problem_id = p_problem_id and sub.passed and st.join_code is not distinct from v_group
+      and (not st.exclude_from_rank or st.id = v_sid)
+    group by sub.student_id
+  ) f
+  where f.t <= (
+    select min(created_at) from submissions
+    where student_id = v_sid and problem_id = p_problem_id and passed
+  );
+  select count(*) into v_total from students
+  where join_code is not distinct from v_group and (not exclude_from_rank or id = v_sid);
+
+  return json_build_object('ok', true, 'first_solve', true, 'rank', v_rank, 'total', v_total);
+end;
+$$;
+
+create or replace function public.admin_roster(p_token uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  return json_build_object('ok', true, 'students', coalesce((
+    select json_agg(json_build_object(
+      'id', id, 'name', name, 'created_at', created_at, 'group', join_code,
+      'locked', locked_until is not null and locked_until > now(),
+      'exclude_from_rank', exclude_from_rank
+    ) order by name, created_at) from students
+  ), '[]'::json));
+end;
+$$;
+
+-- 어드민: 순위 제외 켜기 · 끄기
+create or replace function public.admin_set_rank_exclude(p_token uuid, p_student_id uuid, p_exclude boolean)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  update students set exclude_from_rank = coalesce(p_exclude, false) where id = p_student_id;
+  if not found then return json_build_object('ok', false, 'error', 'not_found'); end if;
+  return json_build_object('ok', true, 'exclude_from_rank', coalesce(p_exclude, false));
+end;
+$$;
+
+revoke execute on function public.admin_set_rank_exclude(uuid, uuid, boolean) from public;
+grant execute on function public.admin_set_rank_exclude(uuid, uuid, boolean) to anon;
+
 -- 마지막: 어드민 비밀번호 (꼭 바꾸세요)
 select public.set_admin_password('여기에-어드민-비밀번호');

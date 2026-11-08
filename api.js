@@ -55,16 +55,23 @@ class SupabaseApi {
       p_case_results: slimCases(result.cases),
     });
   }
+  medals(token) { return this.call("student_medals_get", { p_token: token }); }
+  awardMedals(token, ids) { return this.call("student_medals_award", { p_token: token, p_ids: ids }); }
   history(token, problemId) { return this.call("student_history", { p_token: token, p_problem_id: problemId }); }
   lessonSet(token, lessonId, status, quizScore) {
     return this.call("lesson_progress_set", { p_token: token, p_lesson_id: lessonId, p_status: status, p_quiz_score: quizScore ?? null });
   }
   adminLessons(token) { return this.call("admin_lessons", { p_token: token }); }
+  dayFeedback(token, courseId, score, reasons, comment) {
+    return this.call("day_feedback_set", { p_token: token, p_course_id: courseId, p_score: score, p_reasons: reasons || [], p_comment: comment || null });
+  }
+  adminDayFeedback(token) { return this.call("admin_day_feedback", { p_token: token }); }
   adminLogin(password) { return this.call("admin_login", { p_password: password }); }
   roster(token) { return this.call("admin_roster", { p_token: token }); }
   addStudents(token, names, group) { return this.call("admin_add_students", { p_token: token, p_names: names, p_group: group || null }); }
   resetPin(token, id) { return this.call("admin_reset_pin", { p_token: token, p_student_id: id }); }
   deleteStudent(token, id) { return this.call("admin_delete_student", { p_token: token, p_student_id: id }); }
+  setRankExclude(token, id, exclude) { return this.call("admin_set_rank_exclude", { p_token: token, p_student_id: id, p_exclude: !!exclude }); }
   matrix(token) { return this.call("admin_matrix", { p_token: token }); }
   groups(token) { return this.call("admin_groups", { p_token: token }); }
   saveGroup(token, code, label) { return this.call("admin_save_group", { p_token: token, p_code: code, p_label: label }); }
@@ -253,6 +260,38 @@ class DemoApi {
     this.requireAdmin(db, token);
     return { ok: true, rows: db.lessons || [] };
   }
+  async medals(token) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    const medals = {};
+    for (const m of (db.medals || []).filter((x) => x.student_id === sid)) medals[m.medal_id] = m.earned_at;
+    return { ok: true, medals };
+  }
+  async awardMedals(token, ids) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    db.medals ||= [];
+    const now = new Date().toISOString();
+    for (const id of ids) if (!db.medals.some((m) => m.student_id === sid && m.medal_id === id)) db.medals.push({ student_id: sid, medal_id: id, earned_at: now });
+    this.save(db);
+    return this.medals(token);
+  }
+  async dayFeedback(token, courseId, score, reasons, comment) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    db.feedback ||= [];
+    const now = new Date().toISOString();
+    let row = db.feedback.find((x) => x.student_id === sid && x.course_id === courseId);
+    if (!row) db.feedback.push((row = { student_id: sid, course_id: courseId, created_at: now }));
+    Object.assign(row, { score, reasons: (reasons || []).slice(0, 10), comment: (comment || "").trim().slice(0, 1000) || null, updated_at: now });
+    this.save(db);
+    return { ok: true };
+  }
+  async adminDayFeedback(token) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    return { ok: true, rows: [...(db.feedback || [])].sort((a, b) => b.updated_at.localeCompare(a.updated_at)) };
+  }
   async submit(token, problemId, code, result) {
     const db = this.load();
     const sid = this.studentOf(db, token);
@@ -273,7 +312,8 @@ class DemoApi {
     this.save(db);
     if (!result.passed || already) return { ok: true, first_solve: false };
     const org = db.students.find((s) => s.id === sid)?.org || null;
-    const sameGroup = new Set(db.students.filter((s) => (s.org || null) === org).map((s) => s.id));
+    // 순위 제외 계정은 본인 말고는 세지 않는다
+    const sameGroup = new Set(db.students.filter((s) => (s.org || null) === org && (!s.exclude_from_rank || s.id === sid)).map((s) => s.id));
     const firsts = {};
     for (const s of db.submissions.filter((x) => x.problem_id === problemId && x.passed && sameGroup.has(x.student_id))) {
       if (!firsts[s.student_id] || s.created_at < firsts[s.student_id]) firsts[s.student_id] = s.created_at;
@@ -305,7 +345,7 @@ class DemoApi {
     const db = this.load();
     this.requireAdmin(db, token);
     const students = db.students
-      .map((s) => ({ id: s.id, name: s.name, group: s.org || null, created_at: s.created_at, locked: (s.locked_until || 0) > Date.now() }))
+      .map((s) => ({ id: s.id, name: s.name, group: s.org || null, created_at: s.created_at, locked: (s.locked_until || 0) > Date.now(), exclude_from_rank: !!s.exclude_from_rank }))
       .sort((a, b) => a.name.localeCompare(b.name, "ko"));
     return { ok: true, students };
   }
@@ -342,6 +382,15 @@ class DemoApi {
     for (const [t, v] of Object.entries(db.sessions)) if (v.student_id === id) delete db.sessions[t];
     this.save(db);
     return { ok: true, name: s.name, pin: s.pin };
+  }
+  async setRankExclude(token, id, exclude) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    const s = db.students.find((x) => x.id === id);
+    if (!s) throw new ApiError("not_found");
+    s.exclude_from_rank = !!exclude;
+    this.save(db);
+    return { ok: true, exclude_from_rank: s.exclude_from_rank };
   }
   async deleteStudent(token, id) {
     const db = this.load();

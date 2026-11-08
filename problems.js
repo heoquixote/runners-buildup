@@ -6,6 +6,7 @@
 import { DAY1_UNITS, DAY1_PROBLEMS, DAY1_QUIZZES } from "./problems-day1.js";
 import { SM_UNITS, SM_PROBLEMS, SM_QUIZZES } from "./problems-stats-ml.js";
 import { PB_UNITS, PB_PROBLEMS, PB_QUIZZES } from "./problems-pb-more.js";
+import { PBS_UNITS, PBS_PROBLEMS, PBS_QUIZZES } from "./problems-pb-stdlib.js";
 import { GEN_PROBLEMS } from "./problems-pb-general.js";
 import { DA_UNITS, DA_PROBLEMS, DA_QUIZZES } from "./problems-da.js";
 import { SM2_UNITS, SM2_PROBLEMS, SM2_QUIZZES } from "./problems-stats-ml2.js";
@@ -130,6 +131,7 @@ export const UNITS = [
   ...MORE_UNITS.map((u) => ({ ...u, track: "python", part: "py-2" })),
   ...SM_UNITS.map((u) => ({ ...u, track: u.id <= 16 ? "stats" : "ml", part: u.id <= 16 ? "st-1" : "ml-1" })),
   ...PB_UNITS.map((u) => ({ ...u, track: "python", part: "py-2" })),
+  ...PBS_UNITS.map((u) => ({ ...u, track: "python", part: "py-2" })),
   ...DA_UNITS.map((u) => ({ ...u, track: "python-da", part: "da-1" })),
   ...SM2_UNITS.map((u) => (u.id <= 34 ? { ...u, track: "stats", part: "st-1" } : u.id <= 39 ? { ...u, track: "ml", part: "ml-1" } : { ...u, track: "dl", part: "dl-1" })),
   ...ML3_UNITS.map((u) => ({ ...u, track: "ml", part: "ml-1" })),
@@ -1103,7 +1105,7 @@ const QUIZZES = [
   },
 ];
 PROBLEMS.unshift(...DAY1_PROBLEMS);
-PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES, ...SM_PROBLEMS, ...SM_QUIZZES, ...PB_PROBLEMS, ...PB_QUIZZES, ...GEN_PROBLEMS, ...DA_PROBLEMS, ...DA_QUIZZES, ...SM2_PROBLEMS, ...SM2_QUIZZES, ...ML3_PROBLEMS, ...ML3_QUIZZES, ...ST3_PROBLEMS, ...ST3_QUIZZES);
+PROBLEMS.push(...DAY1_QUIZZES, ...QUIZZES, ...SM_PROBLEMS, ...SM_QUIZZES, ...PB_PROBLEMS, ...PB_QUIZZES, ...PBS_PROBLEMS, ...PBS_QUIZZES, ...GEN_PROBLEMS, ...DA_PROBLEMS, ...DA_QUIZZES, ...SM2_PROBLEMS, ...SM2_QUIZZES, ...ML3_PROBLEMS, ...ML3_QUIZZES, ...ST3_PROBLEMS, ...ST3_QUIZZES);
 // 단원 순서, 단원 안에서는 개념 퀴즈 → 기본 → 도전 (sort는 안정 정렬이라 원래 순서 유지)
 const order = (p) => (p.type === "quiz" ? 0 : p.challenge ? 2 : 1);
 PROBLEMS.sort((a, b) => a.unit - b.unit || order(a) - order(b));

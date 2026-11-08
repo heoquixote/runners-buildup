@@ -4,13 +4,13 @@
 
 export const TRACKS = [
   { id: "python-basic", label: "파이썬 기초", en: "Python Basics", color: "violet", ready: true,
-    blurb: "변수부터 파일 입출력까지. QA/QC 현장 예제로 문법을 익힙니다." },
+    blurb: "변수부터 파일 입출력 · 표준 라이브러리까지. QA/QC 현장 예제로 문법을 익힙니다." },
   { id: "python-da", label: "데이터 분석", en: "Data Analysis", color: "cyan", ready: true,
     blurb: "NumPy · pandas로 데이터를 불러오고, 고르고, 묶고, 합칩니다." },
   { id: "python-viz", label: "데이터 시각화", en: "Visualization", color: "rose", ready: true,
     blurb: "matplotlib · seaborn으로 데이터를 그리고 읽습니다." },
   { id: "sql", label: "SQL", en: "SQL", color: "lime", ready: true,
-    blurb: "SELECT부터 윈도우 함수 · 리텐션 분석까지. 브라우저 안의 SQLite로 바로 실행합니다." },
+    blurb: "SELECT부터 윈도우 함수 · 리텐션 분석, 데이터베이스 설계(모델링 · 정규화 · 트랜잭션 · 인덱스)까지. 브라우저 안의 SQLite로 바로 실행합니다." },
   { id: "stats", label: "통계", en: "Statistics", color: "amber", ready: true,
     blurb: "기술통계 · 분포 · 검정 · 회귀. 시뮬레이션으로 직관을 만듭니다." },
   { id: "ml", label: "머신러닝", en: "Machine Learning", color: "green", ready: true,
@@ -65,7 +65,7 @@ export const COURSES = [
         ] },
       { id: "pb-01-3", title: "자료형과 형변환", minutes: 15, concepts: ["py.types"],
         quiz: [
-          { kind: "short", q: "int(\"3.5\") 를 실행하면 나는 에러 이름을 쓰세요.", answer: "ValueError", explain: "int()는 정수 모양의 글자만 받습니다. 소수 모양이면 float()를 먼저 거칩니다." },
+          { kind: "choice", q: "int(\"3.5\") 를 실행하면 나는 에러를 고르세요.", options: ["TypeError", "ValueError", "NameError", "SyntaxError"], answer: 1, explain: "int()는 정수 모양의 글자만 받습니다. 소수 모양이면 float()를 먼저 거칩니다." },
           { kind: "choice", q: "bool()에 넣었을 때 False가 나오는 값은?", options: ["\"0\"", "\" \"", "0", "-1"], answer: 2, explain: "숫자 0과 빈 문자열이 False입니다. \"0\"과 \" \"는 글자가 들어 있는 문자열이라 True입니다." },
         ] },
     ] },
@@ -128,7 +128,7 @@ export const COURSES = [
     lessons: [{ id: "pb-05-1", title: "정렬 두 가지와 에러 메시지 읽는 법", minutes: 12, concepts: ["py.sort", "py.error"],
       quiz: [
         { kind: "choice", q: "nums = [3, 1, 2] 일 때 print(nums.sort()) 의 출력은?", options: ["[1, 2, 3]", "[3, 1, 2]", "None", "에러"], answer: 2, explain: "sort()는 리스트를 제자리에서 바꾸고 None을 돌려줍니다. 정렬된 새 리스트가 필요하면 sorted()를 씁니다." },
-        { kind: "short", q: "리스트 길이가 3인데 nums[5]를 읽으면 나는 에러 이름을 쓰세요.", answer: "IndexError", explain: "범위를 벗어난 인덱스는 IndexError입니다." },
+        { kind: "choice", q: "리스트 길이가 3인데 nums[5]를 읽으면 나는 에러를 고르세요.", options: ["KeyError", "ValueError", "IndexError", "TypeError"], answer: 2, explain: "범위를 벗어난 인덱스는 IndexError입니다." },
       ] },
       { id: "pb-05-2", title: "리스트에서 찾고 요약하기", minutes: 15, concepts: ["py.list", "py.sort"],
         quiz: [
@@ -138,7 +138,7 @@ export const COURSES = [
       { id: "pb-05-3", title: "에러 메시지 읽고 고치기", minutes: 15, concepts: ["py.error"],
         quiz: [
           { kind: "choice", q: "Traceback에서 가장 먼저 읽어야 할 곳은?", options: ["맨 위 Traceback (most recent call last) 줄", "맨 아래 에러 이름과 설명 줄", "가운데 File 줄", "아무 데나 상관없다"], answer: 1, explain: "맨 아래 줄에 에러 이름과 설명이 있습니다. 그다음 바로 위의 줄 번호와 코드를 봅니다." },
-          { kind: "short", q: "int('1,250') 처럼 자료형은 맞지만 값을 바꿀 수 없을 때 나는 에러 이름을 쓰세요.", answer: "ValueError", explain: "문자열을 int()에 넣는 것은 맞지만 쉼표가 섞인 값이라 바꿀 수 없어 ValueError입니다." },
+          { kind: "choice", q: "int('1,250') 처럼 자료형은 맞지만 값을 바꿀 수 없을 때 나는 에러를 고르세요.", options: ["ValueError", "TypeError", "IndexError", "NameError"], answer: 0, explain: "문자열을 int()에 넣는 것은 맞지만 쉼표가 섞인 값이라 바꿀 수 없어 ValueError입니다." },
         ] },
     ] },
   { id: "pb-06", track: "python-basic", title: "딕셔너리와 Set", summary: "key-value CRUD, get, 중첩 딕셔너리, 행 목록, update, pop, Set 연산(| & - ^), 부분집합", unit: 6, level: "입문",
@@ -265,11 +265,38 @@ export const COURSES = [
           { kind: "choice", q: "행 1,000개를 처리하는 for 반복 바깥에 try 를 두면 어떻게 될까요?", options: ["문제 행만 건너뛰고 끝까지 처리한다", "첫 에러에서 반복 전체가 끝난다", "에러가 난 행을 0으로 처리한다", "문법 오류가 난다"], answer: 1, explain: "에러가 나면 try 블록 전체를 빠져나가므로 반복도 끝납니다. 한 행씩 따로 처리하려면 try를 반복 안에 둡니다." },
         ] },
     ] },
+  // 표준 라이브러리 (2026-11-07 진성 님 원고). 기획안 docs/lesson-plans/python-basic.md 의 pb-13
+  { id: "pb-13", track: "python-basic", title: "표준 라이브러리 (datetime · math · random · os)", summary: "import와 내 모듈, datetime · timedelta, strftime · strptime, math 올림 · 내림, random seed · sample, os 경로 · 폴더", unit: 50, level: "기본",
+    concepts: ["py.module", "py.datetime", "py.math", "py.random", "py.os"],
+    lessons: [
+      { id: "pb-13-1", title: "모듈과 import: 남이 만든 도구 상자 쓰기", minutes: 15, concepts: ["py.module"],
+        quiz: [
+          { kind: "choice", q: "from math import sqrt 로 불러왔을 때 25의 제곱근을 구하는 바른 코드는?", options: ["math.sqrt(25)", "sqrt(25)", "math(sqrt(25))", "import sqrt(25)"], answer: 1, explain: "from 모듈 import 이름 으로 꺼낸 이름은 모듈 이름 없이 바로 씁니다. math 라는 이름은 불러오지 않았으므로 math.sqrt 는 NameError가 납니다." },
+          { kind: "ox", q: "datetime, math, os 같은 표준 라이브러리는 pip install 로 먼저 설치해야 쓸 수 있다.", answer: false, explain: "표준 라이브러리는 파이썬을 설치할 때 함께 들어 있어 import만 하면 됩니다. pip 설치가 필요한 것은 numpy · pandas 같은 외부 라이브러리입니다." },
+        ] },
+      { id: "pb-13-2", title: "datetime: 날짜와 시간 계산하기", minutes: 20, concepts: ["py.datetime"],
+        quiz: [
+          { kind: "choice", q: "CSV에서 읽은 문자열 \"2026-11-07\" 을 날짜 계산이 되는 datetime으로 바꾸는 코드는?", options: ["datetime.strftime(\"2026-11-07\", \"%Y-%m-%d\")", "datetime.strptime(\"2026-11-07\", \"%Y-%m-%d\")", "datetime(\"2026-11-07\")", "str(\"2026-11-07\")"], answer: 1, explain: "문자열 → 날짜는 strptime(p = parse, 읽어 내기), 날짜 → 문자열은 strftime(f = format)입니다." },
+          { kind: "write", q: "made 에 timedelta를 더해 30일 뒤 날짜를 '%Y-%m-%d' 모양으로 출력하는 코드를 작성하세요.", given: "from datetime import datetime, timedelta\nmade = datetime(2026, 11, 7)", expect: "2026-12-07", must: ["timedelta\\(", "strftime\\("], solution: "from datetime import datetime, timedelta\nmade = datetime(2026, 11, 7)\nprint((made + timedelta(days=30)).strftime('%Y-%m-%d'))", explain: "datetime + timedelta(days=30) 은 30일 뒤 datetime입니다. 월이 바뀌는 것도 알아서 처리합니다. strftime으로 원하는 모양의 문자열을 만듭니다." },
+        ] },
+      { id: "pb-13-3", title: "math와 random: 계산 도구와 난수", minutes: 20, concepts: ["py.math", "py.random"],
+        quiz: [
+          { kind: "choice", q: "math.floor(-2.5) 의 결과는?", options: ["-2", "-3", "-2.5", "2"], answer: 1, explain: "floor(내림)는 수직선에서 더 작은 쪽(왼쪽)으로 갑니다. -2.5보다 작은 정수 중 가장 가까운 것은 -3입니다. 0 쪽으로 자르는 math.trunc(-2.5)는 -2입니다." },
+          { kind: "ox", q: "random.seed(42) 로 고정한 뒤 random.randint(1, 5) 를 다섯 번 뽑으면, 다시 seed(42)를 하고 뽑아도 같은 순서로 나온다.", answer: true, explain: "seed는 난수 목록의 시작 번호입니다. 번호가 같으면 같은 난수가 같은 순서로 다시 나와 결과를 재현할 수 있습니다." },
+        ] },
+      { id: "pb-13-4", title: "os: 폴더와 파일 경로 다루기", minutes: 20, concepts: ["py.os"],
+        quiz: [
+          { kind: "choice", q: "이미 있는 logs 폴더를 os.makedirs(\"logs\") 로 한 번 더 만들면 어떤 에러가 날까요?", options: ["FileNotFoundError", "FileExistsError", "PermissionError", "에러 없이 지나간다"], answer: 1, explain: "이미 있는 폴더를 또 만들려 하면 FileExistsError가 납니다. 있어도 괜찮게 하려면 os.makedirs(\"logs\", exist_ok=True) 로 씁니다." },
+        ] },
+    ] },
 
   // ── 데이터 분석 (NumPy · pandas) ──────────────────────────
   { id: "da-01", track: "python-da", title: "NumPy 배열과 연산", summary: "배열 연산 · 만들기 · 자료형, 불리언 인덱싱, np.where, 정렬과 세기", unit: 10, level: "기본",
     concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
-    lessons: [{ id: "da-01-1", title: "반복문 없이 배열을 한 번에 계산하기", minutes: 25, concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
+    lessons: [
+      // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "da-01-0", title: "NumPy 소개: 숫자를 한꺼번에 계산하는 도구", minutes: 10, concepts: ["np.array"] },
+      { id: "da-01-1", title: "반복문 없이 배열을 한 번에 계산하기", minutes: 25, concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
       quiz: [
         { kind: "write", q: "반복문 없이 a의 모든 원소에 2를 곱한 배열을 출력하는 코드를 작성하세요.", given: "import numpy as np\na = np.array([1, 2, 3])", expect: ["[2 4 6]"], must: ["a\\s*\\*\\s*2|2\\s*\\*\\s*a"], solution: "import numpy as np\na = np.array([1, 2, 3])\nprint(a * 2)", explain: "배열에 숫자를 곱하면 모든 원소에 적용됩니다. 리스트의 [1,2,3]*2와 다릅니다." },
         { kind: "choice", q: "2차원 배열에서 열(세로) 방향으로 합을 구해 열마다 값 하나씩 얻으려면?", options: ["arr.sum()", "arr.sum(axis=0)", "arr.sum(axis=1)", "arr.sum(axis=2)"], answer: 1, explain: "axis=0은 행을 따라 접어 열별 결과를 남깁니다." },
@@ -305,7 +332,10 @@ export const COURSES = [
     ] },
   { id: "da-03", track: "python-da", title: "pandas Series · DataFrame", summary: "read_csv, describe, 표 만들기, 열 추가 · 이름 변경 · 삭제, 인덱스", unit: 24, level: "기본",
     concepts: ["pd.dataframe"],
-    lessons: [{ id: "da-03-1", title: "표 데이터를 불러와 첫인상 잡기", minutes: 25, concepts: ["pd.dataframe"],
+    lessons: [
+      // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "da-03-0", title: "pandas 소개: 표를 코드로 다루는 도구", minutes: 10, concepts: ["pd.dataframe"] },
+      { id: "da-03-1", title: "표 데이터를 불러와 첫인상 잡기", minutes: 25, concepts: ["pd.dataframe"],
       quiz: [
         { kind: "write", q: "df의 qty 열 합계를 출력하는 코드를 작성하세요.", given: "import pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C'], 'qty': [500, 480, 520, 610]})", expect: "2110", must: ["\\[\\s*['\"]qty['\"]\\s*\\]"], solution: "import pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C'], 'qty': [500, 480, 520, 610]})\nprint(df['qty'].sum())", explain: "df['qty']는 Series이고 sum()으로 합계를 냅니다." },
         { kind: "ox", q: "df.head()는 기본으로 처음 5행을 보여 준다.", answer: true, explain: "개수를 바꾸려면 head(10)처럼 숫자를 넣습니다." },
@@ -418,6 +448,8 @@ export const COURSES = [
   { id: "da-09", track: "python-viz", dir: "python-da", title: "matplotlib 기본 구조", summary: "그래프 뼈대(fig · ax), 그리는 순서, 서브플롯 배치와 꾸미기", level: "기본",
     concepts: ["mpl.basic", "mpl.layout"],
     lessons: [
+      // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "da-09-0", title: "matplotlib 소개: 파이썬 그래프의 바탕", minutes: 10, concepts: ["mpl.basic"] },
       { id: "da-09-1", title: "그래프의 뼈대: fig와 ax", minutes: 15, concepts: ["mpl.basic"],
         quiz: [
           { kind: "write", q: "fig, ax를 만들고 ax.plot으로 [1, 4, 9]를 그린 뒤, 그려진 선의 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt", expect: "1", must: ["\\.plot\\("], solution: "import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.plot([1, 4, 9])\nprint(len(ax.lines))", explain: "ax.plot을 한 번 부르면 ax.lines에 선 하나가 생깁니다." },
@@ -428,13 +460,16 @@ export const COURSES = [
   { id: "da-10", track: "python-viz", dir: "python-da", title: "seaborn 기본 구조", summary: "data · x · y · hue, 칸 단위 함수와 그림 단위 함수", level: "기본",
     concepts: ["sns.stat"],
     lessons: [
+      // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+      { id: "da-10-0", title: "seaborn 소개: 표를 넘기면 통계 그래프가 나온다", minutes: 10, concepts: ["sns.stat"] },
       { id: "da-10-1", title: "seaborn의 기본 구조: data · x · y · hue", minutes: 18, concepts: ["sns.stat"],
         quiz: [
           { kind: "write", q: "sns.countplot으로 df의 line별 개수를 그린 뒤, 막대 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})", expect: "3", must: ["countplot\\("], solution: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})\nax = sns.countplot(data=df, x='line')\nprint(len(ax.patches))", explain: "범주 A, B, C마다 막대 하나입니다." },
           { kind: "choice", q: "새 도화지를 스스로 만들어서 ax=를 받지 않고, col=로 칸을 나누는 함수는?", options: ["histplot", "boxplot", "displot", "heatmap"], answer: 2, explain: "displot · catplot · relplot · pairplot 같은 그림 단위 함수는 새 도화지를 만듭니다. 칸 단위 함수(histplot 등)는 ax=로 자리를 정해 줍니다." },
         ] },
     ] },
-  { id: "da-12", track: "python-viz", dir: "python-da", title: "비교: 어느 쪽이 더 큰가", summary: "막대 · 가로 막대 · countplot, 평균과 오차 막대, 묶음 막대 · pointplot · 점 그래프", level: "기본",
+  // 질문별 차트(PART 3~7): 질문(비교 · 추이 · 분포 · 관계 · 구성) = PART, 차트 하나 = DAY 하나. 레슨 md 이름(da-12-1 …)은 진도 기록 때문에 그대로 둔다.
+  { id: "vz-01", track: "python-viz", dir: "python-da", title: "막대 그래프", summary: "세로 · 가로 막대와 정렬, 0에서 시작하는 축, countplot, 개수가 많다 ≠ 비율이 높다", level: "기본",
     concepts: ["viz.compare"],
     lessons: [
       { id: "da-12-1", title: "막대 그래프 읽기", minutes: 15, concepts: ["viz.compare"],
@@ -442,17 +477,33 @@ export const COURSES = [
           { kind: "choice", q: "두 공장의 합격률 막대 그래프에서 y축이 90%부터 시작한다. A 막대가 B 막대보다 3배 길어 보이고 실제 값은 A 99%, B 93%다. 맞는 해석은?", options: ["A가 B보다 합격률이 3배 높다", "A가 B보다 6%p 높다. 막대 길이 차이는 축을 90에서 잘라 과장된 것이다", "축과 상관없이 막대 길이 비율이 곧 값의 비율이다", "B 공장은 합격률이 매우 낮다"], answer: 1, explain: "막대는 길이로 값을 나타내므로 0에서 시작해야 합니다. 축을 자르면 작은 차이가 몇 배처럼 보입니다." },
           { kind: "ox", q: "3등실 생존자 수(119명)가 2등실(87명)보다 많으므로 3등실의 생존율도 더 높다.", answer: false, explain: "개수는 그룹 크기의 영향을 받습니다. 3등실은 491명, 2등실은 184명이라 생존율은 3등실 24%, 2등실 47%입니다." },
         ] },
+    ] },
+  { id: "vz-02", track: "python-viz", dir: "python-da", title: "평균과 오차 막대", summary: "barplot 막대는 평균, 오차 막대 vs 표준편차 막대, 합계로 바꾸기", level: "기본",
+    concepts: ["viz.compare"],
+    lessons: [
       { id: "da-12-2", title: "평균과 오차 막대 읽기", minutes: 18, concepts: ["viz.compare"],
         quiz: [
           { kind: "ox", q: "sns.barplot의 막대 높이는 기본으로 그룹의 합계다.", answer: false, explain: "기본은 평균입니다. 합계를 그리려면 estimator=\"sum\"을 줍니다." },
           { kind: "choice", q: "두 그룹의 평균 막대에서 오차 막대(95% 신뢰 구간)가 크게 겹친다. 알맞은 해석은?", options: ["두 그룹의 평균은 확실히 다르다", "두 그룹의 평균이 다르다고 단정하기 어렵다", "두 그룹의 데이터 개수가 같다", "오차 막대는 최솟값과 최댓값이다"], answer: 1, explain: "신뢰 구간이 크게 겹치면 데이터를 다시 모았을 때 순서가 바뀔 수도 있습니다. 차이를 단정하지 않습니다." },
         ] },
-      { id: "da-12-3", title: "두 기준으로 나눠 비교하기", minutes: 18, concepts: ["viz.compare"],
+    ] },
+  { id: "vz-03", track: "python-viz", dir: "python-da", title: "묶음 막대 · 칸 나누기", summary: "기준이 둘이면 hue로 묶음 막대, 셋이면 catplot col=로 칸 나누기", level: "기본",
+    concepts: ["viz.compare"],
+    lessons: [
+      { id: "da-12-3", title: "묶음 막대 · 칸 나누기 읽기", minutes: 15, concepts: ["viz.compare"],
+        quiz: [
+          { kind: "ox", q: "sns.barplot(x=\"class\", hue=\"sex\")로 그린 묶음 막대에서는 같은 등급 안의 여성 · 남성 비교가, 같은 성별끼리 등급을 비교하는 것보다 쉽다.", answer: true, explain: "hue로 나눈 쪽이 한 묶음 안에 나란히 서므로 묶음 안 비교가 쉽습니다. 다른 비교가 중요하면 x와 hue를 바꿉니다." },
+        ] },
+    ] },
+  { id: "vz-04", track: "python-viz", dir: "python-da", title: "점 그래프", summary: "pointplot으로 평행 · 엇갈림 읽기, 범주가 많을 때 dot plot · 롤리팝", level: "기본",
+    concepts: ["viz.compare"],
+    lessons: [
+      { id: "da-12-4", title: "점 그래프 읽기: pointplot · dot plot", minutes: 15, concepts: ["viz.compare"],
         quiz: [
           { kind: "choice", q: "종(Adelie · Chinstrap · Gentoo)별 평균 몸무게 pointplot에서 암컷 선과 수컷 선이 거의 평행하다. 맞는 해석은?", options: ["암수 차이가 종마다 크게 다르다", "종과 상관없이 수컷이 암컷보다 비슷한 만큼 무겁다", "성별은 몸무게와 관계없다", "종은 몸무게와 관계없다"], answer: 1, explain: "평행선은 한 기준의 효과가 다른 기준과 상관없이 일정하다는 뜻입니다. 선이 엇갈려야 '조건에 따라 효과가 다르다'고 말합니다." },
         ] },
     ] },
-  { id: "da-13", track: "python-viz", dir: "python-da", title: "추이: 시간에 따라 어떻게 변하나", summary: "선 그래프의 추세 · 계절성 · 급변, 이동평균 · 로그 축 · 기준선, 여러 시계열 비교", level: "기본",
+  { id: "vz-05", track: "python-viz", dir: "python-da", title: "선 그래프", summary: "추세 · 계절성 나눠 보기, y축 범위가 바꾸는 인상, 범주는 선으로 잇지 않기", level: "기본",
     concepts: ["viz.trend"],
     lessons: [
       { id: "da-13-1", title: "선 그래프 읽기", minutes: 18, concepts: ["viz.trend"],
@@ -460,17 +511,25 @@ export const COURSES = [
           { kind: "choice", q: "월별 매출 선 그래프가 매년 12월에 봉우리를 만들고, 봉우리 높이가 해마다 높아진다. 맞는 해석은?", options: ["계절성만 있고 추세는 없다", "추세만 있고 계절성은 없다", "매년 12월에 오르는 계절성과 해마다 늘어나는 추세가 함께 있다", "불규칙 변동이라 해석할 수 없다"], answer: 2, explain: "같은 간격으로 반복되는 봉우리는 계절성, 전체 수준이 올라가는 것은 추세입니다." },
           { kind: "ox", q: "x축이 '1등실 · 2등실 · 3등실'처럼 순서 없는 범주여도 점들을 선으로 이어 추이로 읽을 수 있다.", answer: false, explain: "선은 '이어지는 변화'를 뜻합니다. 순서가 없는 범주는 막대로 비교합니다." },
         ] },
+    ] },
+  { id: "vz-06", track: "python-viz", dir: "python-da", title: "이동평균 · 로그 축 · 기준선", summary: "이동평균으로 흔들림 걸러 내기, 비율 성장은 로그 축, 기준선과 목표 범위", level: "기본",
+    concepts: ["viz.trend"],
+    lessons: [
       { id: "da-13-2", title: "추세를 또렷하게: 이동평균 · 로그 축 · 기준선", minutes: 18, concepts: ["viz.trend"],
         quiz: [
           { kind: "choice", q: "7일 이동평균선이 오늘 막 아래로 꺾였다. 알맞은 해석은?", options: ["오늘 처음으로 값이 떨어졌다", "실제 변화는 며칠 전부터 시작됐을 수 있다", "이동평균은 미래를 예측한 값이다", "꺾인 것은 의미가 없다"], answer: 1, explain: "이동평균은 과거 N일을 평균하므로 실제 변화보다 늦게 반응합니다." },
           { kind: "ox", q: "로그 y축에서 선이 곧은 직선이면 매년 같은 개수(예: 100명)씩 늘어난 것이다.", answer: false, explain: "로그 축의 직선은 매년 같은 '비율(%)'로 늘었다는 뜻입니다. 같은 개수씩 늘면 일반 축에서 직선입니다." },
         ] },
+    ] },
+  { id: "vz-07", track: "python-viz", dir: "python-da", title: "여러 시계열", summary: "한 칸에 여러 선, 작은 여러 칸, 시작점 = 100 지수화, 달력형 히트맵", level: "기본",
+    concepts: ["viz.trend"],
+    lessons: [
       { id: "da-13-3", title: "여러 시계열 비교하기", minutes: 18, concepts: ["viz.trend"],
         quiz: [
           { kind: "choice", q: "1월 승객과 7월 승객을 첫해 = 100으로 지수화했더니 1960년에 두 선이 각각 372, 420이 됐다. 맞는 해석은?", options: ["1960년 7월 승객은 420명이다", "7월 승객이 1월보다 더 빠른 비율로 늘었다", "두 달의 실제 승객 수가 비슷하다", "1월 승객은 줄었다"], answer: 1, explain: "지수는 첫해 대비 몇 배인지를 나타냅니다. 원래 크기는 사라지고 증가 속도만 비교됩니다." },
         ] },
     ] },
-  { id: "da-14", track: "python-viz", dir: "python-da", title: "분포: 값들이 어떻게 퍼져 있나", summary: "히스토그램, 밀도 곡선 · ECDF · 러그, 상자그림, 바이올린 · 스트립 · 스웜", level: "기본",
+  { id: "vz-08", track: "python-viz", dir: "python-da", title: "히스토그램", summary: "분포의 네 가지 모양, 긴 꼬리와 봉우리 두 개, bins와 비율", level: "기본",
     concepts: ["viz.dist"],
     lessons: [
       { id: "da-14-1", title: "히스토그램 읽기", minutes: 20, concepts: ["viz.dist"],
@@ -479,24 +538,50 @@ export const COURSES = [
           { kind: "choice", q: "히스토그램에 봉우리가 두 개 보일 때 가장 먼저 의심할 것은?", options: ["데이터 입력 오류", "서로 다른 무리(그룹)가 섞여 있다", "평균이 정확하다", "bins가 너무 적다"], answer: 1, explain: "봉우리 두 개는 종 · 성별 · 공정처럼 다른 그룹이 섞여 있을 때 자주 생깁니다. hue로 나눠 확인합니다." },
           { kind: "ox", q: "bins 개수를 바꿔도 히스토그램의 모양은 항상 같다.", answer: false, explain: "bins에 따라 봉우리가 생기거나 사라질 수 있습니다. bins를 바꿔도 유지되는 모양만 믿습니다." },
         ] },
-      { id: "da-14-2", title: "밀도 곡선과 ECDF 읽기", minutes: 18, concepts: ["viz.dist"],
+    ] },
+  { id: "vz-09", track: "python-viz", dir: "python-da", title: "밀도 곡선 · 러그", summary: "KDE로 그룹 분포 겹쳐 보기, bw_adjust와 꼬리, 러그로 실제 위치 확인", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
+      { id: "da-14-2", title: "밀도 곡선(KDE) · 러그 읽기", minutes: 15, concepts: ["viz.dist"],
         quiz: [
-          { kind: "choice", q: "ECDF 그래프에서 y = 0.5 가로선과 곡선이 만나는 x값은?", options: ["평균", "중앙값", "최빈값", "최댓값"], answer: 1, explain: "ECDF의 y는 '그 값 이하의 비율'입니다. 50%가 되는 지점이 중앙값입니다." },
           { kind: "ox", q: "나이 KDE 곡선이 0보다 작은 쪽까지 뻗어 있으므로 나이가 음수인 데이터가 있다.", answer: false, explain: "KDE는 데이터마다 언덕을 쌓아 양 끝에서도 곡선이 뻗습니다. 실제 범위는 러그나 최솟값으로 확인합니다." },
         ] },
+    ] },
+  { id: "vz-10", track: "python-viz", dir: "python-da", title: "ECDF", summary: "'이 값 이하가 몇 %', 중앙값 · 백분위를 누적 계단으로 읽기", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
+      { id: "da-14-5", title: "ECDF 읽기", minutes: 10, concepts: ["viz.dist"],
+        quiz: [
+          { kind: "choice", q: "ECDF 그래프에서 y = 0.5 가로선과 곡선이 만나는 x값은?", options: ["평균", "중앙값", "최빈값", "최댓값"], answer: 1, explain: "ECDF의 y는 '그 값 이하의 비율'입니다. 50%가 되는 지점이 중앙값입니다." },
+        ] },
+    ] },
+  { id: "vz-11", track: "python-viz", dir: "python-da", title: "상자그림", summary: "상자의 부품(중앙값 · IQR · 이상치), 치우침 읽기, 그룹별 상자", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
       { id: "da-14-3", title: "상자그림 읽기", minutes: 18, concepts: ["viz.dist"],
         quiz: [
           { kind: "choice", q: "상자그림에서 상자 안의 가운데 선이 뜻하는 것은?", options: ["평균", "중앙값", "최빈값", "최댓값"], answer: 1, explain: "가운데 선은 중앙값, 상자의 아래 · 위 끝은 Q1 · Q3(가운데 50%)입니다." },
           { kind: "ox", q: "상자가 더 큰 그룹은 데이터 개수도 더 많다.", answer: false, explain: "상자 높이(IQR)는 값이 퍼진 정도입니다. 개수는 상자에 나타나지 않으므로 n을 따로 적어 줍니다." },
           { kind: "choice", q: "봉우리가 두 개인 분포를 상자그림으로 그리면?", options: ["상자가 두 개로 나뉜다", "봉우리가 보이지 않고 평범한 상자로 그려진다", "이상치 점이 두 무리로 찍힌다", "그릴 수 없다"], answer: 1, explain: "상자그림은 다섯 숫자로 요약하므로 봉우리 개수를 보여 주지 못합니다. 바이올린이나 히스토그램으로 확인합니다." },
         ] },
-      { id: "da-14-4", title: "바이올린 · 스트립 · 스웜 읽기", minutes: 18, concepts: ["viz.dist"],
+    ] },
+  { id: "vz-12", track: "python-viz", dir: "python-da", title: "바이올린", summary: "상자 + 밀도 곡선으로 봉우리까지, 폭을 개수로 읽지 않기", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
+      { id: "da-14-4", title: "바이올린 그래프 읽기", minutes: 12, concepts: ["viz.dist"],
         quiz: [
           { kind: "ox", q: "바이올린 두 개의 크기가 비슷하면 두 그룹의 데이터 개수도 비슷하다.", answer: false, explain: "바이올린은 그룹마다 넓이를 같게 맞춰 그립니다. 개수는 스트립 · 스웜이나 n 표시로 확인합니다." },
+        ] },
+    ] },
+  { id: "vz-13", track: "python-viz", dir: "python-da", title: "스트립 · 스웜", summary: "값마다 점 하나, 개수까지 보이는 그래프, 상자 + 점 겹쳐 그리기", level: "기본",
+    concepts: ["viz.dist"],
+    lessons: [
+      { id: "da-14-6", title: "스트립 · 스웜 읽기", minutes: 12, concepts: ["viz.dist"],
+        quiz: [
           { kind: "choice", q: "그룹마다 데이터가 20개 정도일 때 분포를 가장 정직하게 보여 주는 그래프는?", options: ["바이올린", "밀도 곡선", "스트립 또는 스웜", "파이"], answer: 2, explain: "데이터가 적으면 매끈한 곡선 모양은 대부분 곡선이 만든 것입니다. 점을 다 찍는 것이 가장 정직합니다." },
         ] },
     ] },
-  { id: "da-15", track: "python-viz", dir: "python-da", title: "관계와 상관: 두 값이 함께 움직이나", summary: "산점도, 추세선 · 잔차, 상관계수 · 히트맵 · 앤스콤, pairplot · jointplot · 심슨의 역설", unit: 30, level: "실무",
+  { id: "vz-14", track: "python-viz", dir: "python-da", title: "산점도", summary: "방향 · 모양 · 강도 · 튀는 점, 색 · 크기로 정보 얹기, 점이 겹칠 때", level: "실무",
     concepts: ["viz.relation"],
     lessons: [
       { id: "da-15-1", title: "산점도 읽기", minutes: 18, concepts: ["viz.relation"],
@@ -504,23 +589,35 @@ export const COURSES = [
           { kind: "choice", q: "점 1만 개를 기본 산점도로 그렸더니 가운데가 한 덩어리로 칠해졌다. 가장 먼저 할 일은?", options: ["점을 더 크게 그린다", "alpha(투명도)를 낮추고 점을 작게 그린다", "파이 그래프로 바꾼다", "데이터를 지운다"], answer: 1, explain: "점이 겹치면 빽빽한 곳과 드문 곳이 똑같아 보입니다. 투명하게 그리면 겹친 곳일수록 진해집니다." },
           { kind: "ox", q: "산점도에서 오른쪽 위로 올라가는 띠가 보이면 x가 y의 원인이다.", answer: false, explain: "산점도는 '함께 움직인다'까지만 보여 줍니다. 원인인지는 따로 따져야 합니다." },
         ] },
+    ] },
+  { id: "vz-15", track: "python-viz", dir: "python-da", title: "추세선", summary: "regplot 기울기 해석, 잔차, 그룹별 추세선과 곡선 추세선", level: "실무",
+    concepts: ["viz.relation"],
+    lessons: [
       { id: "da-15-2", title: "추세선 읽기", minutes: 18, concepts: ["viz.relation"],
         quiz: [
           { kind: "choice", q: "계산 금액(x)과 팁(y)의 추세선 기울기가 0.105다. 맞는 해석은?", options: ["팁은 항상 계산 금액의 0.105배다", "계산 금액이 1달러 늘면 팁이 평균 약 0.1달러 늘어난다", "상관계수가 0.105다", "팁이 1달러 늘면 계산 금액이 0.105달러 는다"], answer: 1, explain: "기울기는 x가 1 늘 때 선 위의 y가 늘어나는 양입니다. 개별 점은 선 위아래로 흩어져 있습니다." },
           { kind: "ox", q: "추세선 주변의 옅은 띠 안에 대부분의 점이 들어 있어야 한다.", answer: false, explain: "띠는 '선이 있을 법한 범위'(신뢰 구간)이지 점들의 범위가 아닙니다. 대부분의 점은 띠 밖에 있습니다." },
         ] },
+    ] },
+  { id: "vz-16", track: "python-viz", dir: "python-da", title: "상관계수 · 히트맵", summary: "상관계수 r, 상관 히트맵, 같은 r 다른 그림, 상관은 원인이 아니다", level: "실무",
+    concepts: ["viz.relation"],
+    lessons: [
       { id: "da-15-3", title: "상관계수와 히트맵 읽기", minutes: 20, concepts: ["viz.relation"],
         quiz: [
           { kind: "ox", q: "상관계수가 0에 가까우면 두 값 사이에는 아무 관계도 없다.", answer: false, explain: "r은 직선 관계만 잽니다. 양 끝에서 고장이 나는 U자 관계처럼 r ≈ 0이어도 강한 관계가 있을 수 있습니다." },
           { kind: "choice", q: "네 데이터의 상관계수가 모두 0.82로 같다. 가장 먼저 할 일은?", options: ["네 데이터 모두 강한 직선 관계라고 보고한다", "산점도를 그려 곡선 · 이상치 여부를 확인한다", "평균을 비교한다", "히트맵을 그린다"], answer: 1, explain: "앤스콤의 네 데이터처럼 r이 같아도 모양은 전혀 다를 수 있습니다. r을 보고하기 전에 산점도를 그립니다." },
           { kind: "ox", q: "아이스크림 판매량과 물놀이 사고 건수의 상관계수가 0.9이므로, 아이스크림 판매가 사고의 원인이다.", answer: false, explain: "상관은 인과가 아닙니다. 둘 다 더운 날씨라는 제3의 원인 때문에 함께 늘었을 수 있습니다." },
         ] },
-      { id: "da-15-4", title: "여러 변수 한 번에: pairplot · jointplot", minutes: 18, concepts: ["viz.relation"],
+    ] },
+  { id: "vz-17", track: "python-viz", dir: "python-da", title: "pairplot · jointplot", summary: "여러 변수 한 번에 훑기, 섞인 그룹과 심슨의 역설", unit: 30, level: "실무",
+    concepts: ["viz.relation"],
+    lessons: [
+      { id: "da-15-4", title: "pairplot · jointplot 읽기", minutes: 18, concepts: ["viz.relation"],
         quiz: [
           { kind: "choice", q: "펭귄 전체로는 부리 깊이와 몸무게의 r이 −0.47인데, 종별로 나누면 세 종 모두 +0.6 안팎이다. 알맞은 결론은?", options: ["부리가 깊을수록 가볍다", "같은 종 안에서는 부리가 깊을수록 무겁다. 전체 음의 관계는 종을 섞어서 생긴 착시다", "두 변수는 관계가 없다", "종별 계산이 틀렸다"], answer: 1, explain: "그룹을 섞으면 관계 방향이 뒤집히는 심슨의 역설입니다. 그룹별 결론을 보고합니다." },
         ] },
     ] },
-  { id: "da-16", track: "python-viz", dir: "python-da", title: "구성과 비율: 전체 중 얼마인가", summary: "파이 · 도넛, 누적 막대와 100% 막대, 누적 영역", level: "기본",
+  { id: "vz-18", track: "python-viz", dir: "python-da", title: "파이 · 도넛", summary: "전체 중 비중, 비슷한 조각은 막대로, 무엇의 100%인가, 도넛", level: "기본",
     concepts: ["viz.composition"],
     lessons: [
       { id: "da-16-1", title: "파이 · 도넛 읽기", minutes: 15, concepts: ["viz.composition"],
@@ -528,11 +625,19 @@ export const COURSES = [
           { kind: "choice", q: "제품 12종의 판매 비율을 비교해 가장 많이 팔린 순서를 보여 주려면?", options: ["파이 그래프", "크기순으로 정렬한 막대 그래프", "선 그래프", "히스토그램"], answer: 1, explain: "조각이 많거나 비슷한 파이는 크기 비교가 어렵습니다. 정렬한 막대가 순위를 가장 정확히 보여 줍니다." },
           { kind: "ox", q: "파이 그래프는 빠진 값(결측)이 많으면 원이 덜 채워져서 바로 알 수 있다.", answer: false, explain: "파이는 무엇을 넣든 꽉 찬 원(100%)으로 그려집니다. 분모(n)를 제목이나 설명에서 확인해야 합니다." },
         ] },
+    ] },
+  { id: "vz-19", track: "python-viz", dir: "python-da", title: "누적 막대 · 100% 막대", summary: "개수 누적 vs 100% 누적, 가운데 조각 읽기, 막대마다 n 적기", level: "기본",
+    concepts: ["viz.composition"],
+    lessons: [
       { id: "da-16-2", title: "누적 막대와 100% 막대 읽기", minutes: 18, concepts: ["viz.composition"],
         quiz: [
           { kind: "choice", q: "등급별 생존 비율을 비교하려고 한다. 그룹 크기가 491명, 216명, 184명으로 다를 때 알맞은 그래프는?", options: ["개수 누적 막대", "100% 누적 막대 + 막대마다 n 표시", "파이 세 개", "선 그래프"], answer: 1, explain: "비율 비교는 100% 막대가 정확합니다. 그룹 크기가 사라지므로 n을 함께 적습니다." },
           { kind: "ox", q: "누적 막대에서 위쪽 조각은 조각 끝의 높이로 막대끼리 비교할 수 있다.", answer: false, explain: "위쪽 조각은 막대마다 시작 높이가 달라서 끝 높이가 아니라 조각 길이로 비교해야 합니다." },
         ] },
+    ] },
+  { id: "vz-20", track: "python-viz", dir: "python-da", title: "누적 영역", summary: "전체 추이와 구성 변화를 한 장에, 100% 누적 영역", level: "기본",
+    concepts: ["viz.composition"],
+    lessons: [
       { id: "da-16-3", title: "시간에 따른 구성: 누적 영역", minutes: 15, concepts: ["viz.composition"],
         quiz: [
           { kind: "ox", q: "100% 누적 영역에서 겨울 층이 얇아졌으므로 겨울 승객 수가 줄었다.", answer: false, explain: "100% 그래프는 비중만 보여 줍니다. 겨울 승객 수는 3.6배 늘었고 비중만 조금 줄었습니다." },
@@ -587,7 +692,7 @@ export const COURSES = [
         { kind: "write", lang: "sql", q: "CASE를 써서 연봉(sal)이 10000 이상이면 '고급여', 6000 이상이면 '중간', 나머지는 '기본'으로 등급을 붙이고, 사원 이름(ename_ko)과 등급을 조회하는 SQL을 작성하세요.", given: "SELECT ename_ko,\n       CASE\n       END AS grade\nFROM emp;", must: ["CASE"], solution: "SELECT ename_ko,\n       CASE\n           WHEN sal >= 10000 THEN '고급여'\n           WHEN sal >= 6000 THEN '중간'\n           ELSE '기본'\n       END AS grade\nFROM emp;", explain: "큰 값(좁은 조건)부터 씁니다. 6000 이상을 먼저 쓰면 10000 이상도 모두 '중간'이 됩니다." },
         { kind: "ox", q: "CASE는 WHEN 조건을 모두 확인한 뒤, 마지막으로 맞은 조건의 값을 고른다.", answer: false, explain: "위에서부터 확인하다가 처음 맞는 조건에서 멈춥니다. 그래서 조건 순서가 결과를 바꿉니다." },
       ] }] },
-  { id: "sq-04", track: "sql", title: "JOIN", summary: "INNER · LEFT JOIN, 짝 없는 행 찾기, 키 중복, SELF JOIN, UNION", level: "기본",
+  { id: "sq-04", track: "sql", title: "JOIN", summary: "INNER · LEFT JOIN, 짝 없는 행 찾기, 키 중복, SELF JOIN, UNION · INTERSECT · EXCEPT", level: "기본",
     concepts: ["sql.join"],
     lessons: [{ id: "sq-04-1", title: "흩어진 표를 키로 잇기", minutes: 25, concepts: ["sql.join"],
       quiz: [
@@ -595,7 +700,7 @@ export const COURSES = [
         { kind: "choice", q: "고객 256명(users)과 주문 372건(orders)이 있고, 주문이 한 건도 없는 고객이 64명이다. users LEFT JOIN orders 의 결과는 몇 행일까?", options: ["256행", "372행", "436행", "95,232행"], answer: 2, explain: "주문이 있는 고객은 주문 수만큼(372행), 주문이 없는 고객 64명은 NULL을 채운 1행씩 남습니다. 372 + 64 = 436." },
         { kind: "ox", q: "UNION은 붙인 결과에서 중복 행을 지우고, UNION ALL은 지우지 않는다.", answer: true, explain: "중복을 지우는 만큼 UNION이 더 느립니다. 중복이 없거나 지울 필요가 없으면 UNION ALL." },
       ] }] },
-  { id: "sq-05", track: "sql", title: "서브쿼리와 CTE", summary: "WHERE · SELECT · FROM 안의 서브쿼리, IN, 상관 서브쿼리, WITH", level: "기본",
+  { id: "sq-05", track: "sql", title: "서브쿼리와 CTE", summary: "WHERE · SELECT · FROM 안의 서브쿼리, IN, EXISTS · NOT EXISTS, 상관 서브쿼리, WITH", level: "기본",
     concepts: ["sql.subquery"],
     lessons: [{ id: "sq-05-1", title: "쿼리 안의 쿼리, 이름 붙인 중간 결과", minutes: 22, concepts: ["sql.subquery"],
       quiz: [
@@ -616,6 +721,51 @@ export const COURSES = [
         { kind: "choice", q: "'장바구니 → 구매' 전환율을 계산할 때 분모는?", options: ["방문(visit) 세션 수", "상품 보기(view) 세션 수", "장바구니(cart) 세션 수", "구매(purchase) 세션 수"], answer: 2, explain: "단계 전환율 = 이번 단계 ÷ 바로 앞 단계. 장바구니에 담은 세션 중 몇 %가 샀는지이므로 분모는 장바구니 세션 수입니다." },
         { kind: "ox", q: "코호트 표에서 아직 관측하지 못한 달(예: 6월 가입자의 2개월째)은 0으로 채워야 한다.", answer: false, explain: "아직 오지 않은 달은 0이 아니라 '모름(NULL)'입니다. 0으로 채우면 아무도 다시 사지 않았다는 틀린 결론이 나옵니다." },
       ] }] },
+  // 데이터베이스 설계 구역 (2026-11-07 추가). 셀 안에서 CREATE TABLE로 작은 표를 직접 만든다. 기획안: docs/lesson-plans/sql.md PART 6
+  { id: "sq-09", track: "sql", title: "데이터 모델링", summary: "개념 · 논리 · 물리 모델, 엔터티 · 속성 · 관계, ERD 표기, 카디널리티, N:M 연결 테이블, 키의 종류", level: "기본",
+    concepts: ["sql.modeling"],
+    lessons: [
+      { id: "sq-09-1", title: "설계도부터 그리기: 개념 · 논리 · 물리 모델", minutes: 15, concepts: ["sql.modeling"] },
+      { id: "sq-09-2", title: "ERD 읽기: 관계 · 카디널리티 · 키", minutes: 20, concepts: ["sql.modeling"],
+        quiz: [
+          { kind: "choice", q: "고객 한 명은 주문을 여러 번 할 수 있고, 주문 한 건은 고객 한 명의 것이다. 고객 번호(외래키)는 어느 표에 두어야 할까?", options: ["고객 표", "주문 표", "두 표 모두", "새 연결 테이블"], answer: 1, explain: "고객 : 주문 = 1 : N입니다. 외래키는 N쪽(주문 표)에 둡니다. 주문 한 건에는 고객이 하나뿐이라 칸 하나면 충분합니다." },
+          { kind: "choice", q: "학생은 여러 동아리에 가입할 수 있고, 동아리에도 여러 학생이 있다. 이 관계를 표로 만드는 방법은?", options: ["학생 표에 동아리 번호 열을 하나 추가한다", "동아리 표에 학생 번호 열을 하나 추가한다", "학생 번호와 동아리 번호를 담는 가입 표(연결 테이블)를 만든다", "한 칸에 동아리 번호를 쉼표로 이어 적는다"], answer: 2, explain: "N:M 관계는 연결 테이블로 1:N 두 개로 풉니다. 쉼표로 여러 값을 적으면 1NF 위반입니다." },
+          { kind: "ox", q: "학생 표에서 {학번, 이름}은 행을 하나로 집을 수 있으므로 후보키다.", answer: false, explain: "학번만으로도 유일하므로 이름은 군더더기입니다. 최소성이 없어 슈퍼키이지 후보키가 아닙니다." },
+        ] },
+    ] },
+  { id: "sq-10", track: "sql", title: "정규화와 반정규화", summary: "삽입 · 갱신 · 삭제 이상, 함수 종속, 1NF · 2NF · 3NF · BCNF, 반정규화 기법, OLTP vs OLAP, 스타 스키마", level: "기본",
+    concepts: ["sql.normalization"],
+    lessons: [
+      { id: "sq-10-1", title: "한 사실은 한 곳에: 이상 현상과 정규화", minutes: 25, concepts: ["sql.normalization"] },
+      { id: "sq-10-2", title: "일부러 합치기: 반정규화와 분석용 테이블", minutes: 20, concepts: ["sql.normalization"],
+        quiz: [
+          { kind: "choice", q: "기본키가 (학번, 과목 코드)인 수강 표에 학생 이름이 함께 들어 있다. 학생 이름은 학번만 알면 정해진다. 이 열을 떼어 내는 정규화 단계는?", options: ["1NF", "2NF", "3NF", "BCNF"], answer: 1, explain: "기본키의 일부(학번)에만 기대는 부분 종속입니다. 부분 종속을 없애는 것이 2NF입니다." },
+          { kind: "choice", q: "과목 담당 교수가 바뀌어 여러 줄 중 일부만 고쳤더니, 같은 과목에 교수가 둘이 되었다. 이 현상은?", options: ["삽입 이상", "갱신 이상", "삭제 이상", "무손실 분해"], answer: 1, explain: "같은 사실이 여러 줄에 중복되어, 고칠 때 일부를 빠뜨려 모순이 생긴 갱신 이상입니다." },
+          { kind: "ox", q: "반정규화는 처음 설계할 때부터 JOIN을 줄이기 위해 적극적으로 적용하는 것이 좋다.", answer: false, explain: "정규화를 먼저 하고, 실제로 느린 쿼리를 측정한 뒤 꼭 필요한 곳만 반정규화합니다. 중복 데이터를 맞출 규칙도 함께 정합니다." },
+        ] },
+    ] },
+  { id: "sq-11", track: "sql", title: "테이블 만들고 고치기", summary: "DDL · DML · DCL · TCL, CREATE · ALTER · DROP, 자료형, 제약조건과 무결성, INSERT · UPDATE · DELETE", level: "기본",
+    concepts: ["sql.ddl-dml"],
+    lessons: [
+      { id: "sq-11-1", title: "테이블 만들기: 자료형과 제약조건", minutes: 25, concepts: ["sql.ddl-dml"] },
+      { id: "sq-11-2", title: "데이터 넣고 고치고 지우기", minutes: 18, concepts: ["sql.ddl-dml"],
+        quiz: [
+          { kind: "write", lang: "sql", q: "아산공장(deptno 40) 사원의 연봉(sal)을 500 올린 뒤, 40번 부서 사원의 이름(ename_ko)과 연봉을 조회하는 SQL을 작성하세요.", given: "UPDATE emp\nSET \nWHERE deptno = 40;\n\nSELECT ename_ko, sal\nFROM emp\nWHERE deptno = 40;", must: ["UPDATE"], solution: "UPDATE emp\nSET sal = sal + 500\nWHERE deptno = 40;\n\nSELECT ename_ko, sal\nFROM emp\nWHERE deptno = 40;", explain: "SET sal = sal + 500처럼 지금 값으로 계산해 고칩니다. WHERE deptno = 40이 없으면 전 직원의 연봉이 오릅니다. 이주영 6000 → 6500." },
+          { kind: "choice", q: "DELETE FROM emp; 를 실행하면?", options: ["emp 표가 통째로 사라진다", "emp의 모든 행이 지워지고 표 구조는 남는다", "WHERE가 없어서 오류가 난다", "첫 번째 행만 지워진다"], answer: 1, explain: "WHERE가 없으면 모든 행이 대상입니다. 표 구조까지 지우는 것은 DROP TABLE입니다." },
+          { kind: "choice", q: "학년(grade) 열에 1, 2, 3만 들어오게 하려면 어떤 제약조건을 쓸까?", options: ["NOT NULL", "UNIQUE", "CHECK", "DEFAULT"], answer: 2, explain: "CHECK (grade BETWEEN 1 AND 3)처럼 허용할 값의 조건을 적습니다. 이런 규칙이 지키는 것을 도메인 무결성이라고 합니다." },
+        ] },
+    ] },
+  { id: "sq-12", track: "sql", title: "트랜잭션 · 인덱스 · 뷰", summary: "BEGIN · COMMIT · ROLLBACK, ACID, 잠금, B-Tree 인덱스, 실행 계획, 인덱스를 못 쓰는 조건, 뷰", level: "실무",
+    concepts: ["sql.tx-index"],
+    lessons: [
+      { id: "sq-12-1", title: "모두 되거나, 모두 안 되거나: 트랜잭션", minutes: 18, concepts: ["sql.tx-index"] },
+      { id: "sq-12-2", title: "빨리 찾고, 이름 붙여 두기: 인덱스와 뷰", minutes: 22, concepts: ["sql.tx-index"],
+        quiz: [
+          { kind: "choice", q: "BEGIN 뒤에 UPDATE 두 개를 실행하고 ROLLBACK 했다. 결과는?", options: ["두 UPDATE 모두 반영된다", "첫 번째 UPDATE만 반영된다", "두 UPDATE 모두 취소되어 BEGIN 전 상태가 된다", "마지막 UPDATE만 취소된다"], answer: 2, explain: "ROLLBACK은 BEGIN 이후의 변경을 모두 취소합니다. 전부 되거나 전부 안 되는 원자성입니다." },
+          { kind: "choice", q: "orders의 order_date 열에 인덱스가 있다. 다음 중 인덱스를 쓰지 못하는 조건은?", options: ["WHERE order_date = '2025-07-01'", "WHERE order_date >= '2025-07-01'", "WHERE substr(order_date, 1, 4) = '2025'", "WHERE order_date BETWEEN '2025-07-01' AND '2025-07-31'"], answer: 2, explain: "열을 함수로 감싸면 정렬된 인덱스를 쓸 수 없어 전체 스캔이 됩니다. order_date >= '2025-01-01' AND order_date < '2026-01-01'처럼 범위로 씁니다." },
+          { kind: "ox", q: "인덱스는 검색을 빠르게 하므로 모든 열에 만들어 두는 것이 좋다.", answer: false, explain: "인덱스는 저장 공간을 쓰고, INSERT · UPDATE · DELETE 때마다 함께 고쳐야 해서 쓰기가 느려집니다. 자주 쓰는 느린 쿼리의 열에만 만듭니다." },
+        ] },
+    ] },
 
   // ── 통계 ─────────────────────────────────────────────────
   // 코스 · 레슨 id는 유지하고 레슨을 나눴다(2026-11-05). DAY 번호는 아래 배열 순서로 정해진다. 기획안: docs/lesson-plans/stats.md
@@ -832,6 +982,8 @@ export const COURSES = [
   { id: "ml-01", track: "ml", title: "ML 워크플로와 데이터 준비", summary: "특성과 정답, 결측치, 인코딩, train/test, stratify, 기준 모델, 누수", unit: 17, level: "입문",
     concepts: ["ml.workflow", "ml.missing", "ml.encoding"],
     lessons: [
+    // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+    { id: "ml-01-0", title: "scikit-learn 소개: 머신러닝 공구 상자", minutes: 12, concepts: ["ml.workflow"] },
     { id: "ml-01-1", title: "데이터를 표로 보기: 특성과 정답", minutes: 12, concepts: ["ml.workflow"],
       quiz: [
         { kind: "choice", q: "타이타닉에서 '생존 여부'를 예측하려고 한다. 정답(y)이 되는 열은?", options: ["pclass", "sex", "survived", "fare"], answer: 2, explain: "맞히고 싶은 값이 정답 y이고, 나머지 중 예측에 쓰는 열이 특성 X입니다." },
@@ -855,8 +1007,8 @@ export const COURSES = [
         { kind: "ox", q: "스케일러는 전체 데이터로 fit 한 뒤 나누는 것이 정석이다.", answer: false, explain: "분할 후 학습 데이터로만 fit 해야 누수가 없습니다." },
         { kind: "choice", q: "타이타닉 생존(survived) 예측 모델의 특성으로 넣으면 안 되는 열은?", options: ["pclass (객실 등급)", "age (나이)", "alive (생존 여부 yes/no)", "fare (운임)"], answer: 2, explain: "alive는 정답을 다른 말로 쓴 열이라 넣으면 정답을 그대로 읽는 누수가 됩니다." },
       ] }] },
-  { id: "ml-02", track: "ml", title: "선형 · 로지스틱 회귀", summary: "직선 예측, MAE · RMSE · R², 경사하강법, 다중 회귀, 확률 출력", unit: 18, level: "기본",
-    concepts: ["ml.linear", "ml.gd"],
+  { id: "ml-02", track: "ml", title: "선형 · 로지스틱 회귀", summary: "직선 예측, MAE · RMSE · R², 경사하강법, 다중 회귀, 확률 출력, Ridge · Lasso", unit: 18, level: "기본",
+    concepts: ["ml.linear", "ml.gd", "ml.regularization"],
     lessons: [
     { id: "ml-02-1", title: "선형회귀: 직선 하나로 예측하기", minutes: 12, concepts: ["ml.linear"],
       quiz: [
@@ -876,6 +1028,10 @@ export const COURSES = [
     { id: "ml-02-5", title: "로지스틱 회귀: 확률로 분류하기", minutes: 15, concepts: ["ml.linear"],
       quiz: [
         { kind: "ox", q: "LogisticRegression의 predict는 확률이 0.5 이상이면 1로 판정한다.", answer: true, explain: "이진 분류의 기본 임계값은 0.5입니다." },
+      ] },
+    { id: "ml-02-6", title: "계수에 벌점 주기: Ridge와 Lasso", minutes: 15, concepts: ["ml.regularization"],
+      quiz: [
+        { kind: "choice", q: "쓸모없는 특성의 계수를 딱 0으로 만들어, 특성을 저절로 골라 주는 효과가 있는 것은?", options: ["Ridge", "Lasso", "LinearRegression", "StandardScaler"], answer: 1, explain: "Lasso는 계수의 절댓값에 벌점을 줘서 작은 계수를 0으로 만듭니다. Ridge는 모든 계수를 조금씩 줄일 뿐 0으로 만들지는 않습니다." },
       ] }] },
   { id: "ml-03", track: "ml", title: "평가지표", summary: "혼동행렬, precision · recall · F1, 임계값, ROC-AUC · PR-AUC", unit: 19, level: "기본",
     concepts: ["ml.metrics"],
@@ -913,8 +1069,8 @@ export const COURSES = [
       quiz: [
         { kind: "choice", q: "앞 트리들이 틀린 부분을 고치도록 트리를 하나씩 차례로 쌓는 방법은?", options: ["랜덤포레스트(배깅)", "부스팅", "교차검증", "PCA"], answer: 1, explain: "배깅은 독립된 트리들의 다수결, 부스팅은 앞 트리의 실수를 차례로 보완합니다." },
       ] }] },
-  { id: "ml-05", track: "ml", title: "교차검증과 하이퍼파라미터", summary: "K-fold, GridSearchCV, 검증 곡선 · 학습 곡선", unit: 35, level: "기본",
-    concepts: ["ml.cv", "ml.overfit"],
+  { id: "ml-05", track: "ml", title: "교차검증과 하이퍼파라미터", summary: "K-fold, GridSearchCV, 검증 곡선 · 학습 곡선, 시계열 분할", unit: 35, level: "기본",
+    concepts: ["ml.cv", "ml.overfit", "ml.timeseries"],
     lessons: [
     { id: "ml-05-1", title: "K-fold 교차검증: 돌아가며 시험 보기", minutes: 15, concepts: ["ml.cv"],
       quiz: [
@@ -927,9 +1083,13 @@ export const COURSES = [
     { id: "ml-05-3", title: "검증 곡선: 설정값에 따라 점수가 어떻게 변하나", minutes: 15, concepts: ["ml.cv", "ml.overfit"],
       quiz: [
         { kind: "choice", q: "검증 곡선에서 학습 점수와 검증 점수가 둘 다 낮고 서로 붙어 있다. 어떤 상태일까?", options: ["과적합", "과소적합", "누수", "딱 좋음"], answer: 1, explain: "둘 다 낮으면 데이터의 패턴도 다 배우지 못한 과소적합입니다. 학습 점수만 높고 간격이 크게 벌어지면 과적합입니다." },
+      ] },
+    { id: "ml-05-4", title: "시간 순서가 있는 데이터 나누기", minutes: 15, concepts: ["ml.timeseries", "ml.cv"],
+      quiz: [
+        { kind: "ox", q: "월별 판매량처럼 시간 순서가 있는 데이터도 shuffle=True로 섞은 K-fold로 검증하는 것이 가장 정확하다.", answer: false, explain: "섞으면 미래 데이터로 과거를 맞히는 셈이라 점수가 부풀려집니다(숲 MAE 13.8 vs 시간 순서 28.6). TimeSeriesSplit처럼 과거로 학습하고 그 뒤로 시험합니다." },
       ] }] },
-  { id: "ml-06", track: "ml", title: "피처 엔지니어링과 Pipeline", summary: "SimpleImputer · OneHotEncoder, 표준화 · 정규화, 새 특성, ColumnTransformer · Pipeline", unit: 36, level: "실무",
-    concepts: ["ml.feature"],
+  { id: "ml-06", track: "ml", title: "피처 엔지니어링과 Pipeline", summary: "SimpleImputer · OneHotEncoder · 타깃 인코딩, 표준화 · 로그 변환, 새 특성, Pipeline, 피처 셀렉션, 다중공선성 · VIF", unit: 36, level: "실무",
+    concepts: ["ml.feature", "ml.selection", "ml.collinearity"],
     lessons: [
     { id: "ml-06-1", title: "도구로 빈칸 채우고 글자 바꾸기", minutes: 15, concepts: ["ml.feature", "ml.missing", "ml.encoding"],
       quiz: [
@@ -943,9 +1103,18 @@ export const COURSES = [
       ] },
     { id: "ml-06-4", title: "Pipeline: 손질부터 모델까지 한 줄로", minutes: 12, concepts: ["ml.feature"],
       quiz: [
+      ] },
+    { id: "ml-06-5", title: "쓸 특성만 고르기: 피처 셀렉션", minutes: 15, concepts: ["ml.selection"],
+      quiz: [
+        { kind: "choice", q: "모델을 여러 번 학습하면서 가장 덜 쓰인 특성을 하나씩 빼 나가는 방식은?", options: ["Filter (SelectKBest)", "Wrapper (RFE)", "Embedded (Lasso)", "PCA"], answer: 1, explain: "RFE는 모델을 반복 학습하며 약한 열을 빼는 Wrapper 방식입니다. 조합을 보고 고르지만 느립니다." },
+        { kind: "ox", q: "전체 데이터로 SelectKBest를 해서 특성을 고른 뒤 교차검증하면 정직한 점수가 나온다.", answer: false, explain: "특성 선택도 정답을 보는 단계라, 전체 데이터로 고르면 시험 조각의 정답을 미리 본 셈입니다(난수 데이터가 0.79로 부풀려짐). Pipeline 안에서 골라야 합니다." },
+      ] },
+    { id: "ml-06-6", title: "비슷한 열이 겹칠 때: 다중공선성과 VIF", minutes: 15, concepts: ["ml.collinearity"],
+      quiz: [
+        { kind: "choice", q: "어떤 열의 VIF가 10이다. 무슨 뜻일까?", options: ["이 열은 정답과 상관이 0.9다", "나머지 특성들로 이 열을 약 90%(R² 0.9) 설명할 수 있다", "이 열의 중요도가 10위다", "이 열에 빈칸이 10% 있다"], answer: 1, explain: "VIF = 1 / (1 − R²). 다른 특성들로 이 열을 맞힌 R²가 0.9면 VIF는 10입니다. 거의 다른 열의 복사본이라는 뜻입니다." },
       ] }] },
-  { id: "ml-07", track: "ml", title: "비지도 학습", summary: "K-means 군집, 엘보 · 실루엣, PCA", unit: 37, level: "실무",
-    concepts: ["ml.kmeans", "ml.pca"],
+  { id: "ml-07", track: "ml", title: "비지도 학습", summary: "K-means 군집, 엘보 · 실루엣, DBSCAN · 계층 군집, PCA, 이상 탐지", unit: 37, level: "실무",
+    concepts: ["ml.kmeans", "ml.pca", "ml.anomaly"],
     lessons: [
     { id: "ml-07-1", title: "K-means: 정답 없이 묶기", minutes: 15, concepts: ["ml.kmeans"],
       quiz: [
@@ -959,6 +1128,10 @@ export const COURSES = [
     { id: "ml-07-3", title: "PCA: 여러 열을 몇 개로 요약하기", minutes: 15, concepts: ["ml.pca"],
       quiz: [
         { kind: "ox", q: "PCA의 첫 번째 주성분은 데이터의 분산이 가장 큰 방향이다.", answer: true, explain: "두 번째는 첫 번째와 직교하면서 남은 분산이 가장 큰 방향입니다." },
+      ] },
+    { id: "ml-07-4", title: "평소와 다른 것 찾기: 이상 탐지", minutes: 15, concepts: ["ml.anomaly"],
+      quiz: [
+        { kind: "ox", q: "IsolationForest가 이상 점수 1등으로 뽑은 설비는 반드시 고장이다.", answer: false, explain: "이상 점수는 '평소와 다르다'는 뜻일 뿐입니다. 실제로 1등 설비는 고장이 아니었고, 상위 1% 중 고장은 34%였습니다. 사람이 먼저 볼 후보로 씁니다." },
       ] }] },
   { id: "ml-08", track: "ml", title: "불균형 데이터", summary: "정확도의 함정, class_weight, 임계값과 비용, 오버샘플링", unit: 38, level: "실무",
     concepts: ["ml.imbalance"],
@@ -978,8 +1151,8 @@ export const COURSES = [
       quiz: [
         { kind: "ox", q: "오버샘플링은 train/test로 나누기 전에 전체 데이터에 해야 한다.", answer: false, explain: "나누기 전에 복사하면 같은 행의 복사본이 시험용에도 들어가 점수가 부풀려집니다. 반드시 나눈 뒤 학습용에만 합니다." },
       ] }] },
-  { id: "ml-09", track: "ml", title: "모델 해석", summary: "피처 중요도, 순열 중요도, 표준화 계수, 부분 의존도", unit: 39, level: "실무",
-    concepts: ["ml.explain"],
+  { id: "ml-09", track: "ml", title: "모델 해석", summary: "피처 중요도, 순열 중요도, 표준화 계수, 부분 의존도, SHAP", unit: 39, level: "실무",
+    concepts: ["ml.explain", "ml.shap"],
     lessons: [
     { id: "ml-09-1", title: "무엇을 많이 봤나: 피처 중요도와 순열 중요도", minutes: 15, concepts: ["ml.explain"],
       quiz: [
@@ -989,6 +1162,11 @@ export const COURSES = [
     { id: "ml-09-2", title: "어느 방향으로, 어떤 모양으로: 계수와 부분 의존도", minutes: 15, concepts: ["ml.explain"],
       quiz: [
         { kind: "ox", q: "부분 의존도에서 토크가 60을 넘을 때 고장 확률이 급히 오르면, 토크를 낮추면 반드시 고장이 줄어든다고 결론 내릴 수 있다.", answer: false, explain: "부분 의존도는 모델이 배운 관계(상관)를 보여 줄 뿐 인과를 증명하지 않습니다. 실제 조치는 현장 지식과 실험으로 확인합니다." },
+      ] },
+    { id: "ml-09-3", title: "이 한 건은 왜?: SHAP 값 직접 계산하기", minutes: 15, concepts: ["ml.shap", "ml.explain"],
+      quiz: [
+        { kind: "short", q: "기본값(평균 예측)이 0.05이고, 한 설비의 SHAP 값이 토크 +0.60, 공구 마모 +0.20, 나머지 열 합계 −0.05다. 이 설비의 모델 예측 확률은? (소수)", answer: ["0.8", "0.80", ".8"], explain: "기본값 + SHAP 값의 합 = 예측. 0.05 + 0.60 + 0.20 − 0.05 = 0.80." },
+        { kind: "ox", q: "어떤 설비에서 토크의 SHAP 값이 가장 크면, 토크를 낮추면 그 설비의 고장이 줄어든다는 것이 증명된 것이다.", answer: false, explain: "SHAP 값은 모델이 그렇게 계산했다는 판단 근거일 뿐, 원인을 증명하지 않습니다. 조치 효과는 현장 실험으로 확인합니다." },
       ] }] },
   { id: "ml-10", track: "ml", title: "다른 모델 둘러보기", summary: "KNN, 나이브 베이즈와 라플라스 스무딩, SVM과 커널, 모델 고르기", level: "실무", unit: 47,
     concepts: ["ml.knn", "ml.nb", "ml.svm"],
@@ -1004,6 +1182,16 @@ export const COURSES = [
     { id: "ml-10-3", title: "SVM: 가장 넓은 길 찾기, 그리고 모델 고르기", minutes: 15, concepts: ["ml.svm"],
       quiz: [
         { kind: "choice", q: "새 표 데이터 분류 문제를 받았다. 이 트랙에서 정리한 순서대로라면 가장 먼저 할 일은?", options: ["부스팅 설정값을 GridSearch로 튜닝한다", "기준 모델(찍기) 점수를 확인한다", "SVM 커널을 바꿔 본다", "딥러닝 모델을 만든다"], answer: 1, explain: "기준 모델로 최소선을 확인하고 → 로지스틱 회귀 → 트리 앙상블 순서로 시도합니다." },
+      ] }] },
+  { id: "ml-11", track: "ml", title: "현장에 내보내기", summary: "모델 저장 · 불러오기, 드리프트 감시, 처음부터 끝까지 미니 프로젝트", level: "실무",
+    concepts: ["ml.deploy"],
+    lessons: [
+    { id: "ml-11-1", title: "모델 저장하고 다시 쓰기, 그리고 드리프트", minutes: 15, concepts: ["ml.deploy"],
+      quiz: [
+        { kind: "choice", q: "고장 여부(정답)는 몇 주 뒤에야 확정된다. 배포한 모델이 낡았는지 가장 먼저 알아챌 수 있는 방법은?", options: ["정답이 쌓일 때까지 기다린다", "새로 들어오는 입력 데이터의 분포를 학습 때와 비교한다", "모델을 매일 처음부터 다시 만든다", "판정 기준선을 0.5로 되돌린다"], answer: 1, explain: "정답은 늦게 오지만 입력은 바로 옵니다. KS 통계량 등으로 입력 분포가 학습 때와 달라졌는지 먼저 감시합니다(공기 온도 KS 0.762)." },
+      ] },
+    { id: "ml-11-2", title: "처음부터 끝까지: 설비 고장 예측 미니 프로젝트", minutes: 25, concepts: ["ml.deploy", "ml.workflow"],
+      quiz: [
       ] }] },
 
   // ── 딥러닝 (개념 학습, 실습 없음) ───────────────────────────
@@ -1023,6 +1211,8 @@ export const COURSES = [
   { id: "dl-01", track: "dl", title: "퍼셉트론과 활성화 함수", summary: "뉴런의 가중합 · 활성화, 시그모이드 · ReLU · 소프트맥스, XOR과 은닉층", unit: 40, level: "입문",
     concepts: ["dl.perceptron"],
     lessons: [
+    // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
+    { id: "dl-01-0", title: "PyTorch 소개: 딥러닝을 만드는 도구", minutes: 12, concepts: ["dl.perceptron"] },
     { id: "dl-01-1", title: "뉴런 하나가 하는 일", minutes: 12, concepts: ["dl.perceptron"],
       quiz: [
         { kind: "short", q: "가중치 (2, 1), 편향 −1인 뉴런에 입력 (1, 0)이 들어왔다. 가중합 z는?", answer: ["1"], explain: "2 × 1 + 1 × 0 + (−1) = 1." },
@@ -1177,6 +1367,60 @@ export const COURSES = [
       ] }] },
 ];
 
+// 트랙 페이지의 구역(단원). 같은 구역의 코스는 COURSES 순서에서 이어져 있어야 한다.
+// DAY 번호는 구역과 관계없이 트랙 전체에서 이어 매긴다(dayNo). 구역에 없는 코스는 맨 뒤에 머리글 없이 붙는다.
+export const SECTIONS = {
+  "python-basic": [
+    { id: "start", label: "시작하기", en: "Start", blurb: "파이썬이 무엇이고 어디서 실행하는지", courses: ["pb-00"] },
+    { id: "data", label: "자료형과 자료구조", en: "Data Types", blurb: "숫자 · 문자열 · 리스트 · 딕셔너리로 값을 담고 다루기", courses: ["pb-01", "pb-02", "pb-03", "pb-04", "pb-05", "pb-06"] },
+    { id: "flow", label: "제어문과 함수", en: "Control Flow", blurb: "조건 · 반복으로 흐름을 만들고 함수로 묶기", courses: ["pb-07", "pb-08", "pb-09"] },
+    { id: "practical", label: "실무 문법", en: "Practical", blurb: "파일 입출력, 컴프리헨션 · 람다, 예외 처리, 표준 라이브러리", courses: ["pb-10", "pb-11", "pb-12", "pb-13"] },
+  ],
+  "python-da": [
+    { id: "numpy", label: "NumPy", en: "NumPy", blurb: "배열로 숫자를 한꺼번에 계산하기", courses: ["da-01", "da-02"] },
+    { id: "pandas-basic", label: "pandas 기초", en: "pandas Basics", blurb: "표를 읽고, 고르고, 깨끗하게 다듬기", courses: ["da-03", "da-04", "da-05"] },
+    { id: "pandas-adv", label: "pandas 활용", en: "pandas in Practice", blurb: "묶어서 요약하고, 여러 표를 합치고, 시간 순으로 보기", courses: ["da-06", "da-07", "da-08"] },
+  ],
+  "python-viz": [
+    { id: "matplotlib", label: "matplotlib", en: "matplotlib", blurb: "파이썬 그래프의 바탕: 도화지와 그래프 칸", courses: ["da-09"] },
+    { id: "seaborn", label: "seaborn", en: "seaborn", blurb: "표와 열 이름만으로 그리는 통계 그래프", courses: ["da-10"] },
+    { id: "compare", label: "비교", en: "Comparison", blurb: "어느 쪽이 더 큰가: 막대 · 오차 막대 · 묶음 막대 · 점 그래프", courses: ["vz-01", "vz-02", "vz-03", "vz-04"] },
+    { id: "trend", label: "추이", en: "Trend", blurb: "시간에 따라 어떻게 변하나: 선 그래프와 다듬기, 여러 시계열", courses: ["vz-05", "vz-06", "vz-07"] },
+    { id: "dist", label: "분포", en: "Distribution", blurb: "값들이 어떻게 퍼져 있나: 히스토그램부터 스웜까지", courses: ["vz-08", "vz-09", "vz-10", "vz-11", "vz-12", "vz-13"] },
+    { id: "relation", label: "관계", en: "Relationship", blurb: "두 값이 함께 움직이나: 산점도 · 추세선 · 상관 · pairplot", courses: ["vz-14", "vz-15", "vz-16", "vz-17"] },
+    { id: "composition", label: "구성", en: "Composition", blurb: "전체 중 얼마인가: 파이 · 누적 막대 · 누적 영역", courses: ["vz-18", "vz-19", "vz-20"] },
+    { id: "wrapup", label: "정리", en: "Wrap-up", blurb: "어떤 차트를 쓸지 고르는 기준과 체크리스트", courses: ["da-11"] },
+  ],
+  sql: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "SQL과 데이터베이스, 실습 데이터 소개", courses: ["sq-00"] },
+    { id: "select", label: "조회 기초", en: "Querying", blurb: "필요한 행과 열을 골라 정렬하기", courses: ["sq-01", "sq-02"] },
+    { id: "aggregate", label: "집계와 변환", en: "Aggregation", blurb: "묶어서 세고 더하기, 값을 바꾸고 구간 나누기", courses: ["sq-03", "sq-06"] },
+    { id: "tables", label: "여러 표 다루기", en: "Joins", blurb: "표를 이어 붙이고, 쿼리 안에 쿼리 넣기", courses: ["sq-04", "sq-05"] },
+    { id: "analysis", label: "분석 쿼리", en: "Analytics", blurb: "윈도우 함수와 KPI · 퍼널 · 리텐션", courses: ["sq-07", "sq-08"] },
+    { id: "design", label: "데이터베이스 설계", en: "Database Design", blurb: "표를 설계하고 나누고, 만들고, 안전하게 바꾸고, 빨리 찾기", courses: ["sq-09", "sq-10", "sq-11", "sq-12"] },
+  ],
+  stats: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "통계가 하는 일과 기본 용어", courses: ["st-00"] },
+    { id: "describe", label: "요약과 확률", en: "Describe · Probability", blurb: "데이터를 숫자로 요약하고, 확률과 분포로 불확실성 다루기", courses: ["st-01", "st-09", "st-02"] },
+    { id: "inference", label: "추론 통계", en: "Inference", blurb: "표본으로 모집단을 추정하고 검정하기", courses: ["st-03", "st-04", "st-05"] },
+    { id: "relation", label: "비교와 관계", en: "Comparison · Relation", blurb: "여러 집단 비교, 두 변수의 관계와 회귀", courses: ["st-06", "st-07"] },
+    { id: "practice", label: "실무 해석", en: "In Practice", blurb: "A/B 테스트 설계와 흔한 해석 실수", courses: ["st-08", "st-10"] },
+  ],
+  ml: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "기계가 배운다는 것", courses: ["ml-00"] },
+    { id: "supervised", label: "지도학습 기본", en: "Supervised", blurb: "데이터 준비부터 회귀 · 분류 · 트리 모델과 평가까지", courses: ["ml-01", "ml-02", "ml-03", "ml-04"] },
+    { id: "tuning", label: "모델 다듬기", en: "Tuning", blurb: "교차검증 · 하이퍼파라미터, 피처 엔지니어링과 Pipeline", courses: ["ml-05", "ml-06"] },
+    { id: "beyond", label: "더 넓히기", en: "Beyond", blurb: "비지도 학습 · 이상 탐지, 불균형 데이터, 모델 해석, 다른 모델", courses: ["ml-07", "ml-08", "ml-09", "ml-10"] },
+    { id: "field", label: "현장에 쓰기", en: "In the Field", blurb: "모델 저장 · 드리프트 감시, 처음부터 끝까지 미니 프로젝트", courses: ["ml-11"] },
+  ],
+  dl: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "머신러닝과 딥러닝은 무엇이 다른가", courses: ["dl-00"] },
+    { id: "basics", label: "신경망 기초", en: "Neural Nets", blurb: "뉴런 · 손실 · 경사하강법 · 역전파 · 과적합", courses: ["dl-01", "dl-02", "dl-03", "dl-04"] },
+    { id: "arch", label: "구조별 모델", en: "Architectures", blurb: "이미지는 CNN, 순서는 RNN, 문장은 어텐션", courses: ["dl-05", "dl-06", "dl-07"] },
+    { id: "practice", label: "생성과 실무", en: "Generative · Practice", blurb: "생성 모델과 사전학습 모델 활용", courses: ["dl-08", "dl-09"] },
+  ],
+};
+
 export const LESSONS = COURSES.flatMap((c) => c.lessons.map((l) => ({ ...l, course: c.id, track: c.track, dir: c.dir || c.track })));
 export const courseById = Object.fromEntries(COURSES.map((c) => [c.id, c]));
 export const lessonById = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
@@ -1185,3 +1429,16 @@ export const coursesOf = (trackId) => COURSES.filter((c) => c.track === trackId)
 export const courseOfUnit = (unitId) => COURSES.find((c) => c.unit === unitId);
 // dir: 레슨 md 폴더. 트랙을 옮긴 코스(da-09~da-11 → python-viz)는 파일을 원래 폴더에 둔다.
 export const lessonPath = (l) => `content/${l.dir || l.track}/${l.id}.md`;
+// 트랙의 코스를 구역별로 나눈다. [{ section | null, courses: [...] }]
+export const sectionsOf = (trackId) => {
+  const list = coursesOf(trackId);
+  const used = new Set();
+  const out = (SECTIONS[trackId] || []).map((sec) => {
+    const courses = list.filter((c) => sec.courses.includes(c.id));
+    courses.forEach((c) => used.add(c.id));
+    return { section: sec, courses };
+  }).filter((g) => g.courses.length);
+  const rest = list.filter((c) => !used.has(c.id));
+  if (rest.length) out.push({ section: null, courses: rest });
+  return out;
+};
