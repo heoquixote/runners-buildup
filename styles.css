@@ -236,14 +236,14 @@ em, i { font-style: normal; }
 .read.panel { clip-path: none; }
 .read { min-width: 0; display: flex; flex-direction: column; max-height: calc(100vh - 120px); position: sticky; top: 70px; }
 @media (max-width: 920px) { .read { position: static; max-height: none; } }
-.tabs { display: flex; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.tabs { display: flex; flex-shrink: 0; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .tab {
   border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--muted);
   border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; white-space: nowrap;
 }
 .tab:hover { color: var(--ink); }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
-.read-body { padding: 18px 20px 24px; overflow: auto; display: grid; gap: 18px; align-content: start; }
+.read-body { flex: 1 1 auto; min-height: 0; padding: 18px 20px 24px; overflow: auto; display: grid; gap: 18px; align-content: start; }
 .read-body h1 { font-size: 22px; }
 .read-body h4 { color: var(--ink-2); }
 .read-body h4 { font-size: 15px; margin-top: 6px; }
