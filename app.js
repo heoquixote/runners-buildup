@@ -1731,7 +1731,7 @@ function dayComplete(c, info) {
   const rankLine = info?.rank ? `<p class="dayend-rank">방금 푼 문제는 <b>${Math.max(info.total, info.rank)}명</b> 중 <b>${info.rank}번째</b>로 맞혔어요.</p>` : "";
   const wrap = document.createElement("div");
   wrap.className = "overlay";
-  wrap.innerHTML = `<div class="celebrate dayend" role="dialog" aria-modal="true" aria-labelledby="day-title">
+  wrap.innerHTML = `<div class="celebrate dayend" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="day-title">
     <div class="dayend-badge"><i>✓</i>Day ${dd(c)} Complete</div>
     <h2 id="day-title"><em>DAY ${dd(c)}</em> 학습이 끝났습니다!${nc ? "<br>다음 일자를 시도해볼까요?" : `<br>${esc(t?.label || "")} 트랙을 완주했어요.`}</h2>
     <p class="dayend-sum">${esc(c.title)} · <b>레슨 ${s.lessonsDone}/${s.lessons}</b>${s.problems ? ` · <b>문제 ${s.solved}/${s.problems}</b>` : ""}</p>
@@ -1745,12 +1745,11 @@ function dayComplete(c, info) {
       <div class="day-chips">${FEEDBACK_REASONS.map((r) => `<button type="button" aria-pressed="false" data-reason="${esc(r)}">${esc(r)}</button>`).join("")}</div>
       <textarea maxlength="1000" placeholder="자세히 적어 주시면 다음 DAY에 반영할게요 (선택)"></textarea>
     </div>
-    <p class="day-thanks" hidden></p>
-    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
+    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary idle" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary idle" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
   </div>`;
   document.body.appendChild(wrap);
   const box = wrap.querySelector(".dayend");
-  const why = box.querySelector(".day-why"), thanks = box.querySelector(".day-thanks");
+  const why = box.querySelector(".day-why");
   const skip = box.querySelector("[data-skip]"), go = box.querySelector("[data-go]");
   const goLabel = go.textContent;
   let score = 0, sentKey = "";
@@ -1768,7 +1767,7 @@ function dayComplete(c, info) {
       toast("응답을 저장하지 못했습니다. " + errorMessage(err));
     });
   };
-  box.querySelectorAll("[data-score]").forEach((b) => b.addEventListener("click", async () => {
+  box.querySelectorAll("[data-score]").forEach((b) => b.addEventListener("click", () => {
     score = Number(b.dataset.score);
     box.querySelectorAll("[data-score]").forEach((x) => { const on = x === b; x.classList.toggle("on", on); x.classList.toggle("low", on && score <= 2); x.setAttribute("aria-checked", String(on)); });
     const low = score <= 2;
@@ -1776,11 +1775,8 @@ function dayComplete(c, info) {
     box.querySelector(".dayend-next")?.toggleAttribute("hidden", low);
     skip.textContent = low ? "건너뛰기" : "닫기";
     go.textContent = low ? (nc ? `보내고 DAY ${dd(nc)} 시작 →` : "보내고 트랙으로 →") : goLabel;
-    thanks.hidden = true;
-    if (low) return void send();
-    await send();
-    thanks.hidden = false;
-    thanks.textContent = "✓ 응답이 저장됐어요. 고마워요!";
+    go.classList.remove("idle");
+    send();
   }));
   box.querySelectorAll("[data-reason]").forEach((b) => b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"))));
   const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
@@ -1788,7 +1784,7 @@ function dayComplete(c, info) {
   document.addEventListener("keydown", onKey);
   skip.addEventListener("click", () => { if (score > 2) send(); close(); });
   go.addEventListener("click", () => { send(); close(); });
-  go.focus();
+  box.focus();
   fireConfetti(true);
 }
 
