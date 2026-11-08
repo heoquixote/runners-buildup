@@ -35,7 +35,7 @@ const domainOf = (p) => p.domain || "mfg";
 const program = () => programOfJoinCode(state.session?.student?.org);
 // 코스의 연습문제: 개념 퀴즈 먼저, 그다음 문제 순서대로. 과정의 소재(domain)에 맞는 문제만,
 // 아직 그 소재의 문제가 없는 코스는 제조 문제를 대신 보여준다 (표시 없이).
-function courseProblems(c, prog = program()) {
+function allCourseProblems(c, prog = program()) {
   if (!c?.unit) return [];
   const all = ALL_PROBLEMS.filter((p) => p.unit === c.unit);
   const quiz = all.filter((p) => p.type === "quiz");
@@ -43,9 +43,12 @@ function courseProblems(c, prog = program()) {
   if (!rest.length) rest = all.filter((p) => p.type !== "quiz" && domainOf(p) === "mfg");
   return [...quiz, ...rest];
 }
+// tip 코스(가볍게 읽고 넘어가는 참고 코스)는 코스 화면 · 진도에 연습문제를 보여 주지 않는다.
+// 유닛 문제는 그대로 남아 있어 QAQC 회차 과제(SESSIONS)에서는 계속 열 수 있다.
+const courseProblems = (c, prog = program()) => (c?.tip ? [] : allCourseProblems(c, prog));
 const courseOf = (p) => courseOfUnit(p.unit);
 // 이 문제를 보여주는 과정 (문제 소재와 다른 과정에서 열어도 코스 맥락은 유지)
-const problemList = (p) => { const c = courseOf(p); const list = courseProblems(c); return list.includes(p) ? list : courseProblems(c, PROGRAMS.find((x) => x.domain === domainOf(p)) || program()); };
+const problemList = (p) => { const c = courseOf(p); const list = allCourseProblems(c); return list.includes(p) ? list : allCourseProblems(c, PROGRAMS.find((x) => x.domain === domainOf(p)) || program()); };
 // 코스 안 번호: Q(개념 퀴즈), 1, 2, …
 const cno = (p) => { const i = problemList(p).filter((x) => x.type !== "quiz").indexOf(p); return p.type === "quiz" ? "Q" : String(i + 1); };
 const isReady = (c) => c.status !== "planned";
@@ -1065,7 +1068,7 @@ function viewCourse(c) {
     </header>
     <section class="part"><h2 class="part-title">레슨</h2>
       ${c.lessons.length ? `<ol class="plist simple panel">${c.lessons.map((l, k) => `<li><a class="srow" href="#/l/${l.id}">${lessonIcon(l.id)}<span class="pid">${k + 1}</span><span class="ptitle">${esc(l.title)}</span>${l.optional ? '<span class="pmark" title="셋 중 하나만 골라 보면 됩니다">선택</span>' : ""}<span class="muted" style="font-size:13px">${l.minutes}분</span></a></li>`).join("")}</ol>` : `<div class="panel empty-state">레슨을 준비하고 있습니다.</div>`}</section>
-    ${c.intro && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
+    ${(c.intro || c.tip) && !probs.length ? "" : `<section class="part"><h2 class="part-title">연습문제</h2>
       ${probs.length ? `<ol class="plist simple panel">${probs.map((p) => `<li><a class="srow" href="#/p/${p.id}">${statusIcon(p.id)}<span class="pid">${cno(p)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}${domainMark(p)}</a></li>`).join("")}</ol>` : `<div class="panel empty-state">연습문제를 준비하고 있습니다.</div>`}</section>`}
     <nav class="unit-nav">${prevC ? `<a class="btn small ghost" href="${courseHref(prevC)}">← ${esc(prevC.title)}</a>` : "<span></span>"}${nextC ? `<a class="btn small ghost" href="${courseHref(nextC)}">${esc(nextC.title)} →</a>` : ""}</nav>
   </main>`;

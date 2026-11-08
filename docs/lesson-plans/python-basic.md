@@ -46,9 +46,7 @@
 | 10 | 알고리즘 · 함수형 (pb-09, 9) | pb-09-1 함수 안에서 세고 찾고 집계하기 (기존) | 세기 · 찾기 · 집계 패턴을 고른다 | py.function, py.scope | 퀴즈 2 (기존) |
 | | | pb-09-2 함수 호출과 스코프 | 지역 · 전역 변수와 리스트를 넘길 때 원본이 바뀌는 이유를 안다 | py.scope | 퀴즈 2 |
 | | | pb-09-3 내장 함수로 짧게 쓰기 | sum · min · max(key) · any · all · zip으로 반복문을 줄인다 | py.enumerate | 퀴즈 2 → 유닛 9 실습 |
-| 11 | 파일 입출력 (pb-10, 11) | pb-10-1 파일을 열고 CSV · JSON 읽기 (기존) | open · with로 파일을 읽는다 | py.file | 퀴즈 2 (기존) |
-| | | pb-10-2 CSV 파일 읽고 쓰기 | csv.reader · DictReader로 읽고 숫자로 바꿔 집계한 뒤 csv.writer로 저장한다 | py.csv, py.file | 퀴즈 2 |
-| | | pb-10-3 JSON으로 설정과 결과 저장하기 | 딕셔너리를 JSON으로 저장 · 불러오고 중첩 구조에서 값을 꺼낸다 | py.json | 퀴즈 2 → 유닛 11 실습 |
+| 11 | Tip · 파일 입출력과 데이터 형식 (pb-10, 11) (2026-11-08 Tip 코스로 축소) | pb-10-1 데이터의 모양과 파일 다루기: 정형 · 반정형, CSV · JSON | 정형 · 반정형 · 비정형을 구분하고, with open · CSV · JSON의 흐름을 맛본다 | py.data-format, py.file, py.csv, py.json | 퀴즈 · 연습문제 없음 ('다 읽었어요') |
 | 12 | 컴프리헨션과 람다 (pb-11, 21) | pb-11-1 for문 세 줄을 한 줄로 (기존) | 리스트 컴프리헨션과 sorted key를 쓴다 | py.comprehension, py.lambda | 퀴즈 2 (기존) |
 | | | pb-11-2 컴프리헨션 넓히기: 조건식 · 딕셔너리 · Set | 조건식과 딕셔너리 · Set 컴프리헨션을 쓰고, 언제 for문이 나은지 고른다 | py.comprehension | 퀴즈 2 |
 | | | pb-11-3 lambda와 key: 정렬 기준 고르기 | 여러 기준 정렬 · max의 key · map · filter를 쓴다 | py.lambda | 퀴즈 2 → 유닛 21 실습 |
@@ -177,17 +175,12 @@
 - 퀴즈: choice(all([]) 결과는 다루지 않음 → any/all 판단), write(max key)
 - 원본: 04-4, 06-4 일부
 
-### pb-10-2 CSV 파일 읽고 쓰기
-- 개념: 파일 만들기(write), `csv.reader`, 헤더 `next()`, 숫자 변환, `csv.DictReader`, `csv.writer` + `newline=""`
-- 배치: 셀마다 맨 위에서 예제 파일을 만든다(셀 독립 실행 규칙) → C(reader) → C(next 헤더) → C(변환·집계) → C(DictReader) → C(writer 후 다시 읽기) → 자주 하는 실수(문자열 숫자 합치기)
-- 퀴즈: choice(DictReader 한 행의 모양), ox(csv로 읽은 숫자는 숫자형)
-- 원본: 06-3 CSV와 JSON
-
-### pb-10-3 JSON으로 설정과 결과 저장하기
-- 개념: JSON ↔ 딕셔너리 · 리스트 대응표, `json.dumps`(ensure_ascii, indent), `json.loads`, `json.dump` / `json.load`(파일), 중첩 구조 꺼내기, 설정 파일 예
-- 배치: S(대응표) → C(dumps) → C(loads) → C(파일 저장·불러오기) → C(중첩) → T → 자주 하는 실수(작은따옴표 JSON)
-- 퀴즈: choice(JSON의 null은 파이썬에서?), ox(json.load는 문자열을 받는다)
-- 원본: 06-3
+### pb-10 Tip · 파일 입출력과 데이터 형식 (2026-11-08 축소)
+진성 님 요청으로 파일 입출력 코스를 본 학습이 아닌 **Tip(참고) 코스**로 바꿨다. 실무에서는 pandas `read_csv` · `read_json`이 대부분을 대신하므로 파이썬 기초에서는 모양과 흐름만 맛본다.
+- 레슨 3개(pb-10-1~3)를 pb-10-1 하나로 합치고 pb-10-2, pb-10-3은 삭제. 레슨 퀴즈 없음('다 읽었어요'로 완료).
+- 새 개념: 정형 · 반정형 · 비정형 데이터(진성 님 추가 요청). CSV = 정형, JSON = 반정형으로 연결. 그림 `py-data-structure-types.svg`.
+- 배치: :::tip(참고 코스 안내) → S(세 가지 모양) → F → 비교 표 → C(같은 내용을 리스트 · 딕셔너리로) → S(with open) → C(쓰기 · 읽기) → 모드 표 → S(CSV = 정형) → C(DictReader) → :::tip(writer, pandas) → S(JSON = 반정형) → C(dump · load) → :::tip(JSON vs 파이썬, dumps · loads) → 정리
+- 연습문제: 코스에 `tip: true`를 달아 코스 화면 · 레슨 화면 · 진도 계산에서 연습문제를 뺐다(app.js `courseProblems`). 유닛 11 문제(11-Q, 11-1~5)는 QAQC 5회차 과제(SESSIONS)에서 그대로 쓰므로 지우지 않고 unit 연결도 남겼다.
 
 ### pb-11-2 컴프리헨션 넓히기
 - 개념: 조건식 `A if 조건 else B`, 컴프리헨션 안 조건식(판정 라벨) vs 뒤 if(거르기), 딕셔너리 컴프리헨션, Set 컴프리헨션, zip과 함께, 읽기 어려우면 for문
