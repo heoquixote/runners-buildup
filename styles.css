@@ -425,6 +425,7 @@ details.hint[open] summary { color: var(--ink); margin-bottom: 6px; }
 .pin-list td.act { text-align: right; white-space: nowrap; }
 .new-pins { background: var(--accent-soft); border: 1px solid rgba(200,255,61,.25); border-radius: var(--radius); padding: 12px; display: grid; gap: 8px; }
 .lock-chip { font-size: 13px; padding: 0 8px; border-radius: 999px; background: var(--fail-soft); color: var(--fail); margin-left: 6px; }
+.lock-chip.rank-off { background: rgba(255,255,255,.08); color: var(--muted); }
 
 .stats-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .stats-table th, .stats-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }

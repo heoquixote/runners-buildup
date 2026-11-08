@@ -71,6 +71,7 @@ class SupabaseApi {
   addStudents(token, names, group) { return this.call("admin_add_students", { p_token: token, p_names: names, p_group: group || null }); }
   resetPin(token, id) { return this.call("admin_reset_pin", { p_token: token, p_student_id: id }); }
   deleteStudent(token, id) { return this.call("admin_delete_student", { p_token: token, p_student_id: id }); }
+  setRankExclude(token, id, exclude) { return this.call("admin_set_rank_exclude", { p_token: token, p_student_id: id, p_exclude: !!exclude }); }
   matrix(token) { return this.call("admin_matrix", { p_token: token }); }
   groups(token) { return this.call("admin_groups", { p_token: token }); }
   saveGroup(token, code, label) { return this.call("admin_save_group", { p_token: token, p_code: code, p_label: label }); }
@@ -311,7 +312,8 @@ class DemoApi {
     this.save(db);
     if (!result.passed || already) return { ok: true, first_solve: false };
     const org = db.students.find((s) => s.id === sid)?.org || null;
-    const sameGroup = new Set(db.students.filter((s) => (s.org || null) === org).map((s) => s.id));
+    // 순위 제외 계정은 본인 말고는 세지 않는다
+    const sameGroup = new Set(db.students.filter((s) => (s.org || null) === org && (!s.exclude_from_rank || s.id === sid)).map((s) => s.id));
     const firsts = {};
     for (const s of db.submissions.filter((x) => x.problem_id === problemId && x.passed && sameGroup.has(x.student_id))) {
       if (!firsts[s.student_id] || s.created_at < firsts[s.student_id]) firsts[s.student_id] = s.created_at;
@@ -343,7 +345,7 @@ class DemoApi {
     const db = this.load();
     this.requireAdmin(db, token);
     const students = db.students
-      .map((s) => ({ id: s.id, name: s.name, group: s.org || null, created_at: s.created_at, locked: (s.locked_until || 0) > Date.now() }))
+      .map((s) => ({ id: s.id, name: s.name, group: s.org || null, created_at: s.created_at, locked: (s.locked_until || 0) > Date.now(), exclude_from_rank: !!s.exclude_from_rank }))
       .sort((a, b) => a.name.localeCompare(b.name, "ko"));
     return { ok: true, students };
   }
@@ -380,6 +382,15 @@ class DemoApi {
     for (const [t, v] of Object.entries(db.sessions)) if (v.student_id === id) delete db.sessions[t];
     this.save(db);
     return { ok: true, name: s.name, pin: s.pin };
+  }
+  async setRankExclude(token, id, exclude) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    const s = db.students.find((x) => x.id === id);
+    if (!s) throw new ApiError("not_found");
+    s.exclude_from_rank = !!exclude;
+    this.save(db);
+    return { ok: true, exclude_from_rank: s.exclude_from_rank };
   }
   async deleteStudent(token, id) {
     const db = this.load();
