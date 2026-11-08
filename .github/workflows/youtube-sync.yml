@@ -1,0 +1,49 @@
+name: Sync YouTube videos
+
+# 데이터러너즈 채널에 새 영상이 올라오면, 대기열 항목(content/videos.js)과 제목 키워드로 맞춰
+# 영상 ID 를 채운 PR 을 연다. 머지하면 레슨 본문의 해당 자리에서 바로 재생된다.
+on:
+  schedule:
+    - cron: "17 0 * * *" # 매일 09:17 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: youtube-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: sync
+        run: node scripts/sync-youtube.mjs
+        env:
+          SYNC_SUMMARY: ${{ runner.temp }}/summary.md
+      - run: cat "${{ runner.temp }}/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Open PR
+        if: steps.sync.outputs.filled != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: auto/youtube-sync
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git commit -am "유튜브 새 영상 연결 (자동)"
+          git push -f origin "$BRANCH"
+          body="$(cat "${{ runner.temp }}/summary.md")
+
+          머지하면 레슨 본문에서 바로 재생됩니다. 구글 시트 대기열의 상태·release_url 은 따로 갱신해 주세요."
+          if gh pr view "$BRANCH" --json state -q .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$BRANCH" --body "$body"
+          else
+            gh pr create --head "$BRANCH" --base main --title "유튜브 새 영상 연결" --body "$body" --assignee "${{ github.repository_owner }}"
+          fi

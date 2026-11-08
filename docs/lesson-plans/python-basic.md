@@ -55,6 +55,10 @@
 | 13 | 예외 처리 (pb-12, 22) | pb-12-1 에러가 나도 멈추지 않는 코드 (기존) | try · except로 에러를 잡는다 | py.exception | 퀴즈 2 (기존) |
 | | | pb-12-2 raise: 잘못된 값에 직접 에러 내기 | 업무 규칙에 맞지 않는 값에 직접 에러를 내고, 쓰는 쪽에서 처리한다 | py.exception | 퀴즈 2 |
 | | | pb-12-3 데이터 정제에서 예외 다루기 | 반복 안에서 불량 행을 건너뛰고 실패 목록을 모은다 | py.exception | 퀴즈 1 → 유닛 22 실습 |
+| 14 | 표준 라이브러리 (pb-13, 50) (2026-11-07 추가) | pb-13-1 모듈과 import: 남이 만든 도구 상자 쓰기 | 모듈 · 패키지 · 라이브러리를 구분하고, import 네 가지 모양으로 불러 쓰고, 내 모듈을 만들어 불러온다 | py.module | 퀴즈 2 |
+| | | pb-13-2 datetime: 날짜와 시간 계산하기 | 날짜 문자열을 datetime으로 바꿔 더하고 빼고, 원하는 모양의 문자열로 되돌린다 | py.datetime | 퀴즈 2 |
+| | | pb-13-3 math와 random: 계산 도구와 난수 | 올림 · 내림 · 버림, 소수 비교를 math로 하고, seed를 고정해 같은 난수 · 표본을 다시 만든다 | py.math, py.random | 퀴즈 2 |
+| | | pb-13-4 os: 폴더와 파일 경로 다루기 | 경로를 만들고 확인하고, 날짜별 폴더에 검사 로그를 저장한다 | py.os | 퀴즈 1 → 유닛 50 실습 |
 
 **새 개념 태그**: `py.types`(자료형과 형변환), `py.tuple`(튜플과 언패킹).
 
@@ -209,6 +213,52 @@
 - 퀴즈: choice(try를 반복 밖에 두면?)
 - 원본: 06-2, 08-2
 
+### pb-13 표준 라이브러리 (2026-11-07 추가, 진성 님 원고)
+
+원본은 진성 님이 스레드에 붙여 준 QAQC 수업 원고(1. 모듈 · 라이브러리, 2. datetime, 3. math, 4. random, 5. os, 6. 날짜별 검사 로그 실습)다. 아래 "원본에서 뺀 것"에서 미뤄 두었던 모듈 · datetime을 이 코스로 다룬다. 위치는 실무 문법 PART 끝(예외 처리 다음). 실습이 CSV 저장(파일 입출력)과 try를 이어 쓰기 때문이다.
+
+**브라우저 실행 환경(Pyodide)에서 확인한 것** (Pyodide 0.27.7로 원고 코드를 그대로 돌려 봄)
+
+| 원고 코드 | 이 사이트에서 | 레슨 처리 |
+| --- | --- | --- |
+| `os.getcwd()`, `os.listdir(".")` | `/tmp/rb-xxxx` 같은 임시 폴더, 목록은 `[]`. 실행할 때마다 새 빈 폴더에서 시작하고 끝나면 지워진다 | "실행 셀마다 빈 연습 폴더" 안내. 셀마다 파일을 만들고 시작 |
+| `os.name` | 내 컴퓨터가 Windows여도 `'posix'` | 내 컴퓨터에서는 `'nt'`라고 표로 비교 |
+| `os.environ.get("PATH")` | `'/'` (브라우저 안 가상 시스템) | 실행은 하되 :::tip으로 분리, 내 PC에서 보이는 모양을 함께 적음 |
+| `datetime.now()` | 브라우저 시간대를 따름(한국이면 KST). 소수 초가 1/1000초 단위 | 그대로 사용. 결과가 실행일마다 다르므로 계산 예제는 고정 날짜로 |
+| `import qaqc` (내 모듈) | 셀 안에서 `qaqc.py`를 쓰고 바로 import하면 동작. 다만 같은 탭에서 파일을 고쳐 다시 실행하면 옛 모듈이 남아 있었음 | 하네스 `_workdir`가 실행 후 작업 폴더 모듈을 잊도록 수정(`_forget_modules`) |
+| `secrets.choice` | 동작(브라우저 암호 난수 사용) | :::tip으로 |
+| `random.seed(42)` + `uniform(23, 27)` | `[25.6, 23.1, 24.1, 23.9, 25.9]` 원고 출력 예시와 같음 | 실습 출력 예시 그대로 |
+
+#### pb-13-1 모듈과 import: 남이 만든 도구 상자 쓰기
+- 목표: 모듈 · 패키지 · 라이브러리를 구분하고, import 네 가지 모양으로 불러 쓰고, 내 모듈을 만들어 불러온다
+- 전제: 함수(pb-08), 파일 쓰기(pb-10)
+- 개념: 모듈 = `.py` 파일 하나(작은 도구 상자) → 패키지 = 모듈을 폴더로 묶은 것 → 라이브러리(종합 도구 상자). 표준 라이브러리(설치 없이) vs 외부 라이브러리(pip). import 네 모양, `as` 별칭 관례(np, pd), `모듈.이름` 점 표기, 이름 겹침 주의, 왜 쓰나(재사용 · 효율 · 구조화), 다 외우지 않고 찾는 법(`dir`, 공식 문서 링크), 내 모듈 만들기
+- 배치: S(비유) → F(모듈 · 패키지 · 라이브러리) → C(import math, sqrt) → S(표준 vs 외부 표) → F(import 네 모양) → C ×3(from, as, 여러 개) → 이름 겹침 :::tip → S(왜 쓰나) → C(dir로 둘러보기) → S(내 모듈) → C(qaqc.py 쓰고 import) → R(이 사이트의 임시 폴더) → 정리
+- 퀴즈: choice(`from math import sqrt` 뒤 바른 호출), ox(표준 라이브러리는 pip 설치가 필요하다 → X)
+- 그림: `py-module-library.svg`, `py-import-forms.svg`
+
+#### pb-13-2 datetime: 날짜와 시간 계산하기
+- 목표: 날짜 문자열을 datetime으로 바꿔 더하고 빼고, 원하는 모양의 문자열로 되돌린다
+- 개념: 네 가지 타입(date · time · datetime · timedelta), now · today, 직접 만들기, 속성(year · month · day · hour, weekday), strftime(날짜 → 문자열) / strptime(문자열 → 날짜) + 포맷 코드 표, 문자열 날짜는 계산 · 비교가 위험한 이유, timedelta 더하기 · 빼기, 두 시각의 차 `.days` · `total_seconds()`, `replace`로 시 · 분 맞추기, 일정 간격 시각 만들기
+- 배치: S(달력 · 시계 · 스톱워치 비유) → F(네 타입) → C(now) → C(직접 만들기 + 속성) → S(문자열 ↔ datetime) → F(strftime · strptime 화살표) → C(strftime) → 포맷 표 → C(strptime) → S(왜 바꿔야 하나: 문자열 비교 함정) → C → C(timedelta 더하기) → C(두 시각 빼기) → C(replace + 10분 간격) → R → 정리
+- 퀴즈: choice(문자열 "2026-11-07"을 날짜로 바꾸는 함수), write(timedelta로 30일 뒤 날짜 출력)
+- 그림: `py-datetime-types.svg`, `py-strftime-strptime.svg`
+
+#### pb-13-3 math와 random: 계산 도구와 난수
+- 목표: 올림 · 내림 · 버림과 소수 비교를 math로 하고, seed를 고정해 같은 난수 · 표본을 다시 만든다
+- 개념: math.pi · sqrt · factorial, ceil · floor · trunc · round 차이(음수에서 갈림), pow vs `**`(항상 float), isclose, hypot · 각도(:::tip). random.random · randint · uniform · randrange, seed와 재현성, choice · sample · shuffle(제자리, None 반환) · choices(weights), secrets(:::tip)
+- 배치: S → C(pi, sqrt) → S(올림 · 내림 · 버림) → F(수직선) → C(양수) → C(음수) → R → S(실무: 박스 수 계산 ceil) → C → S(소수 비교) → C(isclose) → :::tip(pow, hypot, radians) → S(난수) → C(random · randint · uniform) → S(seed) → F → C(seed 두 번) → C(choice · sample) → C(shuffle None 함정) → C(choices weights) → :::tip(secrets) → 정리
+- 퀴즈: choice(`math.floor(-2.5)`), ox(seed를 같은 값으로 고정하면 같은 순서의 난수가 나온다)
+- 그림: `py-ceil-floor-trunc.svg`, `py-random-seed.svg`
+
+#### pb-13-4 os: 폴더와 파일 경로 다루기
+- 목표: 경로를 만들고 확인하고, 날짜별 폴더에 검사 로그를 저장한다
+- 개념: 작업 폴더(현재 위치)와 상대 · 절대 경로, 이 사이트의 임시 연습 폴더, getcwd · listdir, `os.path.join`(운영체제마다 구분자 다름), exists · isfile · isdir, abspath · dirname · basename · splitext, makedirs(exist_ok), rename, walk, os.name · environ(:::tip), pathlib(:::tip)
+- 배치: S(폴더 = 서랍, 경로 = 주소) → F(폴더 나무와 상대 · 절대 경로) → S(이 사이트의 연습 폴더) → C(getcwd · listdir) → C(join) → C(exists 등) → C(abspath · dirname · basename · splitext) → C(makedirs 두 번) → R(exist_ok 없으면 FileExistsError, 읽기 전용 블록) → C(rename · walk) → :::tip(os.name · environ) → S(종합 예제: 날짜별 검사 로그) → C(원고 실습 정답, 고정 날짜 대신 오늘 날짜) → R → :::tip(pathlib) → 정리
+- 퀴즈: choice(이미 있는 폴더를 `os.makedirs("logs")`로 또 만들면 나는 에러, 객관식)
+- 그림: `py-os-paths.svg`
+- 실습: 유닛 50 (제조: 50-1 날짜별 검사 로그 저장(단계형), 50-2 검사 간격 중 가장 긴 공백(함수형) / 일반: 50-3 배송 도착 예정일과 요일(함수형), 50-4 경품 추첨과 페이지 수(단계형) / 개념 퀴즈 50-Q). 실행 날짜에 따라 답이 바뀌지 않게 문제는 고정 날짜를 쓴다.
+
 ## 원본에서 뺀 것
 
-모듈 · 클래스 · 가상환경(05장), requests API(07-2), 자동화 스크립트 · 프로젝트 구조(08-1, 08-3)는 QAQC 과정 파이썬 기초 범위 밖이라 이번에 코스를 만들지 않는다. pathlib · datetime(06-4)은 데이터 분석 트랙의 시계열(da-08)에서 다룬다.
+클래스 · 가상환경(05장), requests API(07-2), 자동화 스크립트 · 프로젝트 구조(08-1, 08-3)는 QAQC 과정 파이썬 기초 범위 밖이라 이번에 코스를 만들지 않는다. pathlib(06-4)은 pb-13-4의 팁 상자로만 소개한다. 모듈과 datetime은 2026-11-07 진성 님 원고로 pb-13 코스에서 다룬다.
