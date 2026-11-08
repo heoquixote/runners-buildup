@@ -951,6 +951,7 @@ kbd {
 @media (max-width: 560px) { .run-meta > span:not(.run-end) { text-align: center; } }
 .cno small { display: block; font: 600 9px/1 var(--font-en); letter-spacing: .12em; color: var(--muted); margin-bottom: 3px; }
 /* ── DAY 완료 팝업 + 만족도 ── */
+.celebrate.dayend:focus { outline: none; }
 .celebrate.dayend { width: min(440px, 100%); text-align: left; gap: 0; padding: 28px 26px 22px; max-height: calc(100vh - 32px); overflow-y: auto; }
 .dayend-badge { display: inline-flex; align-items: center; gap: 8px; font: 700 12px var(--font-en); letter-spacing: .12em; color: var(--pass); text-transform: uppercase; }
 .dayend-badge i { width: 22px; height: 22px; border-radius: 50%; background: var(--pass-soft); border: 1.5px solid var(--pass); display: grid; place-items: center; font-style: normal; font-size: 12px; }
@@ -979,7 +980,7 @@ kbd {
 .rate button.on.low { border-color: var(--fail); background: var(--fail-soft); }
 .rate button.on.low .n { color: var(--fail); }
 .day-why { margin-top: 14px; padding: 14px; border: 1px solid rgba(255,122,146,.3); background: rgba(255,122,146,.05); }
-.day-why[hidden], .day-thanks[hidden] { display: none; }
+.day-why[hidden] { display: none; }
 .celebrate.dayend .day-why .day-wq { color: var(--ink); font-size: 13.5px; font-weight: 600; margin: 0 0 10px; }
 .day-why .day-wq span { color: var(--subtle); font-weight: 400; font-size: 12px; margin-left: 6px; }
 .day-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -987,9 +988,11 @@ kbd {
 .day-chips button[aria-pressed="true"] { border-color: var(--fail); color: var(--ink); background: var(--fail-soft); }
 .day-why textarea { margin-top: 10px; width: 100%; box-sizing: border-box; min-height: 62px; resize: vertical; background: var(--code-bg); border: 1px solid var(--line); color: var(--ink); font: 13px/1.5 var(--font-body); padding: 9px 10px; border-radius: var(--radius); }
 .day-why textarea:focus, .day-why textarea:focus-visible { outline: none; box-shadow: none; border-color: var(--fail); }
-.celebrate.dayend .day-thanks { margin-top: 12px; font-size: 13px; color: var(--pass); }
 .celebrate.dayend .btns { justify-content: flex-end; margin-top: 18px; flex-wrap: nowrap; }
-.dayend .btns .btn.primary { flex: 1; justify-content: center; }
+.dayend .btns .btn.primary { flex: 1; justify-content: center; transition: background .2s, border-color .2s, color .2s; }
+/* 만족도를 고르기 전: 회색 톤이지만 누르면 그대로 넘어간다 */
+.dayend .btns .btn.primary.idle { background: var(--surface-2); border-color: var(--line); color: var(--muted); font-weight: 600; }
+.dayend .btns .btn.primary.idle:hover { background: var(--surface-2); border-color: var(--muted); color: var(--ink-2); box-shadow: none; }
 @media (max-width: 420px) { .rate .w { font-size: 10px; } .celebrate.dayend { padding: 24px 18px 18px; } }
 /* 어드민 만족도 */
 .fb-score { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font: 700 13px var(--font-en); background: var(--surface-3); color: var(--ink-2); }
