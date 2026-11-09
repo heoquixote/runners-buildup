@@ -36,7 +36,12 @@ class SupabaseApi {
     } catch {
       throw new ApiError("network");
     }
-    if (!response.ok) throw new ApiError("server", { status: response.status });
+    if (!response.ok) {
+      // PostgREST 오류 본문(code · message)을 같이 넘겨 어드민 화면에서 원인을 볼 수 있게 한다
+      let detail = "";
+      try { const j = await response.json(); detail = [j.code, j.message].filter(Boolean).join(" "); } catch {}
+      throw new ApiError("server", { status: response.status, fn, detail });
+    }
     return unwrap(await response.json());
   }
   login(name, pin) { return this.call("student_login", { p_name: name, p_pin: pin }); }
