@@ -1995,7 +1995,8 @@ function routeAdmin(hash) {
       toast("어드민 로그인이 만료되었습니다.");
       return viewAdminLogin();
     }
-    body.innerHTML = `<p class="form-error">${esc(errorMessage(err))}</p>`;
+    const detail = err.code === "server" ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${esc([err.fn, err.status && `HTTP ${err.status}`, err.detail].filter(Boolean).join(" · "))}</p>` : "";
+    body.innerHTML = `<p class="form-error">${esc(errorMessage(err))}</p>${detail}`;
   };
   const sel = $app.querySelector("#group-select");
   const run = () => {
