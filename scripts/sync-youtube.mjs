@@ -39,6 +39,11 @@ export const MATCH = {
   "dl-m26": ["pca", "주성분"],
   "dl-m27": ["rnn", "순환신경망"],
   "dl-m28": ["어텐션", "attention", "transformer", "트랜스포머"],
+  "dl-m35": ["히스토그램", "histogram", "bins", "밀도곡선", "kde"],
+  "dl-m36": ["상자그림", "박스플롯", "boxplot", "iqr"],
+  "dl-m37": ["앤스콤", "anscombe", "심슨", "simpson"],
+  "dl-m38": ["결측치", "fillna", "interpolate", "보간"],
+  "dl-m39": ["그래프왜곡", "축자르기", "차트왜곡", "misleading"],
 };
 
 const norm = (s) => String(s).toLowerCase().replace(/\s+/g, "");
