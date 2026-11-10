@@ -20,13 +20,13 @@ export const TRACKS = [
 ];
 
 // 과정(프로그램): 같은 커리큘럼을 배우되 연습문제의 소재가 다르다.
-//  - qaqc: 가입 코드 QAQC8 로 들어온 수강생. 제조·품질(domain "mfg") 문제를 푼다. 회차 과제가 있다.
+//  - qaqc: 가입 코드 QAQC8 로 들어온 수강생. 제조·품질(domain "mfg") 문제를 푼다.
 //  - basic: 그 외 모두. 일반 데이터(domain "general") 문제를 푼다. 일반 문제가 아직 없는 코스는 제조 문제를 대신 보여준다.
 // 문제의 domain 은 problems.js 각 문제의 domain 필드(없으면 "mfg").
 export const PROGRAMS = [
-  { id: "qaqc", label: "QAQC 과정", domain: "mfg", joinCodes: ["QAQC8"], sessions: true,
-    blurb: "제조 · 품질 검사 데이터로 푸는 문제. 수업 회차 과제가 함께 나옵니다." },
-  { id: "basic", label: "기본 데이터 과정", domain: "general", joinCodes: [], sessions: false,
+  { id: "qaqc", label: "QAQC 과정", domain: "mfg", joinCodes: ["QAQC8"],
+    blurb: "제조 · 품질 검사 데이터로 푸는 문제." },
+  { id: "basic", label: "기본 데이터 과정", domain: "general", joinCodes: [],
     blurb: "쇼핑몰 주문 · 고객 · 설문 같은 일반 데이터로 푸는 문제." },
 ];
 export const DOMAIN_LABEL = { mfg: "제조 예제", general: "일반 예제" };
