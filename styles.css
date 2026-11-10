@@ -872,36 +872,15 @@ kbd {
 .related-list a { color: var(--ink); text-decoration: none; }
 .related-list a:hover { color: var(--accent); }
 
-/* ── 일일 학습: 오늘의 학습 · 연속 학습일 · 잔디 ── */
+/* ── 홈 상단: 내 트랙 카드 + 트랙별 진행률 카드 (좁은 화면에서는 세로로 쌓기) ── */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.daily-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.daily-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
 @media (max-width: 900px) { .daily-grid { grid-template-columns: minmax(0, 1fr); } }
 
 .daily { padding: 20px 22px; display: grid; gap: 14px; align-content: start; }
 .daily-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .daily-head h2 { font-size: 22px; margin-top: 6px; }
 .daily-head p { margin: 4px 0 0; font-size: 14px; }
-.ring {
-  --p: 0; width: 64px; height: 64px; flex: none; border-radius: 50%; display: grid; place-items: center;
-  background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--surface-3) 0);
-}
-.ring span { white-space: nowrap; width: 50px; height: 50px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font: 600 13px/1 var(--font-en); color: var(--muted); }
-.ring b { font-size: 20px; color: var(--ink); }
-.daily.complete .ring { background: conic-gradient(var(--pass) 100%, var(--surface-3) 0); }
-.plan-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.plan-item a {
-  display: flex; align-items: center; gap: 12px; padding: 10px 12px; text-decoration: none; color: var(--ink);
-  border: 1px solid var(--line); border-left: 3px solid var(--tc, var(--track)); border-radius: var(--radius); background: var(--surface-2);
-}
-.plan-item a:hover { border-color: var(--line-strong); border-left-color: var(--tc, var(--track)); }
-.plan-item a:hover b { color: var(--accent); }
-.plan-check { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 2px solid var(--line-strong); display: grid; place-items: center; font: 700 12px/1 var(--font-en); }
-.plan-item.done .plan-check { background: var(--pass); border-color: var(--pass); color: #0d1006; }
-.plan-item.done b { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
-.plan-main { display: grid; gap: 2px; min-width: 0; }
-.plan-main b { font-size: 15px; font-weight: 600; }
-.plan-main .muted { font-size: 12px; }
-.plan-kind { font: 600 11px/1 var(--font-en); letter-spacing: .06em; color: var(--tc, var(--track)); }
 .daily-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .daily-foot .btn.primary { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -943,6 +922,10 @@ kbd {
 .run-foot { display: flex; }
 .run-others { list-style: none; margin: 0; padding: 12px 0 0; border-top: 1px solid var(--line); display: grid; gap: 8px; }
 .run-others { gap: 4px; }
+.run-list { padding: 20px 22px; display: grid; gap: 12px; align-content: start; }
+.run-list-head h2 { margin: 6px 0 0; font-size: 22px; }
+.run-list-head p { margin: 4px 0 0; font-size: 13px; }
+.run-list .run-others { padding-top: 10px; }
 .ro-row {
   width: 100%; display: grid; grid-template-columns: minmax(84px, auto) 1fr 38px; align-items: center; gap: 10px;
   padding: 7px 8px; margin: 0 -8px; box-sizing: content-box; border: 0; border-radius: var(--radius); background: none;
@@ -1013,7 +996,6 @@ kbd {
 .fb-dist { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--surface-3); min-width: 120px; }
 .fb-dist span { display: block; height: 100%; }
 td.fb-comment { max-width: 360px; white-space: pre-wrap; word-break: break-word; }
-.cel-plan { color: var(--accent); font-weight: 600; margin: 0; }
 
 /* 레슨: 개념 설명 → 실습 순서 */
 

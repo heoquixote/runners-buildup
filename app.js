@@ -418,7 +418,7 @@ function viewGuide() {
     </nav>
 
     <section class="panel lime guide-sec" id="g-start"><div class="eyebrow">00 · Start</div><h2>시작하기: 회원가입부터 첫 문제까지</h2>
-      <p>레슨 읽기와 예제 실행은 로그인 없이도 됩니다. <b>진도 저장, 오늘의 학습, 연습문제 제출</b>은 가입하고 로그인해야 열립니다.</p>
+      <p>레슨 읽기와 예제 실행은 로그인 없이도 됩니다. <b>진도 저장, 연습문제 제출</b>은 가입하고 로그인해야 열립니다.</p>
       <ol class="guide-steps">
         <li><h3>회원가입</h3>
           <ul><li>오른쪽 위 <b>회원가입</b>을 누릅니다.</li>
@@ -431,8 +431,8 @@ function viewGuide() {
           <li>로그인은 이 브라우저에 유지됩니다. 다른 컴퓨터나 휴대폰에서도 같은 이름과 번호로 들어오면 진도가 그대로 이어집니다.</li>
           <li>공용 컴퓨터라면 끝날 때 <b>로그아웃</b>을 눌러 주세요.</li></ul></li>
         <li><h3>홈에서 오늘 할 일 고르기</h3>
-          <ul><li><b>오늘의 학습</b>: 매일 레슨 1개와 연습문제 몇 개를 골라 줍니다. 위에서부터 하나씩 끝내면 체크됩니다.</li>
-          <li><b>내 트랙</b>: 최근 공부한 트랙의 진행률입니다. <b>이어서 달리기</b>를 누르면 멈춘 레슨으로 갑니다.</li>
+          <ul><li><b>내 트랙</b>: 최근 공부한 트랙의 진행률입니다. <b>이어서 달리기</b>를 누르면 멈춘 레슨으로 갑니다.</li>
+          <li><b>트랙별 진행률</b>: 열린 트랙의 진행률을 한눈에 봅니다. 트랙을 누르면 왼쪽 카드가 그 트랙으로 바뀝니다.</li>
           <li>처음이라면 <b>파이썬 기초</b> 트랙의 Day 1부터 시작하세요.</li></ul></li>
         <li><h3>레슨 한 개를 끝내는 순서</h3>
           <ul><li>본문을 읽고, 예제 코드 칸의 <b>실행</b>을 눌러 결과를 직접 확인합니다. 코드를 고쳐서 다시 실행해도 됩니다.</li>
@@ -647,6 +647,7 @@ const dayKey = (d = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: 
 function bumpActivity() { const k = dayKey(); state.activity[k] = (state.activity[k] || 0) + 1; }
 
 // 오늘의 학습: 레슨 1개 + 연습문제로 3단계. 하루 동안은 같은 목록을 유지한다 (이 브라우저에 저장).
+// 홈 카드는 없앴고(2026-11-10), '오늘 할 일 끝' 메달(daily-clear) 판정에만 쓴다.
 const PLAN_SIZE = 3;
 function pickPlan() {
   const items = [];
@@ -678,53 +679,11 @@ function todayPlan() {
   return items;
 }
 const planDone = (it) => (it.kind === "lesson" ? lessonDone(it.id) : solved(it.id));
-// 방금 끝낸 것이 오늘의 학습에 들어 있으면 진행 상황 한 줄
-function planToast(id) {
-  const items = todayPlan();
-  if (!items.some((it) => it.id === id)) return "";
-  const d = items.filter(planDone).length;
-  return d === items.length ? `오늘의 학습 ${d}/${items.length} 완료! 내일도 이어서 해요.` : `오늘의 학습 ${d}/${items.length} 완료`;
-}
-const itemMinutes = (it) => (it.kind === "lesson" ? lessonById[it.id].minutes : byId[it.id].type === "quiz" ? 5 : 10);
-function planRow(it) {
-  const done = planDone(it);
-  if (it.kind === "lesson") {
-    const l = lessonById[it.id], c = courseById[l.course], t = trackById[c.track];
-    return `<li class="plan-item${done ? " done" : ""}" ${trackStyle(t)}><a href="#/l/${l.id}"><span class="plan-check" aria-hidden="true">${done ? "✓" : ""}</span>
-      <span class="plan-main"><span class="plan-kind">레슨</span><b>${esc(l.title)}</b><span class="muted">${esc(t.label)} · ${esc(c.title)} · ${l.minutes}분</span></span><span class="sr-only">${done ? "완료" : "할 일"}</span></a></li>`;
-  }
-  const p = byId[it.id], c = courseOf(p), t = c ? trackById[c.track] : null;
-  return `<li class="plan-item${done ? " done" : ""}" ${t ? trackStyle(t) : ""}><a href="#/p/${p.id}"><span class="plan-check" aria-hidden="true">${done ? "✓" : ""}</span>
-    <span class="plan-main"><span class="plan-kind">${p.type === "quiz" ? "개념 퀴즈" : "연습문제"}</span><b>${esc(p.title)}</b><span class="muted">${c ? `${esc(c.title)} · ` : ""}${p.type === "quiz" ? "5분" : "10분 내외"}</span></span><span class="sr-only">${done ? "완료" : "할 일"}</span></a></li>`;
-}
-// 로그인 전 홈: 오늘의 학습 대신 둘러보기 안내
+// 로그인 전 홈: 둘러보기 안내
 function guestCard() {
   return `<section class="panel lime daily" aria-label="둘러보기 안내"><div class="daily-head"><div><span class="eyebrow">Welcome</span><h2>로그인 없이 둘러보는 중</h2>
-    <p class="muted">트랙과 레슨, 예제 코드 실행은 자유롭게 해 보세요. 연습문제 풀이와 진도 저장, 오늘의 학습은 로그인 뒤에 열립니다.</p></div></div>
+    <p class="muted">트랙과 레슨, 예제 코드 실행은 자유롭게 해 보세요. 연습문제 풀이와 진도 저장은 로그인 뒤에 열립니다.</p></div></div>
     <div class="daily-foot"><button class="btn primary small" data-act="login">로그인</button><a class="btn small" href="#/signup">회원가입</a></div></section>`;
-}
-
-function dailyCard() {
-  const items = todayPlan();
-  const dateLabel = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short" }).format(new Date());
-  if (!items.length) {
-    return `<section class="panel lime daily"><div class="daily-head"><div><span class="eyebrow">Today · ${esc(dateLabel)}</span><h2>열린 코스를 모두 끝냈습니다</h2><p class="muted">새 코스가 열리면 여기에 오늘 할 일이 나옵니다. 지금은 복습해 보세요.</p></div></div></section>`;
-  }
-  const done = items.filter(planDone).length;
-  const left = items.filter((it) => !planDone(it));
-  const mins = left.reduce((a, it) => a + itemMinutes(it), 0);
-  const extra = done === items.length ? pickPlan()[0] : null;
-  const href = (it) => (it.kind === "lesson" ? `#/l/${it.id}` : `#/p/${it.id}`);
-  const title = (it) => (it.kind === "lesson" ? lessonById[it.id].title : byId[it.id].title);
-  return `<section class="panel lime daily${done === items.length ? " complete" : ""}" aria-label="오늘의 학습">
-    <div class="daily-head">
-      <div><span class="eyebrow">Today · ${esc(dateLabel)}</span><h2>오늘의 학습</h2>
-        <p class="muted">${done === items.length ? "오늘 목표를 모두 끝냈어요. 내일 새 목록이 준비됩니다." : `남은 시간 약 ${mins}분 · 하나씩 끝내면 체크됩니다`}</p></div>
-      <div class="ring" style="--p:${pct(done, items.length)}" role="img" aria-label="${items.length}개 중 ${done}개 완료"><span><b>${done}</b>/${items.length}</span></div>
-    </div>
-    <ol class="plan-list">${items.map(planRow).join("")}</ol>
-    ${done === items.length ? `<div class="daily-foot"><span class="today-clear">오늘 목표 달성</span>${extra ? `<a class="btn small ghost" href="${href(extra)}">한 단계 더: ${esc(title(extra))} →</a>` : ""}</div>` : ""}
-  </section>`;
 }
 
 // ── 내 트랙 진행률: 최근 학습한 트랙의 진행 바 위를 러너가 달린다 ─────────
@@ -760,16 +719,20 @@ function trackRun(t) {
 const RUNNER_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="15.2" cy="4.2" r="2.3" fill="currentColor" stroke="none"/><path d="M13.6 7.6 11 13.2M13 9.2l3.6 1 2.4-2.4M13 9.2l-3.8-.4-2.4 2.6M11 13.2l4 1.8.2 5.2M11 13.2l-2.2 4-4.2.8"/></svg>`;
 const FLAG_SVG = `<svg viewBox="0 0 16 20" aria-hidden="true"><path d="M2 19V2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2.8 2.5h11l-2.6 3.6 2.6 3.6h-11z" fill="currentColor"/></svg>`;
 
-// 카드 아래 트랙 줄을 누르면 그 트랙으로 바뀐다. 기본은 가장 최근에 학습한 트랙.
+// 오른쪽 '트랙별 진행률' 줄을 누르면 왼쪽 카드가 그 트랙으로 바뀐다. 기본은 가장 최근에 학습한 트랙.
 let runPick = null;
-const RUN_ROWS = 4;
-function runCard() {
+function runData() {
   const runs = TRACKS.filter((t) => t.ready).map(trackRun).filter((r) => r.courses > 0);
-  if (!runs.length) return "";
   // 진행 중 = 하나라도 끝낸 것이 있거나 최근 기록이 있는 트랙 (최근 학습 순)
   const active = runs.filter((r) => r.done > 0 || r.last).sort((a, b) => String(b.last).localeCompare(String(a.last)) || b.p - a.p);
-  const rows = active.slice(0, RUN_ROWS);
+  // 목록: 진행 중 트랙(최근 순) 다음에 아직 시작 안 한 트랙(트랙 순서)
+  const rows = [...active, ...runs.filter((r) => !active.includes(r))];
   const main = rows.find((r) => r.t.id === runPick) || active[0] || runs[0];
+  return { runs, active, rows, main };
+}
+function runCard(d = runData()) {
+  const { active, main } = d;
+  if (!main) return "";
   const recent = main === active[0];
   const { t, s, p } = main;
   const msg = p >= 100 ? "완주했어요! 다른 트랙에서 다음 레이스를 시작해 보세요."
@@ -777,7 +740,7 @@ function runCard() {
     : `DAY ${String(main.day).padStart(2, "0")} · ${esc(main.current.title)} 구간을 달리는 중`;
   return `<section class="panel run-card${p >= 100 ? " complete" : ""}" ${trackStyle(t)} aria-label="내 트랙 진행률">
     <div class="run-top">
-      <div><span class="eyebrow">My Track${rows.length > 1 ? (recent ? " · 최근 학습" : " · 선택한 트랙") : ""}</span><h2><a href="#/t/${t.id}">${esc(t.label)}</a></h2><p class="muted">${msg}</p></div>
+      <div><span class="eyebrow">My Track${active.length ? (recent ? " · 최근 학습" : " · 선택한 트랙") : ""}</span><h2><a href="#/t/${t.id}">${esc(t.label)}</a></h2><p class="muted">${msg}</p></div>
       <div class="run-pct"><b>${p}</b>%</div>
     </div>
     <div class="run-lane" role="progressbar" aria-label="${esc(t.label)} 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}">
@@ -787,8 +750,21 @@ function runCard() {
     </div>
     <div class="run-meta"><span class="run-end">Start</span><span>코스 <b>${main.finished}</b>/${main.courses} 완주 · 레슨 ${s.lessonsDone}/${s.lessons} · 문제 ${s.solved}/${s.problems}</span><span class="run-end">Finish</span></div>
     <div class="run-foot"><a class="btn small${p >= 100 ? " ghost" : ""}" href="${main.href}">${p >= 100 ? "트랙 돌아보기" : main.done ? "이어서 달리기" : "출발하기"} →</a></div>
-    ${rows.length > 1 ? `<ul class="run-others" aria-label="진행 중 트랙 (누르면 위 카드가 바뀝니다)">${rows.map((r) => `<li ${trackStyle(r.t)}><button type="button" class="ro-row${r === main ? " on" : ""}" data-run="${r.t.id}" aria-pressed="${r === main}"><span class="ro-name">${esc(r.t.label)}</span><span class="ro-lane"><span style="width:${r.p}%"></span><i style="left:${r.p}%"></i></span><b>${r.p}%</b></button></li>`).join("")}</ul>` : ""}
   </section>`;
+}
+// 트랙별 진행률 목록 (로그인 후 홈 오른쪽 카드)
+function runListCard(d = runData()) {
+  const { rows, main } = d;
+  if (rows.length < 2) return "";
+  return `<section class="panel run-list" aria-label="트랙별 진행률">
+    <div class="run-list-head"><span class="eyebrow">All Tracks</span><h2>트랙별 진행률</h2><p class="muted">트랙을 누르면 왼쪽 카드가 그 트랙으로 바뀝니다.</p></div>
+    <ul class="run-others">${rows.map((r) => `<li ${trackStyle(r.t)}><button type="button" class="ro-row${r === main ? " on" : ""}" data-run="${r.t.id}" aria-pressed="${r === main}"><span class="ro-name">${esc(r.t.label)}</span><span class="ro-lane"><span style="width:${r.p}%"></span><i style="left:${r.p}%"></i></span><b>${r.p}%</b></button></li>`).join("")}</ul>
+  </section>`;
+}
+function homeCards() {
+  if (!state.session) return `${guestCard()}${runCard()}`;
+  const d = runData();
+  return `${runCard(d)}${runListCard(d)}`;
 }
 
 function trackCard(t) {
@@ -831,19 +807,19 @@ function viewHome() {
       <div><h1>${state.session ? `${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?` : "개념을 읽고, 바로 실행해 보는 데이터 학습 트랙"}</h1>
         <div class="home-progress"><span>레슨 <b>${totals.lessonsDone} / ${totals.lessons}</b></span><span>문제 <b>${totals.solved} / ${totals.problems}</b></span><span class="meter-bar"><span style="width:${pct(totals.lessonsDone + totals.solved, totals.lessons + totals.problems)}%"></span></span></div></div>
     </div>
-    <div class="daily-grid">${state.session ? dailyCard() : guestCard()}${runCard()}</div>
+    <div class="daily-grid">${homeCards()}</div>
     <section class="part"><h2 class="part-title">학습 트랙</h2>
       <div class="tgroups">${trackGroupsHtml()}</div></section>
   </main>`;
   bindTopbar();
   $app.querySelectorAll('main [data-act="login"]').forEach((b) => b.addEventListener("click", () => loginModal()));
-  $app.querySelector(".daily-grid")?.addEventListener("click", (e) => {
+  const grid = $app.querySelector(".daily-grid");
+  grid?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-run]");
-    const card = btn?.closest(".run-card");
-    if (!card) return;
+    if (!btn) return;
     runPick = btn.dataset.run;
-    card.outerHTML = runCard();
-    $app.querySelector(`.run-card [data-run="${runPick}"]`)?.focus();
+    grid.innerHTML = homeCards();
+    grid.querySelector(`[data-run="${runPick}"]`)?.focus();
   });
   preload();
 }
@@ -1235,7 +1211,7 @@ async function viewLesson(l) {
       bumpActivity();
       doneRead();
       if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
-      try { await api.lessonSet(state.session.token, l.id, "passed"); if (!dayWas && courseDone(lc)) dayComplete(lc); else toast(planToast(l.id) || "레슨을 완료했습니다."); awardMedals(); }
+      try { await api.lessonSet(state.session.token, l.id, "passed"); if (!dayWas && courseDone(lc)) dayComplete(lc); else toast("레슨을 완료했습니다."); awardMedals(); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     });
     return;
@@ -1270,7 +1246,7 @@ async function viewLesson(l) {
       state.lessons[l.id] = { status: "passed", quiz_score: ok, updated_at: now, passed_at: state.lessons[l.id]?.passed_at || now };
       bumpActivity();
       if (!state.session) return toast("레슨을 끝냈어요. 로그인하면 진도가 저장됩니다.");
-      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!dayWas && courseDone(lc)) dayComplete(lc); else if (!was) toast(planToast(l.id) || "레슨을 완료했습니다."); awardMedals(); }
+      try { await api.lessonSet(state.session.token, l.id, "passed", ok); if (!dayWas && courseDone(lc)) dayComplete(lc); else if (!was) toast("레슨을 완료했습니다."); awardMedals(); }
       catch (err) { if (err.code === "session") return logout(true); toast("진도를 저장하지 못했습니다. " + errorMessage(err)); }
     } else {
       if (state.session) api.lessonSet(state.session.token, l.id, "viewed", ok).catch(() => {});
@@ -1816,7 +1792,6 @@ function celebrate(p, info) {
     <h2 id="cel-title">정답입니다!</h2>
     <div class="rank-line"><b>${total}명</b> 중 <b>${rank}번째</b>로 맞혔어요</div>
     <p>${esc(sub)}</p>
-    ${planToast(p.id) ? `<p class="cel-plan">${esc(planToast(p.id))}</p>` : ""}
     <div class="btns">${next ? `<a class="btn primary" href="#/p/${next.id}" data-close>${next.type === "quiz" ? "개념 퀴즈" : `다음 문제 ${cno(next)}`}</a>` : ""}<button class="btn" data-close>계속 보기</button></div>
   </div>`;
   document.body.appendChild(wrap);
