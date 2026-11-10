@@ -4,6 +4,8 @@
 //  - 코드 펜스 ```python (읽기 전용) / ```run (파이썬 실행 셀) / ```sqlrun (SQL 실행 셀, sql.js)
 //  - 영상 블록 ::video{ref="dl-m03" start="312" end="540"}
 //  - 그림 블록 ::figure{src="content/img/ml/split.svg" alt="..." caption="..."}
+//  - 차트 카드 ::chart{src="content/img/gallery/mpl-bar.png" name="막대" sig="ax.bar(x, height)" desc="언제 쓰나" more="[자세히](#/l/da-12-1)"}
+//    이어진 ::chart 줄(사이 빈 줄 허용)은 한 격자(갤러리)로 묶인다
 //  - 팁 상자 :::tip 제목 … ::: (전구 아이콘이 붙은 "알아 두면 좋은 지식" 상자, 안에 문단 · 코드 · 표 모두 가능)
 //  - 한 줄이 <로 시작하면 HTML 블록으로 그대로 둔다 (표 등 저작자가 쓴 HTML)
 
@@ -34,6 +36,13 @@ export function parseDirective(line) {
 export function figureHtml(a) {
   const cap = a.caption ? `<figcaption>${inline(a.caption)}</figcaption>` : "";
   return `<figure class="md-fig"><img src="${esc(a.src)}" alt="${esc(a.alt || a.caption || "")}" loading="lazy">${cap}</figure>`;
+}
+
+export function chartCardHtml(a) {
+  const more = a.more ? `<div class="cc-more">${inline(a.more)}</div>` : "";
+  return `<article class="chart-card"><div class="cc-thumb"><img src="${esc(a.src)}" alt="${esc(a.alt || a.name || "")}" loading="lazy"></div>` +
+    `<div class="cc-body"><div class="cc-name">${inline(a.name || "")}</div><code class="cc-sig">${esc(a.sig || "")}</code>` +
+    `<p class="cc-desc">${inline(a.desc || "")}</p>${more}</div></article>`;
 }
 
 // renderers: { run(code, index, lang) -> html, video(attrs, index) -> html }  lang: "python" | "sql"
@@ -67,6 +76,21 @@ export function render(md, renderers = {}) {
     if (tip) { flush(); out.push(`<aside class="md-tip"><div class="md-tip-head">${TIP_ICON}<span>${inline(tip[1] || "알아 두면 좋아요")}</span></div>`); i++; continue; }
     if (/^:::\s*$/.test(line)) { flush(); out.push("</aside>"); i++; continue; }
     const directive = parseDirective(line);
+    if (directive && directive.name === "chart") { // 이어진 차트 카드를 한 격자로
+      flush();
+      const cards = [];
+      while (i < lines.length) {
+        const d = parseDirective(lines[i]);
+        if (d && d.name === "chart") { cards.push(chartCardHtml(d.attrs)); i++; continue; }
+        let j = i;
+        while (j < lines.length && !lines[j].trim()) j++;
+        const next = j > i && j < lines.length ? parseDirective(lines[j]) : null;
+        if (next && next.name === "chart") { i = j; continue; }
+        break;
+      }
+      out.push(`<div class="chart-gallery">${cards.join("")}</div>`);
+      continue;
+    }
     if (directive) {
       flush();
       if (directive.name === "video" && renderers.video) out.push(renderers.video(directive.attrs, videoIdx++));
@@ -125,7 +149,7 @@ export function render(md, renderers = {}) {
 // 레슨 본문에서 실행 셀(파이썬 runs · SQL sqlRuns)과 영상 참조만 뽑는다 (검증 스크립트용)
 export function extract(md) {
   const runs = [], sqlRuns = [], videos = [], figures = [];
-  for (const line of md.split("\n")) { const d = parseDirective(line); if (d && d.name === "figure") figures.push(d.attrs); }
+  for (const line of md.split("\n")) { const d = parseDirective(line); if (d && d.name === "figure") figures.push(d.attrs); if (d && d.name === "chart") figures.push({ ...d.attrs, alt: d.attrs.alt || d.attrs.name }); }
   render(md, { run: (code, i, lang) => { (lang === "sql" ? sqlRuns : runs).push(code); return ""; }, video: (attrs) => { videos.push(attrs); return ""; } });
   return { runs, sqlRuns, videos, figures };
 }
