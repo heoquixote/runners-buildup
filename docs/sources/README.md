@@ -38,10 +38,11 @@
 
 교재에는 있지만 사이트에 코스가 없는 내용: 형변환·참/거짓(02-4), 참조와 복사(03-3), 모듈·클래스·가상환경(05장), pathlib·datetime·collections(06-4), requests API(07-2), 자동화 스크립트·프로젝트 구조(08-1, 08-3).
 
-### 데이터 분석 (python-da: da-01~08) · 데이터 시각화 (python-viz: da-09~da-16)
+### 데이터 분석 (python-da: da-00~08) · 데이터 시각화 (python-viz: da-09~da-16)
 
 | 코스 | 주 원본 | 보조 |
 | --- | --- | --- |
+| da-00 pip과 가상환경 | python/00-pip-venv (2026-11-10 진성 님 스레드 원고) | 05-3-venv-and-packages, 01-3-development-environment |
 | da-01 NumPy 배열과 연산 | python/07-3-numpy-arrays | 07-1-what-is-external-library |
 | da-02 인덱싱과 브로드캐스팅 | python/07-3-numpy-arrays | |
 | da-03 pandas Series · DataFrame | python/07-4-pandas-basics (핵심 데이터 구조, 데이터 읽기, 처음 볼 것) | 07-3-pandas-dataframe |
