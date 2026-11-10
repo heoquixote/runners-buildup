@@ -844,5 +844,45 @@ $$;
 revoke execute on function public.admin_set_rank_exclude(uuid, uuid, boolean) from public;
 grant execute on function public.admin_set_rank_exclude(uuid, uuid, boolean) to anon;
 
+-- ── 어드민 실시간 탭 (2026-11-10) ─────────────────────────
+-- 제출을 한 건씩(코드 제외) 보는 admin_activity, 레슨 통과 시각을 함께 주는 admin_lessons
+create or replace function public.admin_activity(p_token uuid, p_since timestamptz)
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  return json_build_object('ok', true, 'items', coalesce((
+    select json_agg(row_to_json(x) order by x.created_at) from (
+      select s.student_id, s.problem_id, s.passed, s.passed_count, s.total_count, s.created_at,
+             case when not s.passed and jsonb_typeof(s.case_results) = 'array' then (
+               select left(coalesce(nullif(e->>'error', ''), nullif(e->>'note', ''), ''), 160)
+               from jsonb_array_elements(s.case_results) e
+               where coalesce((e->>'passed')::boolean, false) = false
+               limit 1
+             ) end as error
+      from submissions s
+      where s.created_at >= coalesce(p_since, now() - interval '1 day')
+      order by s.created_at desc
+      limit 5000
+    ) x
+  ), '[]'::json));
+end;
+$$;
+
+create or replace function public.admin_lessons(p_token uuid)
+returns json language plpgsql stable security definer set search_path = public as $$
+begin
+  if not _is_admin(p_token) then return json_build_object('ok', false, 'error', 'session'); end if;
+  return json_build_object('ok', true, 'rows', coalesce((
+    select json_agg(json_build_object('student_id', student_id, 'lesson_id', lesson_id, 'status', status,
+                                      'quiz_score', quiz_score, 'passed_at', passed_at, 'updated_at', updated_at))
+    from lesson_progress
+  ), '[]'::json));
+end;
+$$;
+
+revoke execute on function public.admin_activity(uuid, timestamptz) from public;
+grant execute on function public.admin_activity(uuid, timestamptz) to anon;
+grant execute on function public.admin_lessons(uuid) to anon;
+
 -- 마지막: 어드민 비밀번호 (꼭 바꾸세요)
 select public.set_admin_password('여기에-어드민-비밀번호');

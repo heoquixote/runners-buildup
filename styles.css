@@ -1233,3 +1233,52 @@ td.fb-comment { max-width: 360px; white-space: pre-wrap; word-break: break-word;
   .ach::after { display: none; }
 }
 .mnext-item:hover { border-color: var(--line-strong); }
+
+/* ── 어드민 실시간 탭 ─────────────────────────────────── */
+.kpi .v small { font-size: 15px; color: var(--muted); font-weight: 600; margin-left: 2px; }
+.kpi.warn .v { color: var(--fail); }
+.group-select.hide-test { cursor: pointer; }
+.group-select.hide-test input { accent-color: var(--accent); }
+.live-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 1360px) { .live-grid { grid-template-columns: 1fr; } }
+.live-side { display: grid; gap: 16px; }
+.live-side h3 { margin: 0; font-size: 15px; }
+.live-table td, .live-table th { vertical-align: top; }
+.live-table thead th { white-space: nowrap; }
+.live-table th.live-name { font-weight: 600; color: var(--ink); white-space: nowrap; font-size: 14px; }
+.live-hw { font-size: 11.5px; color: var(--subtle); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; white-space: nowrap; }
+.live-status { font-size: 12px; color: var(--subtle); font-weight: 500; }
+.live-row.st-away, .live-row.st-none { opacity: .55; }
+.live-status { padding-left: 18px; }
+.live-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; background: var(--line-strong); vertical-align: 1px; }
+.live-dot.st-live { background: var(--pass); box-shadow: 0 0 0 4px var(--pass-soft); animation: live-pulse 2s infinite; }
+.live-dot.st-today { background: var(--warn); }
+@keyframes live-pulse { 50% { box-shadow: 0 0 0 7px transparent; } }
+.live-where { min-width: 200px; max-width: 300px; font-size: 13.5px; }
+.live-where > div { margin-top: 3px; line-height: 1.4; }
+.live-track { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 99px; color: var(--tc, var(--muted)); border: 1px solid color-mix(in srgb, var(--tc, var(--muted)) 45%, transparent); background: color-mix(in srgb, var(--tc, var(--muted)) 12%, transparent); white-space: nowrap; }
+.live-kind { font-size: 12px; color: var(--subtle); }
+.live-tracks { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
+.live-tracks b { margin-right: 6px; font-variant-numeric: tabular-nums; }
+.live-auto { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.live-auto input { accent-color: var(--accent); }
+.live-note { margin: 0; padding: 10px 12px; font-size: 13px; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: var(--radius); }
+.live-stuck { cursor: pointer; font: inherit; font-size: 12.5px; padding: 2px 8px; margin: 0 4px 4px 0; border-radius: 99px; border: 1px solid rgba(255,122,146,.35); background: var(--fail-soft); color: var(--ink-2); white-space: nowrap; }
+.live-stuck b { color: var(--fail); font-weight: 700; }
+.live-stuck.hot { border-color: var(--fail); }
+.live-stuck:hover { border-color: var(--fail); }
+.fail-ink { color: var(--fail); }
+.live-prog { display: grid; gap: 4px; min-width: 150px; font-size: 12.5px; }
+.live-prog .bar { height: 6px; background: var(--surface-3); border-radius: 99px; overflow: hidden; }
+.live-prog .bar span { display: block; height: 100%; background: var(--tc, var(--pass)); border-radius: 99px; }
+.live-stucklist { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; font-size: 13.5px; }
+.live-stucklist li { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.live-stucklist li:last-child { border-bottom: 0; padding-bottom: 0; }
+.live-feed { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; font-size: 13px; max-height: 520px; overflow-y: auto; }
+.live-feed li { display: grid; grid-template-columns: 40px 14px 1fr; gap: 6px; align-items: start; }
+.live-feed .t { color: var(--subtle); font-size: 12px; padding-top: 1px; }
+.live-feed .ic { color: var(--subtle); font-weight: 700; }
+.live-feed li.pass .ic { color: var(--pass); }
+.live-feed li.fail .ic { color: var(--fail); }
+.live-feed .f-place { color: var(--ink-2); line-height: 1.4; }
+.live-feed .f-err { color: var(--fail); font-size: 11.5px; margin-top: 2px; word-break: break-all; }
