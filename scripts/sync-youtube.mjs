@@ -10,6 +10,9 @@ import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 
 const CHANNEL_ID = "UCbiosyXlVcv8X4aBFbsNCNg";
 const FEED_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
+// RSS 가 404·500 을 줄 때(GitHub 러너 IP 에서 자주 발생) 쓰는 대체 경로: 채널 동영상 탭 HTML 의 ytInitialData.
+const CHANNEL_VIDEOS_URL = `https://www.youtube.com/channel/${CHANNEL_ID}/videos`;
+const UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
 const VIDEOS_FILE = new URL("../content/videos.js", import.meta.url);
 
 // 영상 id → 채널 제목에 들어 있으면 그 영상으로 보는 키워드(공백·대소문자 무시, 하나만 맞아도 됨).
@@ -57,6 +60,49 @@ export function parseFeed(xml) {
   })).filter((v) => v.id);
 }
 
+// 채널 동영상 탭 HTML 에서 영상 id·제목을 뽑는다(최신순). 게시일은 상대 표기("1일 전")만 있어 비워 둔다.
+export function parseChannelPage(html) {
+  const m = html.match(/ytInitialData\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
+  if (!m) return [];
+  const out = [], seen = new Set();
+  const text = (t) => t?.simpleText ?? t?.runs?.map((r) => r.text).join("") ?? t?.content ?? "";
+  const walk = (o) => {
+    if (!o || typeof o !== "object") return;
+    if (Array.isArray(o)) return o.forEach(walk);
+    const vr = o.videoRenderer || o.gridVideoRenderer;
+    if (vr?.videoId && !seen.has(vr.videoId)) { seen.add(vr.videoId); out.push({ id: vr.videoId, title: text(vr.title), published: "" }); }
+    const lv = o.lockupViewModel;
+    if (lv?.contentId && /^[\w-]{11}$/.test(lv.contentId) && !seen.has(lv.contentId)) {
+      seen.add(lv.contentId);
+      out.push({ id: lv.contentId, title: text(lv.metadata?.lockupMetadataViewModel?.title), published: "" });
+    }
+    for (const v of Object.values(o)) walk(v);
+  };
+  walk(JSON.parse(m[1]));
+  return out.filter((v) => v.title);
+}
+
+async function get(url) {
+  const res = await fetch(url, { headers: { "user-agent": UA, "accept-language": "ko,en;q=0.8" } });
+  return { status: res.status, body: await res.text() };
+}
+
+// RSS → (실패 시) 채널 동영상 탭 순서로 시도하고, 각 시도의 HTTP 상태를 남긴다.
+async function loadFeed() {
+  const tried = [];
+  for (let i = 0; i < 2; i++) {
+    const r = await get(FEED_URL);
+    const feed = r.status === 200 ? parseFeed(r.body) : [];
+    tried.push(`RSS ${r.status} (${feed.length}편)`);
+    if (feed.length) return { feed, source: "RSS", tried };
+    await new Promise((ok) => setTimeout(ok, 3000));
+  }
+  const r = await get(CHANNEL_VIDEOS_URL);
+  const feed = r.status === 200 ? parseChannelPage(r.body) : [];
+  tried.push(`채널 페이지 ${r.status} (${feed.length}편)`);
+  return { feed, source: "채널 페이지", tried };
+}
+
 // 아직 영상이 없는 항목(videos.js 의 youtube_id: null 줄)만 후보로 삼는다.
 export function plan(feed, src) {
   const known = new Set([...src.matchAll(/youtube_id: "([\w-]{11})"|watch\?v=([\w-]{11})/g)].map((m) => m[1] || m[2]));
@@ -84,17 +130,19 @@ export function apply(src, fills) {
 async function main() {
   const args = process.argv.slice(2);
   const feedArg = args.indexOf("--feed");
-  const xml = feedArg >= 0 ? readFileSync(args[feedArg + 1], "utf8") : await (await fetch(FEED_URL)).text();
-  const feed = parseFeed(xml);
-  if (!feed.length) throw new Error("RSS 에서 영상을 하나도 읽지 못했습니다.");
+  const { feed, source, tried } = feedArg >= 0
+    ? { feed: parseFeed(readFileSync(args[feedArg + 1], "utf8")), source: "파일", tried: [] }
+    : await loadFeed();
+  console.error(`영상 목록: ${source}에서 ${feed.length}편 (${tried.join(" → ") || "-"})`);
+  if (!feed.length) throw new Error(`유튜브에서 영상 목록을 읽지 못했습니다: ${tried.join(" → ")}`);
   const src = readFileSync(VIDEOS_FILE, "utf8");
   const { fills, unmatched, ambiguous } = plan(feed, src);
   if (fills.length && !args.includes("--dry-run")) writeFileSync(VIDEOS_FILE, apply(src, fills));
 
   const lines = [];
-  if (fills.length) lines.push("### 영상 연결", ...fills.map((f) => `- \`${f.ref}\` ← [${f.title}](https://www.youtube.com/watch?v=${f.id}) (${f.published.slice(0, 10)})`), "");
+  if (fills.length) lines.push("### 영상 연결", ...fills.map((f) => `- \`${f.ref}\` ← [${f.title}](https://www.youtube.com/watch?v=${f.id})${f.published ? ` (${f.published.slice(0, 10)})` : ""}`), "");
   if (ambiguous.length) lines.push("### 후보가 여럿이라 보류", ...ambiguous.map((v) => `- [${v.title}](https://www.youtube.com/watch?v=${v.id}) → ${v.hits.join(", ")}`), "");
-  if (unmatched.length) lines.push("### 대기열과 매칭 안 됨 (직접 확인)", ...unmatched.map((v) => `- [${v.title}](https://www.youtube.com/watch?v=${v.id}) (${v.published.slice(0, 10)})`), "");
+  if (unmatched.length) lines.push("### 대기열과 매칭 안 됨 (직접 확인)", ...unmatched.map((v) => `- [${v.title}](https://www.youtube.com/watch?v=${v.id})${v.published ? ` (${v.published.slice(0, 10)})` : ""}`), "");
   const summary = lines.join("\n") || "새로 연결할 영상이 없습니다.";
   console.log(summary);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `filled=${fills.length}\n`);
