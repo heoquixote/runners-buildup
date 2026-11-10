@@ -4,7 +4,7 @@
 
 export const TRACKS = [
   { id: "python-basic", label: "파이썬 기초", en: "Python Basics", color: "violet", ready: true,
-    blurb: "변수부터 파일 입출력 · 표준 라이브러리까지. QA/QC 현장 예제로 문법을 익힙니다." },
+    blurb: "변수부터 파일 입출력 · 표준 라이브러리 · 클래스까지. QA/QC 현장 예제로 문법을 익힙니다." },
   { id: "python-da", label: "데이터 분석", en: "Data Analysis", color: "cyan", ready: true,
     blurb: "pip · 가상환경으로 내 PC를 준비하고, NumPy · pandas로 데이터를 불러오고, 고르고, 묶고, 합칩니다." },
   { id: "python-viz", label: "데이터 시각화", en: "Visualization", color: "rose", ready: true,
@@ -177,8 +177,8 @@ export const COURSES = [
           { kind: "choice", q: "for 반복 안에서 continue를 만나면 다음에 실행되는 곳은?", options: ["반복문 다음 줄", "다음 회차의 첫 줄", "같은 회차의 다음 줄", "프로그램이 끝난다"], answer: 1, explain: "continue는 이번 회차의 남은 줄만 건너뛰고 다음 회차로 갑니다. 반복 전체를 끝내는 것은 break입니다." },
         ] },
     ] },
-  { id: "pb-08", track: "python-basic", title: "문자열 활용 (함수 문제)", summary: "함수, 매개변수 기본값, 키워드 인자, 여러 값 반환, 작은 함수로 나눠 문자열 검증", unit: 8, level: "기본",
-    concepts: ["py.function", "py.index-slice", "py.str-method"],
+  { id: "pb-08", track: "python-basic", title: "문자열 활용 (함수 문제)", summary: "함수, 매개변수 기본값, 키워드 인자, 여러 값 반환, 작은 함수로 나눠 문자열 검증, *args · **kwargs", unit: 8, level: "기본",
+    concepts: ["py.function", "py.index-slice", "py.str-method", "py.args"],
     lessons: [{ id: "pb-08-1", title: "solution 함수로 문자열 처리하기", minutes: 20, concepts: ["py.function", "py.index-slice", "py.str-method"],
       quiz: [
         { kind: "ox", q: "함수형 문제에서 답은 print()로 출력하면 채점된다.", answer: false, explain: "채점기는 return 값을 봅니다. print는 확인용입니다." },
@@ -192,6 +192,11 @@ export const COURSES = [
       { id: "pb-08-3", title: "작은 함수로 나눠 문자열 검증하기", minutes: 20, concepts: ["py.function", "py.str-method"],
         quiz: [
           { kind: "choice", q: "로트 코드 검증 함수 is_valid 에서 길이 검사를 맨 먼저 하는 이유는?", options: ["속도가 빨라서", "길이가 짧으면 뒤의 인덱싱에서 IndexError가 나기 때문에", "파이썬 문법 규칙이라서", "대문자로 바꾸기 위해"], answer: 1, explain: "code[9]처럼 자리를 꺼내기 전에 길이를 확인해야 짧은 입력에서 에러가 나지 않습니다. 위험한 일 전에 안전한 검사부터 합니다." },
+        ] },
+      { id: "pb-08-4", title: "개수가 정해지지 않은 인자: *args · **kwargs", minutes: 15, concepts: ["py.args"],
+        quiz: [
+          { kind: "choice", q: "def f(*values): 로 만든 함수를 f(3, 5, 7) 로 부르면 함수 안에서 values 는?", options: ["리스트 [3, 5, 7]", "튜플 (3, 5, 7)", "딕셔너리", "마지막 값 7"], answer: 1, explain: "별 하나(*)는 남은 위치 인자를 튜플 하나로 모읍니다. 튜플이라 for · len · sum은 되지만 append는 안 됩니다." },
+          { kind: "write", q: "규격 딕셔너리 spec 을 ** 로 풀어 넣어 judge(10.1, ...) 의 결과를 출력하는 코드를 작성하세요.", given: "def judge(value, low=9.5, high=10.5):\n    return '합격' if low <= value <= high else '불합격'\n\nspec = {'low': 9.8, 'high': 10.0}", expect: "불합격", must: ["judge\\(\\s*10\\.1\\s*,\\s*\\*\\*spec\\s*\\)"], solution: "def judge(value, low=9.5, high=10.5):\n    return '합격' if low <= value <= high else '불합격'\n\nspec = {'low': 9.8, 'high': 10.0}\nprint(judge(10.1, **spec))", explain: "judge(10.1, **spec) 은 judge(10.1, low=9.8, high=10.0) 과 같습니다. 10.1은 상한 10.0을 넘어 불합격입니다." },
         ] },
     ] },
   { id: "pb-09", track: "python-basic", title: "알고리즘 (함수형)", summary: "solution 함수, 세기 · 찾기 · 집계 패턴, 호출 스택, 지역 · 전역 변수, sum · max(key) · any · all", unit: 9, level: "기본",
@@ -256,8 +261,8 @@ export const COURSES = [
         ] },
     ] },
   // 표준 라이브러리 (2026-11-07 진성 님 원고). 기획안 docs/lesson-plans/python-basic.md 의 pb-13
-  { id: "pb-13", track: "python-basic", title: "표준 라이브러리 (datetime · math · random · os)", summary: "import와 내 모듈, datetime · timedelta, strftime · strptime, math 올림 · 내림, random seed · sample, os 경로 · 폴더", unit: 50, level: "기본",
-    concepts: ["py.module", "py.datetime", "py.math", "py.random", "py.os"],
+  { id: "pb-13", track: "python-basic", title: "표준 라이브러리 (datetime · math · random · os · collections)", summary: "import와 내 모듈, help 읽기, datetime · timedelta, strftime · strptime, math 올림 · 내림, random seed · sample, os 경로 · 폴더, Counter · defaultdict", unit: 50, level: "기본",
+    concepts: ["py.module", "py.datetime", "py.math", "py.random", "py.os", "py.collections"],
     lessons: [
       { id: "pb-13-1", title: "모듈과 import: 남이 만든 도구 상자 쓰기", minutes: 15, concepts: ["py.module"],
         quiz: [
@@ -277,6 +282,31 @@ export const COURSES = [
       { id: "pb-13-4", title: "os: 폴더와 파일 경로 다루기", minutes: 20, concepts: ["py.os"],
         quiz: [
           { kind: "choice", q: "이미 있는 logs 폴더를 os.makedirs(\"logs\") 로 한 번 더 만들면 어떤 에러가 날까요?", options: ["FileNotFoundError", "FileExistsError", "PermissionError", "에러 없이 지나간다"], answer: 1, explain: "이미 있는 폴더를 또 만들려 하면 FileExistsError가 납니다. 있어도 괜찮게 하려면 os.makedirs(\"logs\", exist_ok=True) 로 씁니다." },
+        ] },
+      { id: "pb-13-5", title: "collections: Counter로 세고 defaultdict로 모으기", minutes: 15, concepts: ["py.collections"],
+        quiz: [
+          { kind: "write", q: "Counter 와 most_common 으로 defects 에서 가장 많은 불량 유형 이름 하나를 출력하는 코드를 작성하세요.", given: "from collections import Counter\ndefects = ['dent', 'scratch', 'crack', 'scratch', 'dent', 'scratch']", expect: "scratch", must: ["Counter\\(", "most_common\\("], solution: "from collections import Counter\ndefects = ['dent', 'scratch', 'crack', 'scratch', 'dent', 'scratch']\nprint(Counter(defects).most_common(1)[0][0])", explain: "most_common(1)은 [('scratch', 3)] 입니다. [0]으로 튜플을, 다시 [0]으로 이름을 꺼냅니다." },
+          { kind: "ox", q: "일반 딕셔너리 d = {} 에서 d['A'] += 1 을 실행하면 'A'가 0에서 시작해 1이 된다.", answer: false, explain: "일반 딕셔너리는 없는 key를 꺼내면 KeyError가 납니다. 0에서 시작하게 하려면 defaultdict(int)나 d.get('A', 0) + 1을 씁니다." },
+        ] },
+    ] },
+  // 클래스와 객체 (2026-11-10 보강). 기획안 docs/lesson-plans/python-basic.md 의 "2026-11-10 보강"
+  { id: "pb-14", track: "python-basic", title: "클래스와 객체", summary: "객체 · 속성 · 메서드, class · __init__ · self, 상태를 바꾸는 메서드, fit · predict 직접 만들기, 학습 결과 속성(_)", unit: 52, level: "기본",
+    concepts: ["py.class"],
+    lessons: [
+      { id: "pb-14-1", title: "객체: 값과 기능을 함께 가진 것", minutes: 15, concepts: ["py.class"],
+        quiz: [
+          { kind: "choice", q: "pandas 표 df 에서 괄호 없이 쓰는 속성(가진 값)은?", options: ["df.head()", "df.shape", "df.describe()", "df.dropna()"], answer: 1, explain: "df.shape는 표가 가진 (행 수, 열 수) 값이라 괄호 없이 꺼냅니다. 나머지는 표에게 일을 시키는 메서드라 괄호를 붙입니다." },
+          { kind: "ox", q: "sizes.sort() 는 정렬된 새 리스트를 돌려주므로 sizes = sizes.sort() 처럼 써야 한다.", answer: false, explain: "sort는 원본을 제자리에서 바꾸고 None을 돌려주는 메서드입니다. sizes = sizes.sort() 라고 쓰면 sizes가 None이 됩니다. 새 리스트가 필요하면 sorted(sizes)." },
+        ] },
+      { id: "pb-14-2", title: "class로 나만의 객체 만들기: __init__ · self", minutes: 20, concepts: ["py.class"],
+        quiz: [
+          { kind: "write", q: "Box 클래스에 개수 × 단가를 돌려주는 total 메서드를 만들고, Box(12, 1500) 의 total() 을 출력하세요.", given: "class Box:\n    def __init__(self, count, price):\n        self.count = count\n        self.price = price\n", expect: "18000", must: ["def\\s+total\\s*\\(\\s*self", "self\\.count", "\\.total\\(\\s*\\)"], solution: "class Box:\n    def __init__(self, count, price):\n        self.count = count\n        self.price = price\n\n    def total(self):\n        return self.count * self.price\n\nprint(Box(12, 1500).total())", explain: "메서드의 첫 매개변수는 self이고, 안에서 속성은 self.count, self.price로 꺼냅니다. 부를 때는 괄호를 비워 둡니다." },
+          { kind: "choice", q: "class Lot: 안에 def show(): 처럼 self 없이 메서드를 만들고 a.show() 를 부르면?", options: ["정상 실행된다", "TypeError: show() takes 0 positional arguments but 1 was given", "NameError: name 'self' is not defined", "SyntaxError"], answer: 1, explain: "a.show()는 Lot.show(a)로 바뀌어 실행되므로 a가 자동으로 들어갑니다. 받을 자리가 없어서 '0개 받는데 1개가 들어왔다'는 TypeError가 납니다." },
+        ] },
+      { id: "pb-14-3", title: "fit과 predict 직접 만들기: 머신러닝 모델은 객체입니다", minutes: 20, concepts: ["py.class"],
+        quiz: [
+          { kind: "choice", q: "레슨의 MeanModel 로 model = MeanModel() 만 실행한 직후의 상태는?", options: ["mean_ 에 평균이 들어 있다", "mean_ 은 None 이다(아직 배운 것이 없다)", "predict 를 부르면 에러 없이 평균을 돌려준다", "fit 이 자동으로 실행되었다"], answer: 1, explain: "__init__은 설정만 하고 mean_ = None으로 둡니다. 평균은 fit을 불러야 계산되어 mean_에 저장됩니다." },
+          { kind: "ox", q: "scikit-learn 모델의 coef_, feature_importances_ 처럼 끝에 밑줄이 붙은 속성은 fit 을 한 뒤에 생기는 학습 결과다.", answer: true, explain: "fit이 데이터로 계산한 결과를 끝에 밑줄 붙은 속성에 저장하는 것이 scikit-learn의 관례입니다." },
         ] },
     ] },
 
@@ -1483,7 +1513,7 @@ export const SECTIONS = {
     { id: "start", label: "시작하기", en: "Start", blurb: "파이썬이 무엇이고 어디서 실행하는지", courses: ["pb-00"] },
     { id: "data", label: "자료형과 자료구조", en: "Data Types", blurb: "숫자 · 문자열 · 리스트 · 딕셔너리로 값을 담고 다루기", courses: ["pb-01", "pb-02", "pb-03", "pb-04", "pb-05", "pb-06"] },
     { id: "flow", label: "제어문과 함수", en: "Control Flow", blurb: "조건 · 반복으로 흐름을 만들고 함수로 묶기", courses: ["pb-07", "pb-08", "pb-09"] },
-    { id: "practical", label: "실무 문법", en: "Practical", blurb: "파일 입출력, 컴프리헨션 · 람다, 예외 처리, 표준 라이브러리", courses: ["pb-10", "pb-11", "pb-12", "pb-13"] },
+    { id: "practical", label: "실무 문법", en: "Practical", blurb: "파일 입출력, 컴프리헨션 · 람다, 예외 처리, 표준 라이브러리, 클래스와 객체", courses: ["pb-10", "pb-11", "pb-12", "pb-13", "pb-14"] },
   ],
   "python-da": [
     { id: "env", label: "개발 환경", en: "Setup", blurb: "pip으로 라이브러리를 설치하고, 프로젝트마다 가상환경 만들기", courses: ["da-00"] },

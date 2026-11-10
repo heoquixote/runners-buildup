@@ -42,7 +42,8 @@
 | | | pb-07-3 반복 흐름 추적: while · break · continue | 반복마다 변수 값이 어떻게 바뀌는지 추적표로 따라간다 | py.while, py.loop-flow | 퀴즈 2 → 유닛 7 실습 |
 | 09 | 문자열 활용 · 함수 (pb-08, 8) | pb-08-1 solution 함수로 문자열 처리하기 (기존) | 함수 하나로 문자열을 처리해 return 한다 | py.function | 퀴즈 2 (기존) |
 | | | pb-08-2 함수 만들기 기본기 | 매개변수 · 기본값 · 키워드 인자 · 여러 값 반환을 쓴다 | py.function | 퀴즈 2 |
-| | | pb-08-3 작은 함수로 나눠 문자열 검증하기 | 정리 → 분해 → 검증 함수를 나눠 만들고 예시 입력으로 확인한다 | py.function, py.str-method | 퀴즈 1 → 유닛 8 실습 |
+| | | pb-08-3 작은 함수로 나눠 문자열 검증하기 | 정리 → 분해 → 검증 함수를 나눠 만들고 예시 입력으로 확인한다 | py.function, py.str-method | 퀴즈 1 |
+| | | pb-08-4 개수가 정해지지 않은 인자: *args · **kwargs (2026-11-10 추가) | 인자를 몇 개든 받는 함수를 만들고, 호출할 때 `*` · `**`로 리스트 · 딕셔너리를 풀어 넣는다 | py.args | 퀴즈 2 → 유닛 8 실습 |
 | 10 | 알고리즘 · 함수형 (pb-09, 9) | pb-09-1 함수 안에서 세고 찾고 집계하기 (기존) | 세기 · 찾기 · 집계 패턴을 고른다 | py.function, py.scope | 퀴즈 2 (기존) |
 | | | pb-09-2 함수 호출과 스코프 | 지역 · 전역 변수와 리스트를 넘길 때 원본이 바뀌는 이유를 안다 | py.scope | 퀴즈 2 |
 | | | pb-09-3 내장 함수로 짧게 쓰기 | sum · min · max(key) · any · all · zip으로 반복문을 줄인다 | py.enumerate | 퀴즈 2 → 유닛 9 실습 |
@@ -56,9 +57,13 @@
 | 14 | 표준 라이브러리 (pb-13, 50) (2026-11-07 추가) | pb-13-1 모듈과 import: 남이 만든 도구 상자 쓰기 | 모듈 · 패키지 · 라이브러리를 구분하고, import 네 가지 모양으로 불러 쓰고, 내 모듈을 만들어 불러온다 | py.module | 퀴즈 2 |
 | | | pb-13-2 datetime: 날짜와 시간 계산하기 | 날짜 문자열을 datetime으로 바꿔 더하고 빼고, 원하는 모양의 문자열로 되돌린다 | py.datetime | 퀴즈 2 |
 | | | pb-13-3 math와 random: 계산 도구와 난수 | 올림 · 내림 · 버림, 소수 비교를 math로 하고, seed를 고정해 같은 난수 · 표본을 다시 만든다 | py.math, py.random | 퀴즈 2 |
-| | | pb-13-4 os: 폴더와 파일 경로 다루기 | 경로를 만들고 확인하고, 날짜별 폴더에 검사 로그를 저장한다 | py.os | 퀴즈 1 → 유닛 50 실습 |
+| | | pb-13-4 os: 폴더와 파일 경로 다루기 | 경로를 만들고 확인하고, 날짜별 폴더에 검사 로그를 저장한다 | py.os | 퀴즈 1 |
+| | | pb-13-5 collections: Counter로 세고 defaultdict로 모으기 (2026-11-10 추가) | 딕셔너리로 세던 패턴을 Counter 한 줄로 바꾸고, 그룹별 목록을 defaultdict로 모은다 | py.collections | 퀴즈 2 → 유닛 50 실습 |
+| 15 | 클래스와 객체 (pb-14, 52) (2026-11-10 추가) | pb-14-1 객체: 값과 기능을 함께 가진 것 | 점(.) 뒤에 오는 것이 속성인지 메서드인지 구분하고, 메서드가 원본을 바꾸는지 새 값을 돌려주는지 안다 | py.class | 퀴즈 2 |
+| | | pb-14-2 class로 나만의 객체 만들기: __init__ · self | class · __init__ · self로 로트 객체를 만들고 메서드로 계산 · 상태 변경을 한다 | py.class | 퀴즈 2 |
+| | | pb-14-3 fit과 predict 직접 만들기 | 평균으로 예측하는 모델 클래스를 직접 만들어 머신러닝 라이브러리의 만들기 → fit → predict 흐름을 이해한다 | py.class | 퀴즈 2 → 유닛 52 실습 |
 
-**새 개념 태그**: `py.types`(자료형과 형변환), `py.tuple`(튜플과 언패킹).
+**새 개념 태그**: `py.types`(자료형과 형변환), `py.tuple`(튜플과 언패킹). 2026-11-10: `py.args`(가변 인자와 풀어 넣기), `py.collections`(Counter · defaultdict), `py.class`(클래스와 객체).
 
 **영상**: `dl-m14`(변수와 객체 참조)는 pb-01-1에 두고, pb-04-1 끝에 있던 것은 pb-04-3으로 옮긴다. `dl-m15`(반복문 실행 흐름)는 pb-07-1에 그대로 두고 pb-07-3 추적표 뒤에도 넣는다. `dl-m16`(함수 호출과 스코프)은 pb-09-1에 그대로 두고 pb-09-2 호출 흐름 설명 뒤에도 넣는다. 모두 제작 전이라 화면에는 아직 나오지 않는다.
 
@@ -252,6 +257,67 @@
 - 그림: `py-os-paths.svg`
 - 실습: 유닛 50 (제조: 50-1 날짜별 검사 로그 저장(단계형), 50-2 검사 간격 중 가장 긴 공백(함수형) / 일반: 50-3 배송 도착 예정일과 요일(함수형), 50-4 경품 추첨과 페이지 수(단계형) / 개념 퀴즈 50-Q). 실행 날짜에 따라 답이 바뀌지 않게 문제는 고정 날짜를 쓴다.
 
+### 2026-11-10 보강: 빠진 기초 개념 (진성 님 요청)
+
+트랙 전체를 점검해 보니 람다 · 컴프리헨션은 pb-11에 있었지만, 이후 데이터 분석 · 머신러닝 트랙이 전제로 쓰는 문법 몇 가지가 빠져 있었다. 우선순위대로 아래를 추가한다.
+
+| 순위 | 추가 | 위치 | 왜 |
+| --- | --- | --- | --- |
+| 1 | 새 코스 **pb-14 클래스와 객체**(레슨 3, 유닛 52) | 트랙 끝, pb-13 표준 라이브러리 다음(DAY 15) | ML 트랙 첫 레슨부터 `model.fit()` · `model.predict()`, pandas는 `df.shape`(속성) · `df.head()`(메서드)를 쓰는데 객체 개념이 한 번도 나오지 않는다 |
+| 2 | 레슨 **pb-08-4** `*args` · `**kwargs`와 풀어 넣기 | pb-08 함수 코스 끝 | `SVC(**best_params)`, `**kwargs`가 적힌 함수 설명을 이후 트랙에서 계속 만난다 |
+| 3 | 레슨 **pb-13-5** `Counter` · `defaultdict` | pb-13 표준 라이브러리 끝 | pb-09-1의 딕셔너리 세기 패턴을 한 줄로, pandas `value_counts()` · `groupby`로 이어지는 다리 |
+| 4 | 기존 레슨에 절 추가 | pb-11-2, pb-11-3, pb-13-1 | 이미 쓰고 있는데 설명이 없는 문법(제너레이터 표현식), 중첩 컴프리헨션, pandas `apply` 미리보기, `help()`로 함수 설명 읽기 |
+
+**클래스 코스 위치를 pb-12 다음이 아니라 pb-13 다음으로 둔 이유**: 첫 레슨에서 속성과 메서드를 구분할 때 학생이 이미 써 본 `datetime`의 `made.year`(속성) · `made.strftime()`(메서드)가 가장 좋은 예다. 그리고 트랙 마지막 코스가 되면 바로 다음 트랙(데이터 분석의 `df.shape` · `df.head()`)과 ML의 `fit` · `predict`로 이어진다. 상속은 :::tip에서 "PyTorch는 이렇게 쓴다" 정도로만 보여 준다(딥러닝 트랙은 개념만).
+
+**원본**: 진성 님 Python 기초 원고 `docs/sources/python/05-2-classes-and-objects.md`(클래스 = 설계도, 객체 = 인스턴스, 속성 = 데이터, 메서드 = 동작, 클래스가 필요 없는 상황), `04-4-functions-and-scope.md`의 가변 인자 절, `06-4-pathlib-datetime-collections.md`의 collections 소개.
+
+#### pb-08-4 개수가 정해지지 않은 인자: *args · **kwargs
+- 목표: 인자를 몇 개든 받는 함수를 만들고, 호출할 때 `*` · `**`로 리스트 · 딕셔너리를 풀어 넣는다
+- 전제: 매개변수 · 기본값 · 키워드 인자(pb-08-2), 튜플 언패킹(pb-04-2), 딕셔너리(pb-06)
+- 개념: 이미 써 본 "개수 자유" 함수(`print(a, b, c)`, `max(3, 7, 5)`) → `*args`는 남은 위치 인자를 **튜플**로 모은다 → 고정 매개변수와 함께(`def report(lot, *values)`) → `**kwargs`는 남은 키워드 인자를 **딕셔너리**로 모은다 → 이름은 관례일 뿐(별 개수가 뜻) → 호출할 때 반대로 풀어 넣기: `f(*리스트)`, `f(**딕셔너리)` → 실무: 설정 딕셔너리를 한 번에 넘기기(`judge(x, **spec)`), 라이브러리 설명의 `**kwargs` 읽기, ML 트랙 `Model(**best_params)` 미리보기 → 매개변수 순서 규칙
+- 배치: S(개수가 정해지지 않은 함수) → C(print · max 여러 개) → S(*args) → C(average(*values)) → C(type이 tuple) → C(고정 + *args) → S(**kwargs) → C(kwargs 출력) → C(로트 정보 한 줄) → F(모으기 vs 풀어 넣기) → S(호출할 때 *) → C(print(*lots)) → C(average(*temps)) → S(호출할 때 **) → C(judge(x, **spec)) → :::tip(ML 미리보기 `SVC(**best_params)`, 읽기 전용) → 순서 규칙 표 → 자주 하는 실수 → 정리
+- 퀴즈: choice(`def f(*args)`에서 args의 자료형), write(`**spec`으로 딕셔너리를 풀어 judge 호출)
+- 그림: `py-args-pack-unpack.svg`(정의할 때는 모으고, 호출할 때는 푼다)
+- 실습: 유닛 8에 8-8(제조, 측정값 몇 개든 받아 범위 판정, 함수형), 8-9(일반, 설정 딕셔너리로 가격 계산, 함수형) 추가
+
+#### pb-13-5 collections: Counter로 세고 defaultdict로 모으기
+- 목표: 딕셔너리로 세던 패턴을 Counter 한 줄로 바꾸고, 그룹별 목록을 defaultdict로 모은다
+- 전제: 딕셔너리 `get`으로 세기(pb-09-1), import(pb-13-1)
+- 개념: 복습(`counts[k] = counts.get(k, 0) + 1`) → `Counter(목록)` → `most_common(n)` → 없는 key는 0 → 문자열도 셀 수 있음 → Counter 더하기(두 날 합치기) → `defaultdict(list)`로 그룹별 목록 모으기(`groups[line].append(x)`) → `defaultdict(int)`로 합계 → 왜 KeyError가 안 나는가 → pandas 미리보기(`value_counts()` = Counter, `groupby` = defaultdict로 모은 뒤 계산)
+- 배치: S(복습: get으로 세기) → C → S(Counter) → C → C(most_common) → C(없는 key는 0) → C(Counter 더하기) → F(dict 세기 vs Counter) → S(그룹별로 모으기 문제) → C(일반 딕셔너리로 하면 if 필요) → C(defaultdict(list)) → C(defaultdict(int) 합계) → R → S(pandas 미리보기) → C(value_counts) → 정리
+- 퀴즈: write(Counter로 가장 많은 불량 유형 출력), ox(일반 딕셔너리에 없는 key로 `d[k] += 1` 하면 0에서 시작한다 → X)
+- 그림: `py-counter-defaultdict.svg`
+- 실습: 유닛 50에 50-5(제조, 불량 유형 상위 2개, 함수형), 50-6(일반, 학과별 학생 목록 모으기, 함수형) 추가
+
+#### pb-14-1 객체: 값과 기능을 함께 가진 것
+- 목표: 점(.) 뒤에 오는 것이 속성인지 메서드인지 구분하고, 메서드가 원본을 바꾸는지 새 값을 돌려주는지 안다
+- 전제: 문자열 · 리스트 메서드(pb-03, pb-05), datetime(pb-13-2), dir(pb-13-1)
+- 개념: 지금까지 찍은 점(.)들 모아 보기 → 파이썬의 모든 값은 **객체** → `type()`이 보여 주는 `<class 'str'>`의 class = 객체의 종류 → 객체 = **속성**(가진 값, 괄호 없음) + **메서드**(할 수 있는 일, 괄호 있음) → 괄호를 빼먹으면 메서드 자체가 출력됨 → 함수 vs 메서드(`len(lots)` vs `lots.count()`) → 메서드 두 종류(원본을 바꾸고 None: `sort`, `append` / 새 값을 돌려줌: `upper`, `replace`) → `dir()`로 둘러보기 → pandas 미리보기(`df.shape`, `df.columns` 속성 / `df.head()`, `df.describe()` 메서드)
+- 배치: S(시작하기 전에, 점 찍은 표) → S(객체 비유: 스마트폰) → F → C(type 여러 개) → S(속성 vs 메서드) → C(datetime 속성) → C(datetime 메서드) → C(괄호 빠뜨림) → S(함수 vs 메서드) → C → S(원본을 바꾸는 메서드 vs 새 값) → C(upper) → C(sort None) → C(dir) → S(pandas 미리보기) → C(DataFrame shape · head) → 정리
+- 퀴즈: choice(속성인 것 고르기), ox(`lots.sort()`는 정렬된 새 리스트를 돌려준다 → X)
+- 그림: `py-object-anatomy.svg`(객체 = 속성 + 메서드, datetime 예)
+
+#### pb-14-2 class로 나만의 객체 만들기: __init__ · self
+- 목표: class · __init__ · self로 로트 객체를 만들고 메서드로 계산 · 상태 변경을 한다
+- 개념: 딕셔너리 + 함수로 다루던 로트(복습) → **클래스 = 설계도(붕어빵 틀)**, **객체(인스턴스) = 찍어 낸 것** → `class Lot:` + `__init__`(만들 때 자동 실행, 속성 채우기) → `self` = 지금 만들어지는(쓰이는) 그 객체 → `a.rate()`는 `Lot.rate(a)`와 같다 → 메서드 추가 → 객체 여러 개를 리스트에 → 상태를 바꾸는 메서드(`add`) → `__repr__`(:::tip) → 딕셔너리 vs 클래스, 언제 클래스를 쓰나(원고: 상태 + 동작이 함께 움직일 때. 한 번 계산하고 끝나면 함수) → 자주 하는 실수(self 빠뜨림, 속성 앞 self. 빠뜨림, 괄호 없이 클래스 대입, 밑줄 하나)
+- 배치: S(복습) → S(설계도 비유) → F → C(가장 작은 클래스 + type) → S(__init__) → C → S(self) → F(호출 풀어 보기) → C(메서드 rate) → C(Lot.rate(a) 같은 결과) → C(여러 객체) → S(상태 바꾸기) → C(add) → :::tip(__repr__) → 비교 표 → 자주 하는 실수 표(에러는 읽기 전용) → 정리
+- 퀴즈: write(Box 클래스에 total 메서드 추가해 출력), choice(self를 빠뜨렸을 때 나는 에러)
+- 그림: `py-class-instance.svg`(설계도 하나, 객체 셋), `py-self-call.svg`(a.rate() → Lot.rate(a))
+
+#### pb-14-3 fit과 predict 직접 만들기
+- 목표: 평균으로 예측하는 모델 클래스를 직접 만들어 머신러닝 라이브러리의 만들기 → fit → predict 흐름을 이해한다
+- 개념: ML 트랙에서 만날 세 줄 미리보기(읽기 전용) → 세 단계 비유(채용 → 교육 → 실무) → `MeanModel`: `__init__`(설정만, 아직 모름) → `fit(y)`(배워서 `self.mean_`에 저장) → `predict(X)`(저장한 값으로 답) → fit 전 predict → 끝 밑줄 `_` = 학습으로 생긴 속성(scikit-learn 관례, `coef_` · `feature_importances_`) → 같은 클래스, 다른 데이터 = 다른 객체 → 설정값이 있는 모델(`GroupMeanModel(digits=1)`: 라인별 평균, 처음 보는 라인은 전체 평균) → `return self`로 이어 쓰기(`.fit(...).predict(...)`) → 진짜 scikit-learn `DummyRegressor(strategy="mean")`로 같은 흐름(`constant_`) → 상속(:::tip, PyTorch 모양 읽기 전용)
+- 배치: S(시작하기 전에 + 미리보기) → S(세 단계 비유) → F → C(MeanModel 정의 + fit + predict) → C(fit 전) → S(밑줄 관례) → C(두 객체) → S(설정값 + 특성 X) → C(GroupMeanModel) → C(이어 쓰기) → S(진짜 라이브러리) → C(DummyRegressor) → R(우리가 만든 것과 같다) → :::tip(상속) → 정리 표(만들기 · fit · predict · 밑줄 속성)
+- 퀴즈: choice(`model = MeanModel()` 직후 상태), ox(fit은 학습 결과를 객체 안에 저장한다 → O)
+- 그림: `py-fit-predict.svg`(객체의 상태가 만들기 → fit → predict에서 어떻게 바뀌나)
+- 실습: 유닛 52 (제조: 52-1 설비 판정 클래스(단계형), 52-2 라인별 평균 두께 모델 fit · predict(단계형) / 일반: 52-3 장바구니 클래스(단계형), 52-4 카테고리별 평균 가격 모델(단계형) / 개념 퀴즈 52-Q 5문항)
+
+#### 기존 레슨 보강
+- **pb-11-2**: "언제 for문이 나은가" 앞에 두 절. ① **중첩 컴프리헨션**: 2차원 리스트(라인별 측정값) 펼치기 `[v for row in grid for v in row]`, for 순서는 바깥 → 안쪽(풀어 쓴 for문과 같은 순서), 표로 대응 ② **괄호만 바꾸면 제너레이터 표현식**: `sum(t for t in temps if t > 25)`, `any(...)`처럼 함수 괄호 안에서는 대괄호 생략, 리스트를 만들지 않고 하나씩 흘려 보낸다(메모리), 한 번 쓰면 끝. [내장 함수로 짧게 쓰기](#/l/pb-09-3)의 `any(s < 9.5 for s in sizes)`가 이것이었다고 연결
+- **pb-11-3**: 정리 앞에 "pandas에서 다시 만나는 lambda" 절. `df["rate"].apply(lambda r: "NG" if r > 2.0 else "OK")`, `sort_values(key=...)`는 데이터 분석 트랙에서. 실행 셀 1개(작은 Series), 데이터 분석 레슨 링크
+- **pb-13-1**: "다 외우지 않아도 됩니다" 절 뒤에 "함수 설명서 읽기: help()" 절. `help(round)` 출력 읽기(시그니처 `round(number, ndigits=None)`, 기본값), `help(sorted)`의 `/`(앞은 위치로만) · `*`(뒤는 이름으로만) 표시, 내가 쓴 docstring도 help에 나온다(pb-08-2 연결). Jupyter · Colab에서는 `함수?`, 셀 안 Shift+Tab도 같다(:::tip)
+
 ## 원본에서 뺀 것
 
-클래스 · 가상환경(05장), requests API(07-2), 자동화 스크립트 · 프로젝트 구조(08-1, 08-3)는 QAQC 과정 파이썬 기초 범위 밖이라 이번에 코스를 만들지 않는다. pathlib(06-4)은 pb-13-4의 팁 상자로만 소개한다. 모듈과 datetime은 2026-11-07 진성 님 원고로 pb-13 코스에서 다룬다.
+가상환경(05장, 데이터 분석 트랙 da-00으로 옮김), requests API(07-2), 자동화 스크립트 · 프로젝트 구조(08-1, 08-3)는 QAQC 과정 파이썬 기초 범위 밖이라 이번에 코스를 만들지 않는다. pathlib(06-4)은 pb-13-4의 팁 상자로만 소개한다. 모듈과 datetime은 2026-11-07 진성 님 원고로 pb-13 코스에서 다룬다. 클래스(05-2)와 collections는 2026-11-10 보강으로 pb-14 · pb-13-5에서 다룬다.

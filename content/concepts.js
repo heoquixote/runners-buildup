@@ -37,6 +37,9 @@ export const CONCEPTS = {
   "py.math": { name: "math 모듈", track: "python-basic" },
   "py.random": { name: "random 난수 · 표본 추출", track: "python-basic" },
   "py.os": { name: "os 경로 · 폴더 다루기", track: "python-basic" },
+  "py.args": { name: "*args · **kwargs와 풀어 넣기", track: "python-basic" },
+  "py.collections": { name: "collections Counter · defaultdict", track: "python-basic" },
+  "py.class": { name: "클래스와 객체 (속성 · 메서드 · self)", track: "python-basic" },
   // 데이터 분석 · 데이터 시각화
   "py.env": { name: "pip과 가상환경(venv)", track: "python-da" },
   "np.array": { name: "NumPy 배열과 벡터 연산", track: "python-da" },
