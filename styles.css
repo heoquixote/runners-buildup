@@ -876,6 +876,7 @@ kbd {
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .daily-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
 @media (max-width: 900px) { .daily-grid { grid-template-columns: minmax(0, 1fr); } }
+.daily-grid.solo { grid-template-columns: minmax(0, 1fr); }
 
 .daily { padding: 20px 22px; display: grid; gap: 14px; align-content: start; }
 .daily-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }

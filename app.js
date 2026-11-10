@@ -725,9 +725,9 @@ function runData() {
   const runs = TRACKS.filter((t) => t.ready).map(trackRun).filter((r) => r.courses > 0);
   // 진행 중 = 하나라도 끝낸 것이 있거나 최근 기록이 있는 트랙 (최근 학습 순)
   const active = runs.filter((r) => r.done > 0 || r.last).sort((a, b) => String(b.last).localeCompare(String(a.last)) || b.p - a.p);
-  // 목록: 진행 중 트랙(최근 순) 다음에 아직 시작 안 한 트랙(트랙 순서)
-  const rows = [...active, ...runs.filter((r) => !active.includes(r))];
-  const main = rows.find((r) => r.t.id === runPick) || active[0] || runs[0];
+  // 목록: 진행률이 0%보다 큰 트랙만 (최근 학습 순, 그다음 트랙 순서)
+  const rows = [...active, ...runs.filter((r) => !active.includes(r))].filter((r) => r.p > 0);
+  const main = runs.find((r) => r.t.id === runPick) || active[0] || runs[0];
   return { runs, active, rows, main };
 }
 function runCard(d = runData()) {
@@ -755,7 +755,7 @@ function runCard(d = runData()) {
 // 트랙별 진행률 목록 (로그인 후 홈 오른쪽 카드)
 function runListCard(d = runData()) {
   const { rows, main } = d;
-  if (rows.length < 2) return "";
+  if (!rows.length) return "";
   return `<section class="panel run-list" aria-label="트랙별 진행률">
     <div class="run-list-head"><span class="eyebrow">All Tracks</span><h2>트랙별 진행률</h2><p class="muted">트랙을 누르면 왼쪽 카드가 그 트랙으로 바뀝니다.</p></div>
     <ul class="run-others">${rows.map((r) => `<li ${trackStyle(r.t)}><button type="button" class="ro-row${r === main ? " on" : ""}" data-run="${r.t.id}" aria-pressed="${r === main}"><span class="ro-name">${esc(r.t.label)}</span><span class="ro-lane"><span style="width:${r.p}%"></span><i style="left:${r.p}%"></i></span><b>${r.p}%</b></button></li>`).join("")}</ul>
@@ -764,7 +764,8 @@ function runListCard(d = runData()) {
 function homeCards() {
   if (!state.session) return `${guestCard()}${runCard()}`;
   const d = runData();
-  return `${runCard(d)}${runListCard(d)}`;
+  const list = runListCard(d);
+  return list ? `${runCard(d)}${list}` : runCard(d);
 }
 
 function trackCard(t) {
@@ -807,7 +808,7 @@ function viewHome() {
       <div><h1>${state.session ? `${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?` : "개념을 읽고, 바로 실행해 보는 데이터 학습 트랙"}</h1>
         <div class="home-progress"><span>레슨 <b>${totals.lessonsDone} / ${totals.lessons}</b></span><span>문제 <b>${totals.solved} / ${totals.problems}</b></span><span class="meter-bar"><span style="width:${pct(totals.lessonsDone + totals.solved, totals.lessons + totals.problems)}%"></span></span></div></div>
     </div>
-    <div class="daily-grid">${homeCards()}</div>
+    <div class="daily-grid${state.session && !runData().rows.length ? " solo" : ""}">${homeCards()}</div>
     <section class="part"><h2 class="part-title">학습 트랙</h2>
       <div class="tgroups">${trackGroupsHtml()}</div></section>
   </main>`;
