@@ -2,15 +2,16 @@
 // 레슨 본문은 content/<트랙>/<레슨 id>.md 에 있고, 화면에서 그때그때 불러온다.
 // 레슨 quiz 는 본문을 다 읽었는지 확인하는 1~3문항(형식은 problems.js 의 개념 퀴즈와 같다).
 
+// 배열 순서 = 커리큘럼 순서(홈 카테고리와 같음). 트랙별 진행률 · 어드민 표 · 영상 목록이 이 순서를 따른다.
 export const TRACKS = [
   { id: "python-basic", label: "파이썬 기초", en: "Python Basics", color: "violet", ready: true,
     blurb: "변수부터 파일 입출력 · 표준 라이브러리까지. QA/QC 현장 예제로 문법을 익힙니다." },
+  { id: "sql", label: "SQL", en: "SQL", color: "lime", ready: true,
+    blurb: "SELECT부터 윈도우 함수 · 리텐션 분석, 데이터베이스 설계(모델링 · 정규화 · 트랜잭션 · 인덱스)까지. 브라우저 안의 SQLite로 바로 실행합니다." },
   { id: "python-da", label: "데이터 분석", en: "Data Analysis", color: "cyan", ready: true,
     blurb: "pip · 가상환경으로 내 PC를 준비하고, NumPy · pandas로 데이터를 불러오고, 고르고, 묶고, 합칩니다." },
   { id: "python-viz", label: "데이터 시각화", en: "Visualization", color: "rose", ready: true,
     blurb: "matplotlib · seaborn으로 데이터를 그리고 읽습니다." },
-  { id: "sql", label: "SQL", en: "SQL", color: "lime", ready: true,
-    blurb: "SELECT부터 윈도우 함수 · 리텐션 분석, 데이터베이스 설계(모델링 · 정규화 · 트랜잭션 · 인덱스)까지. 브라우저 안의 SQLite로 바로 실행합니다." },
   { id: "stats", label: "통계", en: "Statistics", color: "amber", ready: true,
     blurb: "기술통계 · 분포 · 검정 · 회귀. 시뮬레이션으로 직관을 만듭니다." },
   { id: "ml", label: "머신러닝", en: "Machine Learning", color: "green", ready: true,
