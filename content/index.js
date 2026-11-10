@@ -435,11 +435,13 @@ export const COURSES = [
       ] },
     ] },
   // ── 데이터 시각화 (matplotlib · seaborn) ─ 분석 목적별(비교 · 추이 · 분포 · 관계 · 구성) 구성. 기획안: docs/lesson-plans/viz.md ──
-  { id: "da-09", track: "python-viz", dir: "python-da", title: "matplotlib 기본 구조", summary: "그래프 뼈대(fig · ax), 그리는 순서, 서브플롯 배치와 꾸미기", level: "기본",
+  { id: "da-09", track: "python-viz", dir: "python-da", title: "matplotlib 기본 구조", summary: "대표 차트 갤러리, 그래프 뼈대(fig · ax), 그리는 순서, 서브플롯 배치와 꾸미기", level: "기본",
     concepts: ["mpl.basic", "mpl.layout"],
     lessons: [
       // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
       { id: "da-09-0", title: "matplotlib 소개: 파이썬 그래프의 바탕", minutes: 10, concepts: ["mpl.basic"] },
+      // 차트 갤러리(PART 두 번째 페이지): 대표 차트 카드(::chart) + 질문별 실행 예제, 퀴즈 없음
+      { id: "da-09-5", title: "matplotlib 차트 갤러리: 자주 쓰는 차트 한눈에", minutes: 15, concepts: ["mpl.basic"] },
       { id: "da-09-1", title: "그래프의 뼈대: fig와 ax", minutes: 15, concepts: ["mpl.basic"],
         quiz: [
           { kind: "write", q: "fig, ax를 만들고 ax.plot으로 [1, 4, 9]를 그린 뒤, 그려진 선의 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt", expect: "1", must: ["\\.plot\\("], solution: "import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.plot([1, 4, 9])\nprint(len(ax.lines))", explain: "ax.plot을 한 번 부르면 ax.lines에 선 하나가 생깁니다." },
@@ -447,11 +449,14 @@ export const COURSES = [
         ] },
       { id: "da-09-4", title: "여러 그래프 배치와 다듬기", minutes: 18, concepts: ["mpl.layout"] },
     ] },
-  { id: "da-10", track: "python-viz", dir: "python-da", title: "seaborn 기본 구조", summary: "data · x · y · hue, 칸 단위 함수와 그림 단위 함수", level: "기본",
+  { id: "da-10", track: "python-viz", dir: "python-da", title: "seaborn 기본 구조", summary: "함수 가족별 차트 갤러리, EDA 자동화 라이브러리, data · x · y · hue, 칸 단위 함수와 그림 단위 함수", level: "기본",
     concepts: ["sns.stat"],
     lessons: [
       // 라이브러리 소개(PART 첫 페이지): 퀴즈 없이 읽고 '다 읽었어요'로 완료
       { id: "da-10-0", title: "seaborn 소개: 표를 넘기면 통계 그래프가 나온다", minutes: 10, concepts: ["sns.stat"] },
+      // 차트 갤러리 · EDA 자동화 라이브러리 소개: 퀴즈 없음. EDA 라이브러리는 브라우저에 설치가 안 되어 코드는 읽기 전용
+      { id: "da-10-5", title: "seaborn 차트 갤러리: 함수 가족별 대표 차트", minutes: 18, concepts: ["sns.stat"] },
+      { id: "da-10-6", title: "EDA 자동화 라이브러리: fasteda · YData Profiling · Sweetviz · PyGWalker", minutes: 15, concepts: ["sns.stat"] },
       { id: "da-10-1", title: "seaborn의 기본 구조: data · x · y · hue", minutes: 18, concepts: ["sns.stat"],
         quiz: [
           { kind: "write", q: "sns.countplot으로 df의 line별 개수를 그린 뒤, 막대 개수를 출력하는 코드를 작성하세요.", given: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})", expect: "3", must: ["countplot\\("], solution: "import matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\ndf = pd.DataFrame({'line': ['A', 'B', 'A', 'C']})\nax = sns.countplot(data=df, x='line')\nprint(len(ax.patches))", explain: "범주 A, B, C마다 막대 하나입니다." },
@@ -1466,8 +1471,8 @@ export const SECTIONS = {
     { id: "pandas-adv", label: "pandas 활용", en: "pandas in Practice", blurb: "묶어서 요약하고, 여러 표를 합치고, 시간 순으로 보기", courses: ["da-06", "da-07", "da-08"] },
   ],
   "python-viz": [
-    { id: "matplotlib", label: "matplotlib", en: "matplotlib", blurb: "파이썬 그래프의 바탕: 도화지와 그래프 칸", courses: ["da-09"] },
-    { id: "seaborn", label: "seaborn", en: "seaborn", blurb: "표와 열 이름만으로 그리는 통계 그래프", courses: ["da-10"] },
+    { id: "matplotlib", label: "matplotlib", en: "matplotlib", blurb: "파이썬 그래프의 바탕과 차트 갤러리: 도화지와 그래프 칸", courses: ["da-09"] },
+    { id: "seaborn", label: "seaborn", en: "seaborn", blurb: "표와 열 이름만으로 그리는 통계 그래프, 차트 갤러리, EDA 자동화", courses: ["da-10"] },
     { id: "compare", label: "비교", en: "Comparison", blurb: "어느 쪽이 더 큰가: 막대 · 오차 막대 · 묶음 막대 · 점 그래프", courses: ["vz-01", "vz-02", "vz-03", "vz-04"] },
     { id: "trend", label: "추이", en: "Trend", blurb: "시간에 따라 어떻게 변하나: 선 그래프와 다듬기, 여러 시계열", courses: ["vz-05", "vz-06", "vz-07"] },
     { id: "dist", label: "분포", en: "Distribution", blurb: "값들이 어떻게 퍼져 있나: 히스토그램부터 스웜까지", courses: ["vz-08", "vz-09", "vz-10", "vz-11", "vz-12", "vz-13"] },
