@@ -159,6 +159,7 @@ const state = {
   activity: {}, // {"YYYY-MM-DD": 학습 횟수} 한국 시간 기준
   progressLoaded: false,
   adminGroup: store.get("rb-admin-group") ?? "", // "" 전체, "-" 그룹 없음, 그 외 그룹 코드
+  adminHideTest: store.get("rb-admin-hide-test") ?? true, // 순위 제외(테스트) 계정을 어드민 집계에서 뺀다
   groups: [],
   today: [],
   runner: "idle",
@@ -1954,11 +1955,13 @@ function viewProblem(p) {
 
 // ── 어드민 ───────────────────────────────────────────────
 function routeAdmin(hash) {
+  clearTimeout(liveTimer);
   if (!state.adminToken) return viewAdminLogin();
-  const section = hash.split("/")[2] || "matrix";
-  const tabs = [["matrix", "회차 과제"], ["progress", "학습 현황"], ["feedback", "만족도"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
+  const section = hash.split("/")[2] || "live";
+  const tabs = [["live", "실시간"], ["matrix", "회차 과제"], ["progress", "학습 현황"], ["feedback", "만족도"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
   $app.innerHTML = `${topbar({ admin: true })}<main class="page wide">
     <div class="admin-bar"><nav class="admin-tabs">${tabs.map(([k, l]) => `<a href="#/admin/${k}" ${k === section ? 'aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
+      ${section === "roster" ? "" : `<label class="group-select hide-test" title="명단에서 '순위 제외'로 표시한 계정(테스트 계정)을 집계 · 표에서 뺍니다"><input type="checkbox" id="hide-test" ${state.adminHideTest ? "checked" : ""}><span>테스트 계정 제외</span></label>`}
       <label class="group-select"><span>그룹</span><select id="group-select"><option value="">전체</option></select></label></div>
     <div id="admin-body"><p class="muted">불러오는 중…</p></div></main>`;
   bindTopbar();
@@ -1979,7 +1982,8 @@ function routeAdmin(hash) {
     if (section === "progress") return adminProgress(body).catch(fail);
     if (section === "stats") return adminStats(body).catch(fail);
     if (section === "feedback") return adminFeedback(body).catch(fail);
-    return adminMatrix(body).catch(fail);
+    if (section === "matrix") return adminMatrix(body).catch(fail);
+    return adminLive(body).catch(fail);
   };
   api.groups(state.adminToken).then((res) => {
     state.groups = res.groups || [];
@@ -1991,6 +1995,11 @@ function routeAdmin(hash) {
   sel.addEventListener("change", () => {
     state.adminGroup = sel.value;
     store.set("rb-admin-group", sel.value);
+    run();
+  });
+  $app.querySelector("#hide-test")?.addEventListener("change", (e) => {
+    state.adminHideTest = e.target.checked;
+    store.set("rb-admin-hide-test", e.target.checked);
     run();
   });
 }
@@ -2023,11 +2032,13 @@ function viewAdminLogin() {
 }
 
 const inGroup = (s) => !state.adminGroup || (state.adminGroup === "-" ? !s.group : s.group === state.adminGroup);
+// 집계 대상: 고른 그룹 + (켜져 있으면) 순위 제외 · 테스트 계정 빼기
+const counted = (s) => inGroup(s) && !(state.adminHideTest && s.exclude_from_rank);
 const groupLabel = (code) => state.groups.find((g) => g.code === code)?.label || code || "그룹 없음";
 
 async function loadAdminData() {
   const [roster, matrix] = await Promise.all([api.roster(state.adminToken), api.matrix(state.adminToken)]);
-  const students = roster.students.filter(inGroup);
+  const students = roster.students.filter(counted);
   const ids = new Set(students.map((s) => s.id));
   const raw = matrix.cells.filter((c) => ids.has(c.student_id));
   const cells = {};
@@ -2103,8 +2114,192 @@ async function adminProgress(body) {
   });
 }
 
+// ── 실시간: 수업 중 모니터링 ─────────────────────────────────
+// 누가 지금 학습 중인지, 어디(트랙 · 코스 · 레슨/문제)에 있는지, 오늘 얼마나 했는지, 어느 문제에서 막혔는지.
+// 회차 과제만이 아니라 트랙 레슨 · 문제를 모두 센다. 30초마다 다시 불러온다(탭을 보고 있을 때만).
+let liveTimer = null;
+const LIVE_MIN = 10; // 마지막 활동이 이 분 안이면 '학습 중'
+const STUCK_TRIES = 2; // 오늘 시도했고 아직 못 맞힌 문제를 이 횟수 이상 틀렸으면 '막힘'
+const agoText = (iso) => {
+  const m = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+  return m < 1 ? "방금" : m < 60 ? `${m}분 전` : m < 1440 ? `${Math.floor(m / 60)}시간 전` : fmtTime(iso);
+};
+const hhmm = (iso) => { const d = new Date(iso); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+const later = (a, b) => (!a ? b : !b ? a : Date.parse(b) > Date.parse(a) ? b : a);
+function placeOf(kind, id) {
+  if (kind === "lesson") {
+    const l = lessonById[id], c = l && courseById[l.course];
+    return { kind, id, title: l?.title || id, course: c, track: c && trackById[c.track] };
+  }
+  const p = byId[id], c = p && courseOf(p);
+  return { kind, id, title: p?.title || id, course: c, track: c && trackById[c.track], no: NO[id] };
+}
+const placeLabel = (pl) => `${pl.course ? `<span class="muted">${esc(pl.course.title)} ›</span> ` : ""}${pl.no ? `<span class="live-hw" title="QAQC 회차 과제 번호">과제 ${esc(pl.no)}</span> ` : ""}${esc(pl.title)}`;
+const trackChip = (t) => (t ? `<span class="live-track" ${trackStyle(t)}>${esc(t.label)}</span>` : `<span class="live-track">회차 과제</span>`);
+
+async function adminLive(body) {
+  clearTimeout(liveTimer);
+  const t0 = new Date();
+  t0.setHours(0, 0, 0, 0);
+  const since = t0.toISOString();
+  const isToday = (iso) => !!iso && Date.parse(iso) >= t0.getTime();
+  const [{ students, raw }, lessonRes, actRes] = await Promise.all([
+    loadAdminData(),
+    api.adminLessons(state.adminToken),
+    // admin_activity 는 2026-11-10 마이그레이션 함수. 아직 실행 전이면(404) 문제별 마지막 제출로만 계산한다.
+    api.adminActivity(state.adminToken, since).catch((err) => {
+      if (err.code === "server" && (err.status === 404 || /PGRST202/.test(err.detail || ""))) return null;
+      throw err;
+    }),
+  ]);
+  if (!students.length) {
+    body.innerHTML = `<div class="panel empty-state"><b>집계할 수강생이 없습니다.</b>그룹 선택이나 '테스트 계정 제외'를 확인하세요.</div>`;
+    return;
+  }
+  const ids = new Set(students.map((s) => s.id));
+  const lessons = (lessonRes.rows || []).filter((r) => ids.has(r.student_id));
+  const hasPassedAt = lessons.some((r) => "passed_at" in r);
+  const acts = actRes ? (actRes.items || []).filter((a) => ids.has(a.student_id)) : null;
+
+  const per = new Map(students.map((s) => [s.id, { s, last: null, lastPlace: null, lessonsToday: 0, solvedToday: 0, subsToday: 0, failsToday: 0, stuck: [], passed: new Set(), solved: new Set() }]));
+  const feed = [];
+  const setLast = (r, at, kind, id) => { if (at && (!r.last || Date.parse(at) >= Date.parse(r.last))) { r.last = at; r.lastPlace = placeOf(kind, id); } };
+
+  for (const l of lessons) {
+    const r = per.get(l.student_id);
+    setLast(r, l.updated_at, "lesson", l.lesson_id);
+    if (l.status === "passed") r.passed.add(l.lesson_id);
+    // passed_at 이 없으면(마이그레이션 전) 마지막으로 연 시각으로 대신 센다 → 다시 연 레슨도 '오늘'로 잡힐 수 있다.
+    const passAt = l.status === "passed" ? (hasPassedAt ? l.passed_at : l.updated_at) : null;
+    if (isToday(passAt)) { r.lessonsToday++; feed.push({ at: passAt, r, kind: "lesson-pass", place: placeOf("lesson", l.lesson_id) }); }
+    if (isToday(l.updated_at) && (!passAt || Date.parse(l.updated_at) - Date.parse(passAt) > 60000)) feed.push({ at: l.updated_at, r, kind: "lesson-view", place: placeOf("lesson", l.lesson_id) });
+  }
+  const cellOf = {};
+  for (const c of raw) {
+    const r = per.get(c.student_id);
+    cellOf[c.student_id + "|" + c.problem_id] = c;
+    setLast(r, c.last_at, "problem", c.problem_id);
+    if (c.solved) r.solved.add(c.problem_id);
+    if (isToday(c.first_solved_at)) r.solvedToday++;
+    if (!acts && isToday(c.last_at)) {
+      r.subsToday++;
+      feed.push({ at: c.last_at, r, kind: c.solved ? "sub-pass" : "sub-fail", place: placeOf("problem", c.problem_id), attempts: c.attempts });
+    }
+  }
+  const lastErr = {};
+  if (acts) for (const a of acts) {
+    const r = per.get(a.student_id);
+    r.subsToday++;
+    if (!a.passed) { r.failsToday++; if (a.error) lastErr[a.student_id + "|" + a.problem_id] = a.error; }
+    feed.push({ at: a.created_at, r, kind: a.passed ? "sub-pass" : "sub-fail", place: placeOf("problem", a.problem_id), score: a.total_count ? `${a.passed_count}/${a.total_count}` : "", error: a.error });
+  }
+  // 막힌 문제: 오늘 손댔고, 아직 한 번도 못 맞혔고, STUCK_TRIES 번 이상 틀린 문제
+  for (const c of raw) {
+    if (c.solved || c.attempts < STUCK_TRIES || !isToday(c.last_at)) continue;
+    per.get(c.student_id).stuck.push({ c, place: placeOf("problem", c.problem_id), error: lastErr[c.student_id + "|" + c.problem_id] });
+  }
+  const status = (r) => (!r.last ? "none" : Date.now() - Date.parse(r.last) <= LIVE_MIN * 60000 ? "live" : isToday(r.last) ? "today" : "away");
+  const order = { live: 0, today: 1, away: 2, none: 3 };
+  const rows = [...per.values()].map((r) => {
+    r.status = status(r);
+    r.stuck.sort((a, b) => Date.parse(b.c.last_at) - Date.parse(a.c.last_at));
+    // 지금 있는 트랙의 진도 (레슨 · 문제)
+    const t = r.lastPlace?.track;
+    if (t) {
+      const prog = programOfJoinCode(r.s.group);
+      const cs = coursesOf(t.id).filter(isReady);
+      const ls = cs.flatMap((c) => c.lessons.filter((l) => !l.optional)), ps = cs.flatMap((c) => courseProblems(c, prog));
+      r.trackProg = { t, ld: ls.filter((l) => r.passed.has(l.id)).length, lt: ls.length, pd: ps.filter((p) => r.solved.has(p.id)).length, pt: ps.length };
+    }
+    return r;
+  }).sort((a, b) => order[a.status] - order[b.status] || b.stuck.length - a.stuck.length || (Date.parse(b.last) || 0) - (Date.parse(a.last) || 0) || a.s.name.localeCompare(b.s.name, "ko"));
+
+  const sum = (k) => rows.reduce((a, r) => a + r[k], 0);
+  const nLive = rows.filter((r) => r.status === "live").length;
+  const nToday = rows.filter((r) => r.status === "live" || r.status === "today").length;
+  const nStuck = rows.filter((r) => r.stuck.length).length;
+  // 오늘 학생들이 머문 트랙 (마지막 위치 기준)
+  const trackNow = {};
+  for (const r of rows) if (r.status === "live" || r.status === "today") { const k = r.lastPlace?.track?.id || "-"; trackNow[k] = (trackNow[k] || 0) + 1; }
+  // 반 전체에서 막힌 문제
+  const stuckBy = {};
+  for (const r of rows) for (const x of r.stuck) (stuckBy[x.c.problem_id] ||= { place: x.place, who: [] }).who.push({ r, c: x.c });
+  const stuckTop = Object.entries(stuckBy).map(([pid, v]) => ({ pid, ...v, solvedToday: raw.filter((c) => c.problem_id === pid && isToday(c.first_solved_at)).length }))
+    .sort((a, b) => b.who.length - a.who.length || b.who.reduce((s, w) => s + w.c.attempts, 0) - a.who.reduce((s, w) => s + w.c.attempts, 0)).slice(0, 8);
+  feed.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+
+  const STATUS = { live: ["학습 중", `${LIVE_MIN}분 안에 활동`], today: ["쉬는 중", "오늘 학습했고 최근 활동 없음"], away: ["오늘 미접속", ""], none: ["기록 없음", ""] };
+  const stuckChip = (x, r) => `<button class="live-stuck ${x.c.attempts >= 4 ? "hot" : ""}" data-s="${r.s.id}" data-p="${x.c.problem_id}" title="${esc(`${x.place.title} · ${x.c.attempts}번 제출, 아직 정답 없음 · 마지막 ${hhmm(x.c.last_at)}${x.error ? "\n" + x.error : ""}`)}">${esc(x.place.title)} <b>✗${x.c.attempts}</b></button>`;
+  const progCell = (p) => (p ? `<div class="live-prog" ${trackStyle(p.t)}><div class="bar"><span style="width:${p.lt ? Math.round((p.ld / p.lt) * 100) : 0}%"></span></div>
+      <span class="muted">레슨 ${p.ld}/${p.lt} · 문제 ${p.pd}/${p.pt}</span></div>` : `<span class="muted">–</span>`);
+  const rowHtml = (r) => `<tr class="live-row st-${r.status}">
+    <th scope="row" class="live-name"><span class="live-dot st-${r.status}" title="${esc(STATUS[r.status][1])}"></span>${esc(r.s.name)}<div class="live-status">${STATUS[r.status][0]}</div></th>
+    <td class="live-where">${r.lastPlace ? `${trackChip(r.lastPlace.track)} <span class="live-kind">${r.lastPlace.kind === "lesson" ? "레슨" : "문제"}</span><div>${placeLabel(r.lastPlace)}</div>` : `<span class="muted">아직 학습 기록이 없습니다</span>`}</td>
+    <td class="num">${r.last ? `<span title="${esc(fmtTime(r.last))}">${esc(agoText(r.last))}</span>` : "–"}</td>
+    <td class="num">${r.lessonsToday || `<span class="muted">0</span>`}</td>
+    <td class="num">${r.solvedToday}<span class="muted"> / ${r.subsToday}${acts ? "회" : "문제"}</span></td>
+    <td>${r.stuck.length ? r.stuck.map((x) => stuckChip(x, r)).join("") : `<span class="muted">–</span>`}</td>
+    <td>${progCell(r.trackProg)}</td></tr>`;
+  const FEED = { "lesson-pass": ["✓", "레슨 통과", "pass"], "lesson-view": ["·", "레슨 열람", ""], "sub-pass": ["✓", "정답", "pass"], "sub-fail": ["✗", "오답", "fail"] };
+  const feedHtml = feed.slice(0, 40).map((e) => {
+    const [ic, label, cls] = FEED[e.kind];
+    const extra = e.kind === "sub-fail" ? (e.score ? ` ${e.score}` : e.attempts ? ` (누적 ${e.attempts}회)` : "") : "";
+    return `<li class="${cls}"><span class="t mono">${hhmm(e.at)}</span><span class="ic">${ic}</span><div><b>${esc(e.r.s.name)}</b> <span class="muted">${label}${esc(extra)}</span><div class="f-place">${placeLabel(e.place)}</div>${e.error ? `<div class="f-err mono">${esc(e.error)}</div>` : ""}</div></li>`;
+  }).join("");
+
+  const auto = store.get("rb-live-auto") ?? true;
+  body.innerHTML = `<div style="display:grid;gap:16px">
+    <div class="kpis">
+      <div class="panel kpi"><span class="k">지금 학습 중 (${LIVE_MIN}분 이내)</span><span class="v">${nLive}<small> / ${rows.length}명</small></span></div>
+      <div class="panel kpi"><span class="k">오늘 접속</span><span class="v">${nToday}<small>명</small></span></div>
+      <div class="panel kpi"><span class="k">오늘 통과한 레슨</span><span class="v">${sum("lessonsToday")}<small>개</small></span></div>
+      <div class="panel kpi"><span class="k">오늘 맞힌 문제 / ${acts ? "제출" : "제출한 문제"}</span><span class="v">${sum("solvedToday")}<small> / ${sum("subsToday")}</small></span></div>
+      <div class="panel kpi ${nStuck ? "warn" : ""}"><span class="k">막힌 학생</span><span class="v">${nStuck}<small>명</small></span></div>
+    </div>
+    <div class="toolbar"><div class="live-tracks"><span class="muted">지금 있는 트랙</span>${Object.entries(trackNow).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${trackChip(trackById[k])}<b>${n}</b>`).join("") || `<span class="muted">오늘 활동 없음</span>`}</div>
+      <span class="spacer"></span><label class="live-auto"><input type="checkbox" id="live-auto" ${auto ? "checked" : ""}> 30초마다 자동 새로고침</label>
+      <span class="muted" style="font-size:13px">갱신 ${hhmm(new Date().toISOString())}</span><button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
+    ${acts ? "" : `<p class="live-note">오늘 제출 횟수 · 오류 메시지 · 제출 단위 활동 기록은 <code>supabase/migrations_2026-11-10_admin_live.sql</code>을 실행하면 보입니다. 지금은 문제마다 마지막 제출만으로 셉니다(‘제출’ 칸 = 오늘 제출한 문제 수).</p>`}
+    <div class="live-grid">
+      <div class="panel table-scroll"><table class="stats-table live-table"><thead><tr><th>이름</th><th>지금 하는 것</th><th class="num">마지막 활동</th><th class="num">오늘 레슨</th><th class="num">오늘 정답 / 제출</th><th>막힌 문제</th><th>현재 트랙 진도</th></tr></thead>
+        <tbody>${rows.map(rowHtml).join("")}</tbody></table></div>
+      <div class="live-side">
+        <section class="panel card-pad"><h3>지금 막힌 문제</h3>
+          ${stuckTop.length ? `<ol class="live-stucklist">${stuckTop.map((x) => `<li><div>${trackChip(x.place.track)} ${placeLabel(x.place)}</div>
+            <div class="muted" style="font-size:13px">막힘 <b class="fail-ink">${x.who.length}명</b> · 오늘 맞힌 학생 ${x.solvedToday}명</div>
+            <div>${x.who.map((w) => `<button class="live-stuck ${w.c.attempts >= 4 ? "hot" : ""}" data-s="${w.r.s.id}" data-p="${x.pid}">${esc(w.r.s.name)} <b>✗${w.c.attempts}</b></button>`).join("")}</div></li>`).join("")}</ol>`
+            : `<p class="muted" style="margin:0;font-size:14px">오늘 ${STUCK_TRIES}번 이상 틀리고 아직 못 맞힌 문제가 없습니다.</p>`}</section>
+        <section class="panel card-pad"><h3>최근 활동</h3>${feedHtml ? `<ul class="live-feed">${feedHtml}</ul>` : `<p class="muted" style="margin:0;font-size:14px">오늘 활동이 아직 없습니다.</p>`}</section>
+      </div>
+    </div>
+    <p class="muted" style="font-size:13px;margin:0">‘학습 중’은 ${LIVE_MIN}분 안에 레슨을 열었거나 문제를 제출한 학생입니다. ‘막힌 문제’는 오늘 손댄 문제 중 ${STUCK_TRIES}번 이상 틀리고 아직 맞히지 못한 문제이고, 누르면 제출 코드와 실패한 케이스를 봅니다. 레슨 열람만으로는 진도가 오르지 않고, 체크 퀴즈를 통과해야 ‘레슨 통과’로 셉니다.</p></div>`;
+
+  body.querySelector("#refresh").addEventListener("click", () => adminLive(body).catch(() => toast("새로고침하지 못했습니다.")));
+  body.querySelector("#live-auto").addEventListener("change", (e) => { store.set("rb-live-auto", e.target.checked); adminLive(body).catch(() => {}); });
+  body.querySelectorAll(".live-stuck[data-s]").forEach((b) =>
+    b.addEventListener("click", () => openSubmissionDrawer(students.find((s) => s.id === b.dataset.s), byId[b.dataset.p]))
+  );
+  body.querySelector("#csv").addEventListener("click", () => {
+    const head = ["이름", "그룹", "상태", "마지막 활동", "지금 트랙", "지금 위치", "오늘 레슨 통과", "오늘 맞힌 문제", acts ? "오늘 제출 횟수" : "오늘 제출한 문제", "막힌 문제", "트랙 레슨", "트랙 문제"];
+    const lines = rows.map((r) => [r.s.name, groupLabel(r.s.group), STATUS[r.status][0], r.last ? fmtTime(r.last) : "", r.lastPlace?.track?.label || "", r.lastPlace ? `${r.lastPlace.course?.title || ""} › ${r.lastPlace.title}` : "",
+      r.lessonsToday, r.solvedToday, r.subsToday, r.stuck.map((x) => `${x.place.title}(${x.c.attempts}회)`).join(" / "),
+      r.trackProg ? `${r.trackProg.ld}/${r.trackProg.lt}` : "", r.trackProg ? `${r.trackProg.pd}/${r.trackProg.pt}` : ""]);
+    downloadCsv(`실시간현황_${new Date().toISOString().slice(0, 10)}.csv`, [head, ...lines]);
+  });
+  if (auto) {
+    liveTimer = setTimeout(function tick() {
+      if (!document.body.contains(body) || (location.hash.split("/")[2] || "live") !== "live") return;
+      if (document.hidden) { liveTimer = setTimeout(tick, 30000); return; }
+      adminLive(body).catch(() => { liveTimer = setTimeout(tick, 30000); });
+    }, 30000);
+  }
+}
+
 async function adminMatrix(body) {
-  const { students, cells, raw } = await loadAdminData();
+  const { students, cells, raw: allCells } = await loadAdminData();
+  // 이 표는 회차 과제(PROBLEMS)만 본다. 예전에는 트랙 문제 제출까지 KPI에 섞여 표와 숫자가 맞지 않았다.
+  const pset = new Set(PROBLEMS.map((p) => p.id));
+  const raw = allCells.filter((c) => pset.has(c.problem_id));
   const today = new Date().toDateString();
   const todaySubs = raw.filter((c) => c.last_at && new Date(c.last_at).toDateString() === today).length;
   const solvedBy = (sid) => PROBLEMS.filter((p) => cells[sid + "|" + p.id]?.solved).length;
@@ -2132,15 +2327,15 @@ async function adminMatrix(body) {
   body.innerHTML = `<div style="display:grid;gap:16px">
     <div class="kpis">
       <div class="panel kpi"><span class="k">수강생</span><span class="v">${students.length}명</span></div>
-      <div class="panel kpi"><span class="k">한 번이라도 제출</span><span class="v">${active}명</span></div>
+      <div class="panel kpi"><span class="k">회차 과제 제출한 학생</span><span class="v">${active}명</span></div>
       <div class="panel kpi"><span class="k">1인 평균 해결</span><span class="v">${avgSolved} / ${PROBLEMS.length}</span></div>
-      <div class="panel kpi"><span class="k">오늘 제출이 있었던 칸</span><span class="v">${todaySubs}</span></div>
+      <div class="panel kpi"><span class="k">오늘 제출한 회차 과제 칸</span><span class="v">${todaySubs}</span></div>
     </div>
     <div class="toolbar"><div class="legend"><span><i style="background:var(--pass-soft);border:1px solid var(--pass)"></i>정답 (숫자 = 시도 횟수)</span>
       <span><i style="background:var(--fail-soft);border:1px solid var(--fail)"></i>미통과 (숫자 = 시도 횟수)</span><span>· 미제출</span></div>
       <span class="spacer"></span><button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
     <div class="panel matrix-scroll"><table class="matrix"><thead><tr><th class="sname">이름</th><th>해결</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="muted" style="font-size:13px">QAQC 회차 과제만 모은 표입니다. 칸을 누르면 그 학생의 제출 코드와 실패한 케이스를 볼 수 있습니다. 트랙 전체 학습은 학습 현황 탭에서 봅니다.</p></div>`;
+    <p class="muted" style="font-size:13px">QAQC 회차 과제 25문제만 모은 표이고, 위 숫자도 이 25문제만 셉니다. 칸을 누르면 그 학생의 제출 코드와 실패한 케이스를 볼 수 있습니다. 트랙 레슨 · 문제를 포함한 수업 중 진행은 <a href="#/admin/live">실시간</a> 탭에서 봅니다.</p></div>`;
 
   body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/matrix"));
   body.querySelector("#csv").addEventListener("click", () => {

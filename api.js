@@ -67,6 +67,7 @@ class SupabaseApi {
     return this.call("lesson_progress_set", { p_token: token, p_lesson_id: lessonId, p_status: status, p_quiz_score: quizScore ?? null });
   }
   adminLessons(token) { return this.call("admin_lessons", { p_token: token }); }
+  adminActivity(token, since) { return this.call("admin_activity", { p_token: token, p_since: since }); }
   dayFeedback(token, courseId, score, reasons, comment) {
     return this.call("day_feedback_set", { p_token: token, p_course_id: courseId, p_score: score, p_reasons: reasons || [], p_comment: comment || null });
   }
@@ -264,6 +265,16 @@ class DemoApi {
     const db = this.load();
     this.requireAdmin(db, token);
     return { ok: true, rows: db.lessons || [] };
+  }
+  async adminActivity(token, since) {
+    const db = this.load();
+    this.requireAdmin(db, token);
+    const items = db.submissions
+      .filter((x) => !since || x.created_at >= since)
+      .map((x) => ({ student_id: x.student_id, problem_id: x.problem_id, passed: x.passed, passed_count: x.passed_count, total_count: x.total_count, created_at: x.created_at,
+        error: x.passed ? null : ((x.case_results || []).find((c) => !c.passed)?.error || (x.case_results || []).find((c) => !c.passed)?.note || null) }))
+      .sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+    return { ok: true, items };
   }
   async medals(token) {
     const db = this.load();
