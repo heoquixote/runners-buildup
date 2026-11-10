@@ -38,6 +38,7 @@ export const CONCEPTS = {
   "py.random": { name: "random 난수 · 표본 추출", track: "python-basic" },
   "py.os": { name: "os 경로 · 폴더 다루기", track: "python-basic" },
   // 데이터 분석 · 데이터 시각화
+  "py.env": { name: "pip과 가상환경(venv)", track: "python-da" },
   "np.array": { name: "NumPy 배열과 벡터 연산", track: "python-da" },
   "np.stats": { name: "기본 통계량 (sum · mean · std)", track: "python-da" },
   "np.bool-index": { name: "불리언 인덱싱", track: "python-da" },

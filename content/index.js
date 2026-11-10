@@ -6,7 +6,7 @@ export const TRACKS = [
   { id: "python-basic", label: "파이썬 기초", en: "Python Basics", color: "violet", ready: true,
     blurb: "변수부터 파일 입출력 · 표준 라이브러리까지. QA/QC 현장 예제로 문법을 익힙니다." },
   { id: "python-da", label: "데이터 분석", en: "Data Analysis", color: "cyan", ready: true,
-    blurb: "NumPy · pandas로 데이터를 불러오고, 고르고, 묶고, 합칩니다." },
+    blurb: "pip · 가상환경으로 내 PC를 준비하고, NumPy · pandas로 데이터를 불러오고, 고르고, 묶고, 합칩니다." },
   { id: "python-viz", label: "데이터 시각화", en: "Visualization", color: "rose", ready: true,
     blurb: "matplotlib · seaborn으로 데이터를 그리고 읽습니다." },
   { id: "sql", label: "SQL", en: "SQL", color: "lime", ready: true,
@@ -281,6 +281,26 @@ export const COURSES = [
     ] },
 
   // ── 데이터 분석 (NumPy · pandas) ──────────────────────────
+  // PART 1 개발 환경: 터미널 명령은 브라우저에서 실행되지 않아 읽기 전용 블록으로 보여 준다(기획안 docs/lesson-plans/python-da-env.md)
+  { id: "da-00", track: "python-da", intro: true, title: "pip과 가상환경", summary: "pip으로 설치 · 업그레이드 · 삭제, python -m pip, venv 만들고 켜기, VS Code 인터프리터, requirements.txt, .gitignore", level: "입문",
+    concepts: ["py.env"],
+    lessons: [
+      { id: "da-00-1", title: "pip: 라이브러리를 설치하고 관리하는 도구", minutes: 20, concepts: ["py.env"],
+      quiz: [
+        { kind: "choice", q: "Jupyter 노트북 셀에서 지금 쓰는 노트북 환경에 pandas를 설치하려면 셀에 무엇을 입력할까?", options: ["pip install pandas", "%pip install pandas", "import pandas", ">>> pip install pandas"], answer: 1, explain: "노트북 셀은 파이썬 코드 칸이라 pip 명령을 그대로 쓰면 에러가 납니다. 앞에 %를 붙이면 지금 노트북 커널(파이썬)에 설치합니다. Colab에서는 !pip도 많이 씁니다." },
+        { kind: "choice", q: "팀에서 pandas 2.2.2로 맞추자고 했는데 내 컴퓨터에는 3.0.0이 설치돼 있다. 어떤 명령을 써야 할까?", options: ["pip install --upgrade pandas", "pip install pandas==2.2.2", "pip uninstall pandas", "pip show pandas"], answer: 1, explain: "==로 버전을 정해 설치하면 지금 버전을 지우고 그 버전으로 바꿉니다. 낮은 버전으로 가는 것을 다운그레이드라고 합니다. --upgrade는 최신으로 올리고, show는 정보만 보여 줍니다." },
+      ] },
+      { id: "da-00-2", title: "가상환경(venv): 프로젝트마다 따로 쓰는 파이썬", minutes: 20, concepts: ["py.env"],
+      quiz: [
+        { kind: "ox", q: "터미널에서 가상환경을 activate 해 두면, VS Code의 ▶ 실행 버튼도 자동으로 그 가상환경 파이썬을 쓴다.", answer: false, explain: "activate는 그 터미널 창에만 적용됩니다. VS Code가 쓸 파이썬은 Python: Select Interpreter(또는 오른쪽 아래 버전 표시)에서 venv를 따로 골라야 합니다." },
+        { kind: "choice", q: "앞에 (venv) 표시가 없는 터미널에서 pip install pandas를 실행했다. pandas는 어디에 설치될까?", options: ["프로젝트의 venv 폴더", "가상환경이 켜져 있지 않은 기본 파이썬", "설치되지 않고 에러가 난다", "모든 가상환경에 한꺼번에"], answer: 1, explain: "가상환경을 켜지 않으면 PATH에서 먼저 찾은 기본 파이썬에 설치됩니다. 그래서 venv 파이썬으로 실행하면 ModuleNotFoundError가 납니다. 먼저 activate 하고 (venv) 표시를 확인하세요." },
+      ] },
+      { id: "da-00-3", title: "requirements.txt로 환경 저장하고 되살리기", minutes: 20, concepts: ["py.env"],
+      quiz: [
+        { kind: "ox", q: "팀원이 똑같은 환경을 쓰려면 venv 폴더도 Git 저장소에 올려야 한다.", answer: false, explain: "venv 폴더는 크고 운영체제마다 내용이 달라 다른 PC에서는 제대로 동작하지 않습니다. requirements.txt만 올리고, 팀원은 자기 PC에서 venv를 새로 만든 뒤 pip install -r requirements.txt로 되살립니다." },
+        { kind: "choice", q: "저장소를 막 내려받은 팀원이 새 가상환경을 켰다. 다음으로 실행할 명령은?", options: ["pip freeze > requirements.txt", "pip install -r requirements.txt", "pip install requirements.txt", "python -m venv requirements.txt"], answer: 1, explain: "-r는 '파일에 적힌 목록대로'라는 뜻입니다. freeze > 는 반대로 지금 환경을 파일에 적는 명령이라, 빈 환경에서 실행하면 목록을 덮어써 버립니다." },
+      ] },
+    ] },
   { id: "da-01", track: "python-da", title: "NumPy 배열과 연산", summary: "배열 연산 · 만들기 · 자료형, 불리언 인덱싱, np.where, 정렬과 세기", unit: 10, level: "기본",
     concepts: ["np.array", "np.stats", "np.bool-index", "np.axis"],
     lessons: [
@@ -1466,6 +1486,7 @@ export const SECTIONS = {
     { id: "practical", label: "실무 문법", en: "Practical", blurb: "파일 입출력, 컴프리헨션 · 람다, 예외 처리, 표준 라이브러리", courses: ["pb-10", "pb-11", "pb-12", "pb-13"] },
   ],
   "python-da": [
+    { id: "env", label: "개발 환경", en: "Setup", blurb: "pip으로 라이브러리를 설치하고, 프로젝트마다 가상환경 만들기", courses: ["da-00"] },
     { id: "numpy", label: "NumPy", en: "NumPy", blurb: "배열로 숫자를 한꺼번에 계산하기", courses: ["da-01", "da-02"] },
     { id: "pandas-basic", label: "pandas 기초", en: "pandas Basics", blurb: "표를 읽고, 고르고, 깨끗하게 다듬기", courses: ["da-03", "da-04", "da-05"] },
     { id: "pandas-adv", label: "pandas 활용", en: "pandas in Practice", blurb: "묶어서 요약하고, 여러 표를 합치고, 시간 순으로 보기", courses: ["da-06", "da-07", "da-08"] },
