@@ -23,6 +23,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Diagnose feed
+        run: |
+          for u in "https://www.youtube.com/feeds/videos.xml?channel_id=UCbiosyXlVcv8X4aBFbsNCNg" "https://www.youtube.com/feeds/videos.xml?playlist_id=UUbiosyXlVcv8X4aBFbsNCNg" "https://www.youtube.com/@data-learners-com/videos"; do
+            echo "=== $u"; curl -sS -A "Mozilla/5.0" -o out.txt -w "status=%{http_code} type=%{content_type} size=%{size_download}\n" "$u" || true; head -c 600 out.txt; echo; grep -o '"videoId":"[^"]*"' out.txt | sort -u | head -5; grep -c '<entry>' out.txt || true
+          done
+          node -e 'fetch("https://www.youtube.com/feeds/videos.xml?channel_id=UCbiosyXlVcv8X4aBFbsNCNg").then(async r=>{const t=await r.text();console.log("node fetch",r.status,t.length,t.slice(0,300))})'
       - id: sync
         run: node scripts/sync-youtube.mjs
         env:
