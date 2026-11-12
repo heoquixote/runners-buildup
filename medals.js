@@ -43,9 +43,9 @@ export const GLYPHS = {
 };
 
 // 트랙 메달은 트랙 색을 쓴다 (content/index.js 의 color 이름)
-export const COLOR_HEX = { violet: "#a896ff", cyan: "#66dbff", lime: "#c8ff3d", amber: "#ffcf4a", green: "#61db9c", orange: "#ff9a51", rose: "#ff8fcf" };
+export const COLOR_HEX = { violet: "#a896ff", cyan: "#66dbff", lime: "#c8ff3d", amber: "#ffcf4a", green: "#61db9c", orange: "#ff9a51", rose: "#ff8fcf", blue: "#7aa8ff" };
 
-const TRACK_MEDAL = { "python-basic": "파이썬 기초", "python-da": "데이터 분석", "python-viz": "데이터 시각화", sql: "SQL", stats: "통계", ml: "머신러닝", dl: "딥러닝" };
+const TRACK_MEDAL = { "python-basic": "파이썬 기초", "python-da": "데이터 분석", "python-viz": "데이터 시각화", sql: "SQL", stats: "통계", ml: "머신러닝", ts: "시계열 분석", dl: "딥러닝" };
 
 // goal 이 있는 메달은 진행 막대를 보여준다. stat(ctx) 는 지금 값.
 // event: true 는 화면에서 그 순간에만 알 수 있는 업적 (예: 반에서 첫 정답)
@@ -80,7 +80,7 @@ export const MEDALS = [
     id: `track-${tid}`, cat: "track", tier: "special", glyph: "mountain", track: tid,
     name: `${label} 완주`, desc: `${label} 트랙의 모든 레슨과 문제를 끝냈어요.`, how: `${label} 트랙 100%`, goal: 100, unit: "%", stat: (x) => x.trackPct[tid] || 0,
   })),
-  { id: "grand-slam", cat: "track", tier: "gold", glyph: "trophy", name: "그랜드 슬램", desc: "모든 트랙을 완주했어요.", how: "7개 트랙 모두 완주", goal: 7, stat: (x) => x.tracksDone },
+  { id: "grand-slam", cat: "track", tier: "gold", glyph: "trophy", name: "그랜드 슬램", desc: "모든 트랙을 완주했어요.", how: "8개 트랙 모두 완주", goal: 8, stat: (x) => x.tracksDone },
 
   { id: "grit", cat: "hidden", tier: "bronze", glyph: "repeat", hidden: true, name: "포기를 모르는 러너", desc: "5번 넘게 다시 시도한 끝에 정답을 냈어요.", how: "6번째 이후 제출에서 정답", goal: 1, stat: (x) => x.grit },
   { id: "night-owl", cat: "hidden", tier: "bronze", glyph: "moon", hidden: true, name: "올빼미 러너", desc: "자정이 넘은 새벽에 학습했어요.", how: "밤 0~4시에 레슨 완료 또는 정답", goal: 1, stat: (x) => x.night },

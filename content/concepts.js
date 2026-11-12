@@ -121,6 +121,18 @@ export const CONCEPTS = {
   "ml.boosting": { name: "그래디언트 부스팅 · XGBoost · LightGBM", track: "ml" },
   "ml.gmm": { name: "가우시안 혼합 (GMM)", track: "ml" },
   "ml.tsne": { name: "t-SNE", track: "ml" },
+  // 시계열 분석
+  "ts.intro": { name: "시계열 분석 시작하기", track: "ts" },
+  "ts.prep": { name: "날짜 인덱스 · 빈도 · 집계", track: "ts" },
+  "ts.decompose": { name: "분해: 추세 · 계절성 · 잔차", track: "ts" },
+  "ts.acf": { name: "자기상관: ACF · PACF · 백색잡음", track: "ts" },
+  "ts.stationarity": { name: "정상성과 차분", track: "ts" },
+  "ts.baseline": { name: "기준 예측 · 예측 지표 · 롤링 원점 검증", track: "ts" },
+  "ts.smoothing": { name: "지수평활 (Holt-Winters)", track: "ts" },
+  "ts.arima": { name: "ARIMA · SARIMA · SARIMAX", track: "ts" },
+  "ts.ml": { name: "머신러닝으로 시계열 예측", track: "ts" },
+  "ts.anomaly": { name: "시계열 이상 탐지와 변화점", track: "ts" },
+  "ts.project": { name: "시계열 프로젝트", track: "ts" },
   // 딥러닝
   "dl.intro": { name: "딥러닝 시작하기", track: "dl" },
   "dl.perceptron": { name: "퍼셉트론과 활성화 함수", track: "dl" },
