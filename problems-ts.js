@@ -35,7 +35,7 @@ export const TS_UNITS = [
     "id": 57,
     "title": "지수평활",
     "summary": "ewm으로 직접 평활, SimpleExpSmoothing, Holt-Winters",
-    "note": "<h4>지수평활</h4><p>새 수준 = α × 새 값 + (1 − α) × 이전 수준. <code>s.ewm(alpha=0.3, adjust=False).mean()</code>이 같은 계산입니다. α가 클수록 최근 값을 더 따라갑니다.</p><h4>statsmodels</h4><p><code>SimpleExpSmoothing(train).fit()</code>은 α를 스스로 고릅니다. 추세 · 계절이 있으면 <code>ExponentialSmoothing(train, trend='add', seasonal='mul', seasonal_periods=12)</code>.</p><h4>예측</h4><p><code>fit.forecast(h)</code>가 앞으로 h칸의 예측입니다.</p>"
+    "note": "<h4>지수평활</h4><p>새 수준 = α × 새 값 + (1 − α) × 이전 수준. <code>s.ewm(alpha=0.3, adjust=False).mean()</code>이 같은 계산입니다. α가 클수록 최근 값을 더 따라갑니다.</p><h4>statsmodels</h4><p><code>SimpleExpSmoothing(train, initialization_method='estimated').fit()</code>은 α를 스스로 고릅니다. 추세 · 계절이 있으면 <code>ExponentialSmoothing(train, trend='add', seasonal='mul', seasonal_periods=12)</code>.</p><h4>예측</h4><p><code>fit.forecast(h)</code>가 앞으로 h칸의 예측입니다.</p>"
   },
   {
     "id": 58,
@@ -1282,7 +1282,7 @@ export const TS_PROBLEMS = [
     "level": 2,
     "uses": [
       [
-        "SimpleExpSmoothing(train).fit()",
+        "SimpleExpSmoothing(train, initialization_method='estimated').fit()",
         "α를 스스로 고름"
       ],
       [
@@ -1297,16 +1297,16 @@ export const TS_PROBLEMS = [
     "origin": "시계열",
     "desc": "<p>α를 직접 정하지 않고 모델이 고르게 합니다. 고른 α가 1에 가깝다면 '마지막 값이 가장 좋은 예측'이라는 뜻이라, naive와 거의 같은 결과가 나옵니다.</p>\n<ol><li><code>fit</code>: train에 맞춘 단순 지수평활 모델</li><li><code>alpha</code>: 모델이 고른 α</li><li><code>fc</code>: 앞으로 24시간 예측</li><li><code>mae</code>: 예측의 MAE (test.values와 fc.values 비교)</li><li><code>mae_naive</code>: naive(train의 마지막 값)의 MAE</li></ol>",
     "starter": "import pandas as pd\nimport warnings\nfrom statsmodels.tsa.holtwinters import SimpleExpSmoothing\n\nm = pd.read_csv('machine_temp.csv', parse_dates=['timestamp']).set_index('timestamp')['temp']\nhourly = m.resample('h').mean().interpolate()   # 시간별 평균 온도\nwarnings.filterwarnings('ignore')\ntrain, test = hourly.iloc[:-24], hourly.iloc[-24:]\n\n# 1. train에 맞춘 단순 지수평활 모델\nfit = \n# 2. 모델이 고른 α\nalpha = \n# 3. 앞으로 24시간 예측\nfc = \n# 4. 예측의 MAE (test.values와 fc.values 비교)\nmae = \n# 5. naive(train의 마지막 값)의 MAE\nmae_naive = \n\nprint(round(float(alpha), 3), round(float(mae), 2), round(float(mae_naive), 2))\n",
-    "solution": "import pandas as pd\nimport warnings\nfrom statsmodels.tsa.holtwinters import SimpleExpSmoothing\n\nm = pd.read_csv('machine_temp.csv', parse_dates=['timestamp']).set_index('timestamp')['temp']\nhourly = m.resample('h').mean().interpolate()   # 시간별 평균 온도\nwarnings.filterwarnings('ignore')\ntrain, test = hourly.iloc[:-24], hourly.iloc[-24:]\n\n# 1. train에 맞춘 단순 지수평활 모델\nfit = SimpleExpSmoothing(train).fit()\n# 2. 모델이 고른 α\nalpha = fit.params['smoothing_level']\n# 3. 앞으로 24시간 예측\nfc = fit.forecast(24)\n# 4. 예측의 MAE (test.values와 fc.values 비교)\nmae = abs(test.values - fc.values).mean()\n# 5. naive(train의 마지막 값)의 MAE\nmae_naive = (test - train.iloc[-1]).abs().mean()\n\nprint(round(float(alpha), 3), round(float(mae), 2), round(float(mae_naive), 2))\n",
+    "solution": "import pandas as pd\nimport warnings\nfrom statsmodels.tsa.holtwinters import SimpleExpSmoothing\n\nm = pd.read_csv('machine_temp.csv', parse_dates=['timestamp']).set_index('timestamp')['temp']\nhourly = m.resample('h').mean().interpolate()   # 시간별 평균 온도\nwarnings.filterwarnings('ignore')\ntrain, test = hourly.iloc[:-24], hourly.iloc[-24:]\n\n# 1. train에 맞춘 단순 지수평활 모델\nfit = SimpleExpSmoothing(train, initialization_method='estimated').fit()\n# 2. 모델이 고른 α\nalpha = fit.params['smoothing_level']\n# 3. 앞으로 24시간 예측\nfc = fit.forecast(24)\n# 4. 예측의 MAE (test.values와 fc.values 비교)\nmae = abs(test.values - fc.values).mean()\n# 5. naive(train의 마지막 값)의 MAE\nmae_naive = (test - train.iloc[-1]).abs().mean()\n\nprint(round(float(alpha), 3), round(float(mae), 2), round(float(mae_naive), 2))\n",
     "hints": [
-      "SimpleExpSmoothing(train).fit()",
+      "SimpleExpSmoothing(train, initialization_method='estimated').fit()",
       "변수 이름은 그대로 두고 = 오른쪽만 채우세요. 위에서 만든 변수를 이어서 써도 됩니다."
     ],
     "checks": [
       {
         "label": "1단계 train에 맞춘 단순 지수평활 모델",
         "expr": "hasattr(fit, 'forecast')",
-        "hint": "SimpleExpSmoothing(train).fit()"
+        "hint": "SimpleExpSmoothing(train, initialization_method='estimated').fit()"
       },
       {
         "label": "2단계 모델이 고른 α",
@@ -1315,12 +1315,12 @@ export const TS_PROBLEMS = [
       },
       {
         "label": "3단계 앞으로 24시간 예측",
-        "expr": "len(fc) == 24 and abs(float(fc.iloc[0]) - 89.82999994977067) < 0.5",
+        "expr": "len(fc) == 24 and abs(float(fc.iloc[0]) - 89.82983794064427) < 0.5",
         "hint": "fit.forecast(24)"
       },
       {
         "label": "4단계 예측의 MAE (test.values와 fc.values 비교)",
-        "expr": "abs(mae - 3.3441319946737753) < 0.2",
+        "expr": "abs(mae - 3.344294003800174) < 0.2",
         "hint": "abs(test.values - fc.values).mean()"
       },
       {

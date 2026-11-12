@@ -33,7 +33,7 @@ UNITS = [
              "<h4>지표</h4><p>MAE = |오차|의 평균, MAPE = |오차| ÷ 실제값의 평균(%), MASE = MAE ÷ (학습 구간에서 naive가 낸 MAE). MASE가 1보다 작으면 naive보다 낫습니다.</p>"},
     {"id": 57, "title": "지수평활", "summary": "ewm으로 직접 평활, SimpleExpSmoothing, Holt-Winters",
      "note": "<h4>지수평활</h4><p>새 수준 = α × 새 값 + (1 − α) × 이전 수준. <code>s.ewm(alpha=0.3, adjust=False).mean()</code>이 같은 계산입니다. α가 클수록 최근 값을 더 따라갑니다.</p>"
-             "<h4>statsmodels</h4><p><code>SimpleExpSmoothing(train).fit()</code>은 α를 스스로 고릅니다. 추세 · 계절이 있으면 <code>ExponentialSmoothing(train, trend='add', seasonal='mul', seasonal_periods=12)</code>.</p>"
+             "<h4>statsmodels</h4><p><code>SimpleExpSmoothing(train, initialization_method='estimated').fit()</code>은 α를 스스로 고릅니다. 추세 · 계절이 있으면 <code>ExponentialSmoothing(train, trend='add', seasonal='mul', seasonal_periods=12)</code>.</p>"
              "<h4>예측</h4><p><code>fit.forecast(h)</code>가 앞으로 h칸의 예측입니다.</p>"},
     {"id": 58, "title": "ARIMA", "summary": "ARIMA 적합, AIC 비교, 예측 구간, 계절 · 외부 변수",
      "note": "<h4>ARIMA(p, d, q)</h4><p>p는 과거 값 몇 개, d는 차분 횟수, q는 과거 오차 몇 개를 쓰는지입니다. <code>ARIMA(train, order=(1, 1, 1)).fit()</code>.</p>"
@@ -362,10 +362,10 @@ steps("57-1", "mfg", "설비 온도: ewm으로 지수평활 직접 해 보기", 
       "print(round(next3, 2), round(hourly.iloc[-1], 2), round(rough, 2), [round(v, 3) for v in w], round(w_sum, 3))")
 
 steps("57-2", "mfg", "SimpleExpSmoothing: 모델이 고른 α 해석하기", 2,
-      [["SimpleExpSmoothing(train).fit()", "α를 스스로 고름"], ["fit.params['smoothing_level']", "고른 α"], ["fit.forecast(24)", "24칸 예측"]],
+      [["SimpleExpSmoothing(train, initialization_method='estimated').fit()", "α를 스스로 고름"], ["fit.params['smoothing_level']", "고른 α"], ["fit.forecast(24)", "24칸 예측"]],
       "α를 직접 정하지 않고 모델이 고르게 합니다. 고른 α가 1에 가깝다면 '마지막 값이 가장 좋은 예측'이라는 뜻이라, naive와 거의 같은 결과가 나옵니다.",
       imp(HOURLY, "import warnings", "from statsmodels.tsa.holtwinters import SimpleExpSmoothing") + "\nwarnings.filterwarnings('ignore')\ntrain, test = hourly.iloc[:-24], hourly.iloc[-24:]",
-      [("fit", "train에 맞춘 단순 지수평활 모델", "SimpleExpSmoothing(train).fit()", HAS("forecast")),
+      [("fit", "train에 맞춘 단순 지수평활 모델", "SimpleExpSmoothing(train, initialization_method='estimated').fit()", HAS("forecast")),
        ("alpha", "모델이 고른 α", "fit.params['smoothing_level']", "0.9 < {var} <= 1.0"),
        ("fc", "앞으로 24시간 예측", "fit.forecast(24)", lambda ns, var: f"len({var}) == 24 and abs(float({var}.iloc[0]) - {float(ns[var].iloc[0])!r}) < 0.5"),
        ("mae", "예측의 MAE (test.values와 fc.values 비교)", "abs(test.values - fc.values).mean()", "abs({var} - {v}) < 0.2"),
