@@ -70,7 +70,7 @@ const isBonusLesson = (c, l) => {
 };
 const coreLessons = (c) => c.lessons.filter((l) => !l.optional && !isBonusLesson(c, l));
 const solved = (pid) => !!state.progress[pid]?.solved;
-const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)" };
+const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)", blue: "var(--blue)" };
 const trackStyle = (t) => `style="--tc:${TRACK_COLOR[t.color] || "var(--track)"}"`;
 
 const store = {
@@ -783,7 +783,7 @@ function trackCard(t) {
 const TRACK_GROUPS = [
   { id: "code", label: "프로그래밍 기초", en: "Programming", blurb: "데이터를 코드로 읽고 다루는 기본기", tracks: ["python-basic", "sql"] },
   { id: "analytics", label: "분석 · 시각화", en: "Analytics", blurb: "데이터를 정리하고, 그려서 읽는 힘", tracks: ["python-da", "python-viz"] },
-  { id: "ml", label: "통계 · 머신러닝", en: "Statistics · ML", blurb: "데이터로 판단하고 예측하는 모델", tracks: ["stats", "ml"] },
+  { id: "ml", label: "통계 · 머신러닝", en: "Statistics · ML", blurb: "데이터로 판단하고 예측하는 모델", tracks: ["stats", "ml", "ts"] },
   { id: "dl", label: "딥러닝", en: "Deep Learning", blurb: "신경망의 원리를 개념과 영상으로", tracks: ["dl"] },
 ];
 

@@ -15,6 +15,8 @@ export const TRACKS = [
     blurb: "기술통계 · 분포 · 검정 · 회귀. 시뮬레이션으로 직관을 만듭니다." },
   { id: "ml", label: "머신러닝", en: "Machine Learning", color: "green", ready: true,
     blurb: "scikit-learn으로 회귀 · 분류 · 군집을 만들고 평가합니다." },
+  { id: "ts", label: "시계열 분석", en: "Time Series", color: "blue", ready: true,
+    blurb: "추세 · 계절성 분해부터 지수평활 · ARIMA · 머신러닝 예측, 센서 이상 탐지까지. 시간 순서가 있는 데이터를 읽고 미래를 예측합니다." },
   { id: "dl", label: "딥러닝", en: "Deep Learning", color: "orange", ready: true,
     blurb: "뉴런부터 Transformer · 생성 모델 · 전이 학습까지, 실습 없이 그림과 손 계산으로 원리를 이해합니다." },
 ];
@@ -1303,6 +1305,151 @@ export const COURSES = [
       quiz: [
       ] }] },
 
+  // ── 시계열 분석 ─────────────────────────────────────────
+  { id: "ts-00", track: "ts", intro: true, title: "시계열 분석 시작하기", summary: "시계열이 표 데이터와 다른 점, 추세 · 계절성 · 자기상관, 트랙 지도와 데이터 네 가지", level: "입문",
+    concepts: ["ts.intro"],
+    lessons: [
+    { id: "ts-00-1", title: "시계열은 무엇이 다를까", minutes: 12, concepts: ["ts.intro"],
+      quiz: [
+        { kind: "ox", q: "월별 매출 데이터로 예측 모델을 평가할 때도, 행을 무작위로 섞어 학습용과 시험용으로 나누면 된다.", answer: false, explain: "시계열은 순서가 곧 정보입니다. 섞으면 미래 값으로 과거를 맞히게 되어 점수가 부풀려집니다. 언제나 과거로 학습하고 그 뒤 구간으로 시험합니다." },
+        { kind: "choice", q: "공장 설비의 진동 센서 값을 보고 '평소와 다른 순간'을 알려 주는 시스템을 만들려고 한다. 시계열로 하는 일 네 가지 중 어디에 해당할까?", options: ["이해하기 (분해)", "예측하기", "이상 찾기", "분류하기"], answer: 2, explain: "평소 패턴에서 벗어난 시점을 찾는 일은 이상 탐지입니다. 다음 값을 맞히는 것이 예측, 파형 전체에 종류를 붙이는 것이 분류입니다." },
+      ] },
+    { id: "ts-00-2", title: "트랙 지도와 데이터 네 가지", minutes: 10, concepts: ["ts.intro"], quiz: [] },
+    ] },
+  { id: "ts-01", track: "ts", title: "시계열 데이터 준비", summary: "날짜 인덱스와 빈도, asfreq로 빠진 칸 드러내기, 값의 종류에 맞는 집계", unit: 52, level: "기본",
+    concepts: ["ts.prep"],
+    lessons: [
+    { id: "ts-01-1", title: "일정한 간격 만들기: 날짜 인덱스와 빈도", minutes: 20, concepts: ["ts.prep"], quiz: [] },
+    { id: "ts-01-2", title: "시간 단위 바꾸기: 합칠까, 평균 낼까", minutes: 18, concepts: ["ts.prep"],
+      quiz: [
+        { kind: "choice", q: "공장의 시간별 생산량(개)을 하루 단위로 묶으려고 한다. 어떤 계산이 알맞을까?", options: ["합계 (sum)", "평균 (mean)", "최댓값 (max)", "마지막 값 (last)"], answer: 0, explain: "생산량은 시간이 지나며 쌓이는 양입니다. 하루 생산량은 24시간 치를 더한 값입니다." },
+        { kind: "choice", q: "보일러 압력을 1분마다 잰 기록을 1시간 단위로 묶어, 위험한 순간이 있었는지 감시하려고 한다. 평균과 함께 무엇을 남기는 것이 좋을까?", options: ["합계", "최댓값", "개수만", "첫 값"], answer: 1, explain: "압력은 상태값이라 평균이 기본이지만, 평균만 남기면 순간적으로 치솟은 값이 가려집니다. 위험 감시가 목적이면 최댓값을 함께 남깁니다." },
+      ] },
+    ] },
+  { id: "ts-02", track: "ts", title: "분해: 추세 · 계절성 · 잔차", summary: "이동평균으로 추세 뽑기, 덧셈 · 곱셈 분해와 로그, STL과 여러 겹의 계절성", unit: 53, level: "기본",
+    concepts: ["ts.decompose"],
+    lessons: [
+    { id: "ts-02-1", title: "시계열을 이루는 세 가지", minutes: 20, concepts: ["ts.decompose"],
+      quiz: [
+        { kind: "choice", q: "월별 데이터에서 1년 주기의 계절성을 지우고 추세만 남기려면 이동평균의 창을 몇으로 잡아야 할까?", options: ["3", "6", "12", "아무 값이나 클수록 좋다"], answer: 2, explain: "창이 계절 주기와 같아야 한 바퀴가 통째로 들어가 계절 효과가 서로 지워집니다. 월별 데이터의 1년은 12칸입니다." },
+      ] },
+    { id: "ts-02-2", title: "덧셈 분해와 곱셈 분해", minutes: 18, concepts: ["ts.decompose"],
+      quiz: [
+        { kind: "choice", q: "쇼핑몰 매출이 해마다 늘고, 연말 성수기의 매출 증가 폭도 해마다 함께 커진다. 어떻게 분해하는 것이 알맞을까?", options: ["덧셈 분해", "곱셈 분해(또는 로그를 씌운 뒤 덧셈 분해)", "분해할 수 없다", "이동평균만 구한다"], answer: 1, explain: "수준이 오를수록 계절 폭이 커지면 계절 효과가 '몇 배'로 움직이는 곱셈형입니다. 곱셈 분해를 하거나 로그로 덧셈형으로 바꿉니다." },
+      ] },
+    { id: "ts-02-3", title: "STL과 여러 겹의 계절성", minutes: 20, concepts: ["ts.decompose"], quiz: [] },
+    ] },
+  { id: "ts-03", track: "ts", title: "자기상관", summary: "래그와 ACF 읽기, PACF로 직접 관계만 보기, 백색잡음 · 랜덤워크와 Ljung-Box 검정", unit: 54, level: "기본",
+    concepts: ["ts.acf"],
+    lessons: [
+    { id: "ts-03-1", title: "어제가 오늘을 말해 준다: 자기상관과 ACF", minutes: 22, concepts: ["ts.acf"],
+      quiz: [
+        { kind: "choice", q: "일별 데이터의 ACF 그래프에서 막대가 래그 7, 14, 21에서만 주변보다 높이 솟아 있다. 무엇을 뜻할까?", options: ["추세가 있다", "일주일 주기의 계절성이 있다", "백색잡음이다", "데이터에 빈칸이 있다"], answer: 1, explain: "주기의 배수마다 봉우리가 생기는 것이 계절성의 신호입니다. 일별 데이터에서 7칸은 일주일입니다. 추세는 막대가 천천히 줄어드는 모양으로 나타납니다." },
+      ] },
+    { id: "ts-03-2", title: "PACF: 중간을 빼고 본 직접 관계", minutes: 18, concepts: ["ts.acf"],
+      quiz: [
+        { kind: "ox", q: "ACF에서 래그 3의 막대가 높으면, 3칸 전의 값이 지금 값에 직접 영향을 준다는 뜻이다.", answer: false, explain: "ACF에는 래그 1, 2를 거쳐 건너온 영향이 섞여 있습니다. 직접 영향인지는 중간 래그의 영향을 뺀 PACF에서 확인합니다." },
+      ] },
+    { id: "ts-03-3", title: "백색잡음: 더 뽑아낼 게 없는 상태", minutes: 18, concepts: ["ts.acf"],
+      quiz: [
+        { kind: "ox", q: "예측 모델의 잔차에 Ljung-Box 검정을 했더니 p-값이 0.9였다. 잔차에 아직 패턴이 많이 남아 있다는 뜻이다.", answer: false, explain: "Ljung-Box의 귀무가설은 '자기상관이 없다'입니다. p-값이 크면 기각하지 못하므로, 패턴이 남았다는 증거가 없습니다. 잔차 점검에서는 p-값이 커야 좋습니다." },
+        { kind: "choice", q: "어떤 시계열이 랜덤워크라면, 내일 값에 대한 가장 좋은 예측은 무엇일까?", options: ["전체 평균", "오늘 값 그대로", "지금까지의 상승 추세를 연장한 값", "작년 같은 날의 값"], answer: 1, explain: "랜덤워크는 오늘 값에 예측할 수 없는 무작위 걸음이 더해집니다. 그래프에 보이는 추세는 우연히 쌓인 것이라 연장할 근거가 없고, 오늘 값이 가장 좋은 예측입니다." },
+      ] },
+    ] },
+  { id: "ts-04", track: "ts", title: "정상성", summary: "정상 시계열의 세 조건, 로그 · 차분 · 계절 차분, ADF와 KPSS 검정", unit: 55, level: "실무",
+    concepts: ["ts.stationarity"],
+    lessons: [
+    { id: "ts-04-1", title: "정상성: 성질이 변하지 않는 시계열", minutes: 18, concepts: ["ts.stationarity"],
+      quiz: [
+        { kind: "ox", q: "정상 시계열은 값이 변하지 않고 일정하게 유지되는 시계열이다.", answer: false, explain: "값은 계속 오르내립니다. 일정한 것은 평균, 흔들리는 폭, 자기상관의 모양 같은 '값을 만드는 규칙'입니다." },
+        { kind: "choice", q: "다음 중 정상 시계열에 가장 가까운 것은?", options: ["해마다 꾸준히 오르는 대기 중 이산화탄소 농도", "여름에 많고 겨울에 적은 자전거 대여 수", "안정적으로 가동 중인 설비에서 일정한 수준 주변을 오르내리는 온도", "랜덤워크처럼 움직이는 주가"], answer: 2, explain: "일정한 수준 주변에서 일정한 폭으로 떨리는 값이 정상 시계열입니다. 나머지는 추세, 계절성, 단위근 때문에 정상이 아닙니다." },
+      ] },
+    { id: "ts-04-2", title: "차분과 로그로 정상 만들기", minutes: 22, concepts: ["ts.stationarity"], quiz: [] },
+    { id: "ts-04-3", title: "단위근 검정: ADF와 KPSS", minutes: 20, concepts: ["ts.stationarity"],
+      quiz: [
+        { kind: "choice", q: "어떤 시계열의 ADF 검정 p-값이 0.30, KPSS 검정 p-값이 0.01이었다. 어떻게 판단할까?", options: ["정상이다", "정상이 아니다. 차분을 해 본다", "두 검정이 엇갈리므로 판단할 수 없다", "검정을 잘못했다"], answer: 1, explain: "ADF는 p가 커서 '정상이 아니다'를 기각하지 못했고, KPSS는 p가 작아 '정상이다'를 기각했습니다. 두 검정 모두 비정상을 가리킵니다." },
+        { kind: "ox", q: "ADF 검정에서 p-값이 0.01이면 그 시계열은 정상이 아니라고 본다.", answer: false, explain: "ADF의 귀무가설은 '정상이 아니다'입니다. p-값이 작으면 이것을 기각하므로 정상이라고 봅니다. KPSS와 방향이 반대라는 점에 주의합니다." },
+      ] },
+    ] },
+  { id: "ts-05", track: "ts", title: "예측의 기본기", summary: "기준 예측 네 가지, MAE · RMSE · MAPE · MASE, 롤링 원점 검증과 예측 지평", unit: 56, level: "기본",
+    concepts: ["ts.baseline"],
+    lessons: [
+    { id: "ts-05-1", title: "기준 예측 네 가지", minutes: 18, concepts: ["ts.baseline"], quiz: [] },
+    { id: "ts-05-2", title: "예측 오차 재기: MAE · RMSE · MAPE · MASE", minutes: 20, concepts: ["ts.baseline"],
+      quiz: [
+        { kind: "short", q: "실제 값이 200, 예측 값이 170일 때 절대 백분율 오차(APE)는 몇 %일까요? (숫자만)", answer: ["15", "15.0", "15%"], explain: "|200 − 170| ÷ 200 × 100 = 15%. 오차를 실제 값으로 나눕니다." },
+        { kind: "choice", q: "하루 판매량이 0 ~ 5개인 상품의 수요 예측을 평가하려고 한다. 피해야 할 지표는?", options: ["MAE", "RMSE", "MAPE", "MASE"], answer: 2, explain: "MAPE는 오차를 실제 값으로 나눕니다. 실제 값이 0이면 계산할 수 없고, 1 ~ 2처럼 작으면 퍼센트 오차가 크게 부풀려집니다." },
+      ] },
+    { id: "ts-05-3", title: "시간 순서대로 검증하기: 롤링 원점", minutes: 18, concepts: ["ts.baseline"],
+      quiz: [
+        { kind: "ox", q: "고객의 구매 패턴이 몇 년 사이 크게 달라진 데이터라면, 학습 구간을 처음부터 전부 쓰는 것보다 최근 일정 기간으로 길이를 고정해 옮겨 가는 방식이 더 맞을 수 있다.", answer: true, explain: "오래된 패턴이 지금과 다르면 그 데이터가 오히려 모델을 끌고 갑니다. max_train_size로 학습 구간 길이를 고정하면 최근 패턴만 배웁니다." },
+      ] },
+    ] },
+  { id: "ts-06", track: "ts", title: "지수평활", summary: "단순 지수평활과 α, Holt와 감쇠 추세, Holt-Winters와 예측 구간", unit: 57, level: "실무",
+    concepts: ["ts.smoothing"],
+    lessons: [
+    { id: "ts-06-1", title: "단순 지수평활: 최근일수록 크게", minutes: 20, concepts: ["ts.smoothing"], quiz: [] },
+    { id: "ts-06-2", title: "Holt: 추세 더하기", minutes: 15, concepts: ["ts.smoothing"],
+      quiz: [
+        { kind: "choice", q: "신제품 판매량이 지금 빠르게 늘고 있다. 3년 뒤까지 예측해야 할 때 감쇠 추세(damped trend)를 먼저 고려하는 이유는?", options: ["계산이 더 빨라서", "지금의 성장 속도가 3년 내내 이어진다고 보기 어렵고, 직선 추세가 틀리면 피해가 크기 때문에", "계절성을 함께 다룰 수 있어서", "가까운 미래의 예측이 훨씬 정확해져서"], answer: 1, explain: "대부분의 성장은 언젠가 느려집니다. 감쇠 추세는 추세를 점점 줄여 먼 미래의 과대 예측을 막는 보험입니다. 가까운 미래에서는 둘의 차이가 작습니다." },
+      ] },
+    { id: "ts-06-3", title: "Holt-Winters: 계절까지", minutes: 22, concepts: ["ts.smoothing"], quiz: [] },
+    ] },
+  { id: "ts-07", track: "ts", title: "ARIMA", summary: "AR · MA의 원리, p · d · q 정하기와 AIC, 계절 SARIMA, 바깥 변수 SARIMAX", unit: 58, level: "실무",
+    concepts: ["ts.arima"],
+    lessons: [
+    { id: "ts-07-1", title: "AR과 MA: 과거 값과 과거 오차로 예측", minutes: 22, concepts: ["ts.arima"],
+      quiz: [
+        { kind: "short", q: "AR(1) 모델이 '오늘 값 = 3 + 0.5 × 어제 값'이다. 어제 값이 10이면 오늘의 예측 값은? (숫자만)", answer: ["8", "8.0"], explain: "3 + 0.5 × 10 = 8. 미래의 잡음은 알 수 없으므로 0으로 둡니다." },
+      ] },
+    { id: "ts-07-2", title: "ARIMA(p, d, q) 정하기", minutes: 25, concepts: ["ts.arima"],
+      quiz: [
+        { kind: "choice", q: "차분한 시계열의 PACF가 래그 2까지 높고 그 뒤로 뚝 끊기며, ACF는 천천히 줄어든다. 첫 후보로 알맞은 것은?", options: ["AR(2)", "MA(2)", "백색잡음", "차분을 한 번 더 한다"], answer: 0, explain: "PACF가 래그 p 뒤에서 끊기고 ACF가 천천히 줄면 AR(p)입니다. 반대로 ACF가 끊기고 PACF가 천천히 줄면 MA입니다." },
+        { kind: "ox", q: "같은 데이터에 맞춘 두 ARIMA 모델 중 AIC가 더 큰 쪽이 더 좋은 모델이다.", answer: false, explain: "AIC는 맞는 정도에서 복잡도를 벌점으로 뺀 점수로, 작을수록 좋습니다." },
+      ] },
+    { id: "ts-07-3", title: "SARIMA: 계절이 있는 ARIMA", minutes: 22, concepts: ["ts.arima"], quiz: [] },
+    { id: "ts-07-4", title: "SARIMAX: 바깥 변수 넣기", minutes: 18, concepts: ["ts.arima"],
+      quiz: [
+        { kind: "ox", q: "한 달 뒤 수요를 예측하는 모델을 평가할 때, 시험 구간의 실제 기온을 바깥 변수로 넣어 계산한 오차는 실전 성능을 그대로 보여 준다.", answer: false, explain: "예측하는 시점에는 한 달 뒤의 실제 기온을 알 수 없습니다. 실제 값을 넣은 평가는 실전에서 얻을 수 없는 점수이며, 누수의 한 종류입니다." },
+      ] },
+    ] },
+  { id: "ts-08", track: "ts", title: "머신러닝으로 예측하기", summary: "래그 · 이동 통계 · 달력 특성, 회귀 모델 비교, 재귀 · 직접 전략, 트리의 외삽 한계", unit: 59, level: "실무",
+    concepts: ["ts.ml"],
+    lessons: [
+    { id: "ts-08-1", title: "시계열을 표로 바꾸기", minutes: 20, concepts: ["ts.ml"],
+      quiz: [
+        { kind: "choice", q: "내일의 판매량을 예측하는 모델의 특성으로 쓰면 누수가 되는 것은?", options: ["어제 판매량 (shift(1))", "내일의 요일", "shift 없이 구한 최근 7일 이동평균 (rolling(7).mean())", "지난주 같은 요일 판매량 (shift(7))"], answer: 2, explain: "shift 없이 구한 이동평균에는 그날의 값(정답)이 들어 있습니다. shift(1)을 먼저 해서 어제까지의 값만 평균 내야 합니다." },
+      ] },
+    { id: "ts-08-2", title: "회귀 모델로 예측하고 비교하기", minutes: 22, concepts: ["ts.ml"], quiz: [] },
+    { id: "ts-08-3", title: "여러 걸음 앞 예측과 트리의 한계", minutes: 22, concepts: ["ts.ml"],
+      quiz: [
+        { kind: "choice", q: "해마다 꾸준히 늘어나는 매출을 랜덤포레스트로 예측했더니, 예측이 어느 높이에서 평평해졌다. 이유는?", options: ["트리 개수가 부족해서", "트리의 예측은 학습 때 본 정답들의 평균이라, 본 적 없는 높이를 낼 수 없어서", "표준화를 하지 않아서", "학습 데이터가 너무 많아서"], answer: 1, explain: "평균은 가장 큰 값보다 클 수 없습니다. 추세가 있으면 값 대신 변화량이나 변화율을 예측하게 한 뒤 되돌립니다." },
+      ] },
+    ] },
+  { id: "ts-09", track: "ts", title: "시계열 이상 탐지", summary: "점 · 맥락 · 집단 이상, 고정 한계선과 이동 z-점수, 분해 잔차, 경보 평가, CUSUM 변화점", unit: 60, level: "실무",
+    concepts: ["ts.anomaly"],
+    lessons: [
+    { id: "ts-09-1", title: "이상의 세 종류와 이동 z-점수", minutes: 22, concepts: ["ts.anomaly"],
+      quiz: [
+        { kind: "choice", q: "한여름 오후 2시에 사무실 전력 사용량이 평소 새벽 3시 수준으로 기록됐다. 값 자체는 매일 새벽마다 나오는 흔한 값이다. 어떤 이상일까?", options: ["점 이상", "맥락 이상", "집단 이상", "이상이 아니다"], answer: 1, explain: "값 자체는 전체 범위 안에 있지만 '그 시각'에는 나올 수 없는 값입니다. 계절성(하루 주기)을 뺀 잔차에서 찾습니다." },
+        { kind: "choice", q: "설비 온도가 5시간 동안 급락했다가 정상으로 돌아왔다. 24시간 이동 z-점수가 회복 직후의 정상 값을 '높은 쪽 이상'에 가깝게 판단했다. 이유는?", options: ["센서가 고장 나서", "급락 구간이 최근 24시간의 평균을 끌어내려 기준 자체가 오염됐기 때문에", "한계값이 너무 높아서", "shift(1)을 했기 때문에"], answer: 1, explain: "이동 기준은 최근 값으로 만들기 때문에 이상 구간이 기준에 섞입니다. 평소 수준이 일정한 데이터라면 고정 한계선이 더 안정적입니다." },
+      ] },
+    { id: "ts-09-2", title: "분해 잔차로 이상 찾기", minutes: 25, concepts: ["ts.anomaly"], quiz: [] },
+    { id: "ts-09-3", title: "변화점: 수준이 바뀌는 순간", minutes: 20, concepts: ["ts.anomaly"],
+      quiz: [
+        { kind: "choice", q: "제품 무게의 평균이 어느 날부터 표준편차의 절반만큼 살짝 올라가 계속 유지되고 있다. 가장 먼저 알아챌 가능성이 높은 방법은?", options: ["평균 ± 3σ 고정 한계선", "CUSUM", "seasonal naive", "로그 변환"], answer: 1, explain: "작지만 계속되는 변화는 하나하나가 한계선 안에 있어 한계선으로는 잡히지 않습니다. 벗어난 양을 누적하는 CUSUM이 이런 변화에 민감합니다." },
+      ] },
+    ] },
+  { id: "ts-10", track: "ts", title: "시계열 프로젝트 한 바퀴", summary: "질문 정하기부터 운영 점검까지 여덟 단계, Prophet · 전역 모델 · 딥러닝 · 기초 모델 둘러보기", level: "실무",
+    concepts: ["ts.project"],
+    lessons: [
+    { id: "ts-10-1", title: "예측 프로젝트 순서", minutes: 25, concepts: ["ts.project"], quiz: [] },
+    { id: "ts-10-2", title: "다음 단계: 딥러닝과 최신 도구", minutes: 12, concepts: ["ts.project"],
+      quiz: [
+        { kind: "choice", q: "월별 매출 5년 치(60개) 시계열 하나를 예측하려고 한다. 먼저 시도할 방법으로 가장 알맞은 것은?", options: ["LSTM", "Transformer", "Holt-Winters나 SARIMA", "시계열 수천 개를 쌓은 전역 모델"], answer: 2, explain: "데이터가 60개뿐이면 딥러닝이 배울 만큼의 양이 안 됩니다. 짧은 시계열 하나에는 지수평활이나 ARIMA가 대개 더 정확하고 설명하기도 쉽습니다." },
+        { kind: "ox", q: "최신 딥러닝 모델을 쓴다면 seasonal naive 같은 기준 예측과 비교하는 단계는 건너뛰어도 된다.", answer: false, explain: "어떤 모델이든 기준 예측을 넘지 못하면 쓸 이유가 없습니다. 기준 예측은 모델이 쓸모 있는지 판단하는 잣대입니다." },
+      ] },
+    ] },
   // ── 딥러닝 (개념 학습, 실습 없음) ───────────────────────────
   { id: "dl-00", track: "dl", intro: true, title: "딥러닝 시작하기", summary: "머신러닝과의 차이, 층별 표현, 역사, 쓸 때 · 안 쓸 때", level: "입문",
     concepts: ["dl.intro"],
@@ -1527,6 +1674,12 @@ export const SECTIONS = {
     { id: "tuning", label: "모델 다듬기", en: "Tuning", blurb: "교차검증 · 하이퍼파라미터, 피처 엔지니어링, 불균형 데이터", courses: ["ml-05", "ml-06", "ml-08"] },
     { id: "unsupervised", label: "비지도학습", en: "Unsupervised", blurb: "정답 없이 묶고(군집), 줄이고(차원 축소), 튀는 것 찾기(이상 탐지)", courses: ["ml-07", "ml-13"] },
     { id: "field", label: "해석과 현장", en: "Explain · Deploy", blurb: "모델이 왜 그렇게 판단했나, 저장 · 드리프트 감시, 미니 프로젝트", courses: ["ml-09", "ml-11"] },
+  ],
+  ts: [
+    { id: "start", label: "시작하기", en: "Start", blurb: "시계열은 무엇이 다르고, 무엇을 할 수 있나", courses: ["ts-00"] },
+    { id: "read", label: "시계열 읽기", en: "Reading", blurb: "간격 맞추기, 추세 · 계절성 분해, 자기상관, 정상성", courses: ["ts-01", "ts-02", "ts-03", "ts-04"] },
+    { id: "forecast", label: "예측 모델", en: "Forecasting", blurb: "기준 예측과 지표, 지수평활, ARIMA, 머신러닝 예측", courses: ["ts-05", "ts-06", "ts-07", "ts-08"] },
+    { id: "apply", label: "현장 응용", en: "In Practice", blurb: "센서 이상 탐지와 예측 프로젝트 한 바퀴", courses: ["ts-09", "ts-10"] },
   ],
   dl: [
     { id: "start", label: "시작하기", en: "Start", blurb: "머신러닝과 딥러닝은 무엇이 다른가", courses: ["dl-00"] },
