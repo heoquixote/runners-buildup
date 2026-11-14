@@ -783,8 +783,8 @@ function trackCard(t) {
 const TRACK_GROUPS = [
   { id: "code", label: "프로그래밍 기초", en: "Programming", blurb: "데이터를 코드로 읽고 다루는 기본기", tracks: ["python-basic", "sql"] },
   { id: "analytics", label: "분석 · 시각화", en: "Analytics", blurb: "데이터를 정리하고, 그려서 읽는 힘", tracks: ["python-da", "python-viz"] },
-  { id: "ml", label: "통계 · 머신러닝", en: "Statistics · ML", blurb: "데이터로 판단하고 예측하는 모델", tracks: ["stats", "ml", "ts"] },
-  { id: "dl", label: "딥러닝", en: "Deep Learning", blurb: "신경망의 원리를 개념과 영상으로", tracks: ["dl"] },
+  { id: "ml", label: "통계 · 머신러닝", en: "Statistics · ML", blurb: "데이터로 판단하고 예측하는 모델", tracks: ["stats", "ml"] },
+  { id: "tsdl", label: "시계열 · 딥러닝", en: "Time Series · DL", blurb: "시간의 흐름과 신경망으로 넓히는 예측", tracks: ["ts", "dl"] },
 ];
 
 function trackGroupsHtml() {
