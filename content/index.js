@@ -289,7 +289,7 @@ export const COURSES = [
     lessons: [
       { id: "da-00-1", title: "pip: 라이브러리를 설치하고 관리하는 도구", minutes: 20, concepts: ["py.env"],
       quiz: [
-        { kind: "choice", q: "Jupyter 노트북 셀에서 지금 쓰는 노트북 환경에 pandas를 설치하려면 셀에 무엇을 입력할까?", options: ["pip install pandas", "%pip install pandas", "import pandas", ">>> pip install pandas"], answer: 1, explain: "노트북 셀은 파이썬 코드 칸이라 pip 명령을 그대로 쓰면 에러가 납니다. 앞에 %를 붙이면 지금 노트북 커널(파이썬)에 설치합니다. Colab에서는 !pip도 많이 씁니다." },
+        { kind: "choice", q: "명령 프롬프트(Windows)나 터미널(macOS)을 열었다. 내 컴퓨터 파이썬에 pandas를 설치하려면 무엇을 입력할까?", options: ["import pandas", "pip install pandas", "%pip install pandas", "pip show pandas"], answer: 1, explain: "pip은 터미널 명령이라 터미널에서는 pip install pandas를 그대로 칩니다. import pandas는 이미 설치된 pandas를 파이썬 코드에서 불러오는 문장이고, %pip은 Jupyter·Colab 노트북 셀에서 쓰는 형태라 터미널에서는 쓰지 않습니다. pip show는 설치된 패키지 정보만 보여 줍니다." },
         { kind: "choice", q: "팀에서 pandas 2.2.2로 맞추자고 했는데 내 컴퓨터에는 3.0.0이 설치돼 있다. 어떤 명령을 써야 할까?", options: ["pip install --upgrade pandas", "pip install pandas==2.2.2", "pip uninstall pandas", "pip show pandas"], answer: 1, explain: "==로 버전을 정해 설치하면 지금 버전을 지우고 그 버전으로 바꿉니다. 낮은 버전으로 가는 것을 다운그레이드라고 합니다. --upgrade는 최신으로 올리고, show는 정보만 보여 줍니다." },
       ] },
       { id: "da-00-2", title: "가상환경(venv): 프로젝트마다 따로 쓰는 파이썬", minutes: 20, concepts: ["py.env"],
