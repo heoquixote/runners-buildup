@@ -1,9 +1,9 @@
-// 파이썬 기초 2026-11-10 보강 문제: 클래스와 객체(pb-14, 유닛 52) + 유닛 8(*args · **kwargs) · 유닛 50(Counter · defaultdict) 추가 문제.
+// 파이썬 기초 2026-11-10 보강 문제: 클래스와 객체(pb-14, 유닛 61) + 유닛 8(*args · **kwargs) · 유닛 50(Counter · defaultdict) 추가 문제.
 // scratchpad build_oop.py 로 생성(모범답안을 실행해 함수형 기대값을 채움).
-// domain: "mfg" = QAQC 과정(제조), "general" = 데이터 과정(일반). 개념 퀴즈(52-Q)는 두 과정이 함께 쓴다.
+// domain: "mfg" = QAQC 과정(제조), "general" = 데이터 과정(일반). 개념 퀴즈(61-Q)는 두 과정이 함께 쓴다.
 export const PBO_UNITS = [
   {
-    "id": 52,
+    "id": 61,
     "title": "클래스와 객체",
     "summary": "객체 · 속성 · 메서드, class · __init__ · self, 상태를 바꾸는 메서드, fit · predict",
     "note": "<h4>속성과 메서드</h4><p><code>made.year</code>처럼 괄호 없이 꺼내면 <b>속성</b>(가진 값), <code>made.weekday()</code>처럼 괄호를 붙이면 <b>메서드</b>(시키는 일)입니다. <code>sort()</code> · <code>append()</code>처럼 원본을 바꾸는 메서드는 <code>None</code>을 돌려줍니다.</p><h4>클래스 만들기</h4><pre>class Lot:\n    def __init__(self, lot_id, qty, defects):\n        self.lot_id = lot_id      # 만들 때 속성 채우기\n        self.qty = qty\n        self.defects = defects\n\n    def rate(self):               # 메서드: 첫 매개변수는 self\n        return round(self.defects / self.qty * 100, 2)\n\na = Lot('A0915', 1250, 18)\nprint(a.rate())                   # Lot.rate(a) 와 같다</pre><h4>fit과 predict</h4><p>모델 객체는 <code>fit</code>에서 배운 결과를 끝에 밑줄 붙은 속성(<code>mean_</code>, <code>coef_</code>)에 저장하고, <code>predict</code>에서 그 값을 꺼내 답합니다. <code>fit</code>이 <code>return self</code>를 하면 <code>Model().fit(X, y).predict(new_X)</code>처럼 이어 쓸 수 있습니다.</p><p class=\"qc\">메서드에 self를 빠뜨리면 TypeError(… takes 0 positional arguments but 1 was given), 속성 앞에 self.를 빠뜨리면 NameError가 납니다.</p>"
@@ -12,8 +12,8 @@ export const PBO_UNITS = [
 
 export const PBO_PROBLEMS = [
   {
-    "id": "52-1",
-    "unit": 52,
+    "id": "61-1",
+    "unit": 61,
     "domain": "mfg",
     "title": "온도 한계로 판정하는 설비 객체",
     "type": "steps",
@@ -69,8 +69,8 @@ export const PBO_PROBLEMS = [
     ]
   },
   {
-    "id": "52-2",
-    "unit": 52,
+    "id": "61-2",
+    "unit": 61,
     "domain": "mfg",
     "title": "라인별 평균 두께로 예측하는 모델",
     "type": "steps",
@@ -127,8 +127,8 @@ export const PBO_PROBLEMS = [
     ]
   },
   {
-    "id": "52-3",
-    "unit": 52,
+    "id": "61-3",
+    "unit": 61,
     "domain": "general",
     "title": "담을수록 쌓이는 장바구니 객체",
     "type": "steps",
@@ -185,8 +185,8 @@ export const PBO_PROBLEMS = [
     ]
   },
   {
-    "id": "52-4",
-    "unit": 52,
+    "id": "61-4",
+    "unit": 61,
     "domain": "general",
     "title": "카테고리 평균으로 가격을 예측하는 모델",
     "type": "steps",
@@ -686,8 +686,8 @@ export const PBO_PROBLEMS = [
 
 export const PBO_QUIZZES = [
   {
-    "id": "52-Q",
-    "unit": 52,
+    "id": "61-Q",
+    "unit": 61,
     "title": "클래스와 객체 개념 퀴즈",
     "type": "quiz",
     "level": 1,

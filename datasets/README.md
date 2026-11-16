@@ -15,6 +15,8 @@
 | galton.csv | 934 × 8 | 골턴의 부모 · 자녀 키(인치 → cm로 바꿈) | HistData::GaltonFamilies, 1886년 자료(퍼블릭 도메인) |
 | datasaurus.csv | 1,846 × 3 | 요약 통계가 같은 13개 점 묶음(Datasaurus Dozen) | datasauRus 패키지, MIT |
 | steel_faults.csv | 1,941 × 27 | 강판 표면 결함 7종과 형상 · 밝기 특성 | UCI #198 Steel Plates Faults, CC BY 4.0 |
+| machine_temp.csv | 22,695 × 2 | 산업 설비 내부 부품 온도 센서(5분 간격, 2013-12-02 ~ 2014-02-19). 알려진 이상 4건(2013-12-11 계획 정지, 12-16 감지 어려운 전조, 2014-01-28 · 02-08 고장) | Numenta Anomaly Benchmark `realKnownCause/machine_temperature_system_failure.csv`, MIT · 열 이름을 timestamp, temp로 바꾸고 소수 둘째 자리로 반올림 |
+| co2.csv | 2,284 × 2 | 하와이 마우나로아 대기 중 CO₂ 농도(주별, 1958-03 ~ 2001-12, 빈칸 59개) | Keeling & Whorf (2004), SIO · CDIAC, 퍼블릭 도메인 (statsmodels `datasets.co2`) |
 | sql_company.sql | emp · dept · salgrade | 회사 직원 DB | 오라클 SCOTT 예제 |
 | sql_shop.sql | users · orders · events | 가상 쇼핑몰 | 자체 생성(scripts/build_sql_data.py) |
 | chinook.sql | 11개 테이블 | 음원 판매 DB(artist · album · track · genre · media_type · playlist · playlist_track · employee · customer · invoice · invoice_line) | Chinook Database 1.4.5 (Luis Rocha), MIT · 이름을 snake_case로 바꿈 |

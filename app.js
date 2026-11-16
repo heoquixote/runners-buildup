@@ -1,5 +1,5 @@
 import { CONFIG } from "./config.js";
-import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS, SESSIONS } from "./problems.js";
+import { UNITS as ALL_UNITS, PROBLEMS as ALL_PROBLEMS } from "./problems.js";
 import { TRACKS, COURSES, LESSONS, PROGRAMS, programOfJoinCode, courseById, lessonById, trackById, coursesOf, courseOfUnit, lessonPath, sectionsOf } from "./content/index.js";
 import { conceptName } from "./content/concepts.js";
 import { ADDED_LESSONS } from "./content/added.js";
@@ -10,14 +10,8 @@ import { runCode, gradeCode, preload, onRunnerState } from "./runner.js";
 import { MEDALS, CATEGORIES, TIERS, COLOR_HEX, medalById, medalSvg, medalContext, qualifiedMedals } from "./medals.js";
 import { sqlProgram, parseSqlOutput, sqlResultHtml, sqlResultText, sameSqlResult, sqlOrdered } from "./sql.js";
 
-// 두 가지 보기 방식이 있다.
-//  - 커리큘럼: 트랙 > 코스 > 레슨 + 연습문제 (content/index.js). 코스는 unit 번호로 문제와 이어진다.
-//  - 회차 과제: 수업 회차(SESSIONS)마다 고른 5문제. 홈의 "우리 반 과제"와 어드민 화면이 이 순서를 쓴다.
-const UNITS = SESSIONS.map((s) => ({ ...s }));
-const PROBLEMS = SESSIONS.flatMap((s) => s.ids.map((id) => {
-  const p = ALL_PROBLEMS.find((x) => x.id === id);
-  return { ...p, unit: s.id, noteUnit: p.unit };
-}));
+// 커리큘럼: 트랙 > 코스 > 레슨 + 연습문제 (content/index.js). 코스는 unit 번호로 문제와 이어진다.
+// 진도는 트랙 레슨 · 연습문제 기준 하나로 본다. (예전 '회차 과제' · '오늘의 과제'는 2026-11-10에 없앴고, problems.js 의 SESSIONS 데이터는 기록용으로만 남아 있다.)
 const unitNote = (unitId) => ALL_UNITS.find((u) => u.id === unitId);
 
 // ── 작은 도우미 ───────────────────────────────────────────
@@ -25,10 +19,6 @@ const $app = document.getElementById("app");
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const byId = Object.fromEntries(ALL_PROBLEMS.map((p) => [p.id, p]));
-// 회차 화면에 보이는 번호: 회차 안 순서대로 1-1, 1-2… 저장되는 id(1-Q 등)는 그대로 둔다.
-const NO = {};
-for (const u of UNITS) PROBLEMS.filter((p) => p.unit === u.id).forEach((p, i) => { NO[p.id] = `${u.id}-${i + 1}`; });
-const no = (pid) => NO[pid] || pid;
 const TYPE_LABEL = { io: "입출력형", function: "함수형", steps: "단계 실습형", quiz: "개념 퀴즈" };
 
 // 과정: 가입 코드로만 정한다. QAQC8 → QAQC 과정(제조 문제), 그 외 → 기본 데이터 과정(일반 문제). 화면에는 따로 표시하지 않는다.
@@ -45,7 +35,7 @@ function allCourseProblems(c, prog = program()) {
   return [...quiz, ...rest];
 }
 // tip 코스(가볍게 읽고 넘어가는 참고 코스)는 코스 화면 · 진도에 연습문제를 보여 주지 않는다.
-// 유닛 문제는 그대로 남아 있어 QAQC 회차 과제(SESSIONS)에서는 계속 열 수 있다.
+// 유닛 문제 데이터와 제출 기록은 그대로 남아 있다.
 const courseProblems = (c, prog = program()) => (c?.tip ? [] : allCourseProblems(c, prog));
 const courseOf = (p) => courseOfUnit(p.unit);
 // 이 문제를 보여주는 과정 (문제 소재와 다른 과정에서 열어도 코스 맥락은 유지)
@@ -70,7 +60,7 @@ const isBonusLesson = (c, l) => {
 };
 const coreLessons = (c) => c.lessons.filter((l) => !l.optional && !isBonusLesson(c, l));
 const solved = (pid) => !!state.progress[pid]?.solved;
-const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)" };
+const TRACK_COLOR = { violet: "var(--track)", cyan: "var(--cyan)", lime: "var(--accent)", amber: "var(--warn)", green: "var(--pass)", orange: "var(--orange)", rose: "var(--rose)", blue: "var(--blue)" };
 const trackStyle = (t) => `style="--tc:${TRACK_COLOR[t.color] || "var(--track)"}"`;
 
 const store = {
@@ -159,8 +149,8 @@ const state = {
   activity: {}, // {"YYYY-MM-DD": 학습 횟수} 한국 시간 기준
   progressLoaded: false,
   adminGroup: store.get("rb-admin-group") ?? "", // "" 전체, "-" 그룹 없음, 그 외 그룹 코드
+  adminHideTest: store.get("rb-admin-hide-test") ?? true, // 순위 제외(테스트) 계정을 어드민 집계에서 뺀다
   groups: [],
-  today: [],
   runner: "idle",
   medals: {}, // {medalId: earned_at}
   medalsOn: false, // 메달 테이블을 불러왔을 때만 켠다 (마이그레이션 전이면 기능을 숨김)
@@ -191,7 +181,6 @@ async function loadProgress() {
       state.session.student = res.student;
       store.set(SESSION_KEY, state.session);
     }
-    try { state.today = (await api.getToday(state.session.token)).ids || []; } catch { state.today = []; }
     try { state.medals = (await api.medals(state.session.token)).medals || {}; state.medalsOn = true; } catch { state.medals = {}; state.medalsOn = false; }
     state.progressLoaded = true;
     awardMedals({ silent: true });
@@ -289,9 +278,8 @@ async function route() {
   if (t && trackById[t[1]]) return viewTrack(trackById[t[1]]);
   if (hash.startsWith("#/videos")) return viewVideos();
   if (hash.startsWith("#/medals")) return state.session && state.medalsOn ? viewMedals() : (location.hash = "#/");
-  const u = hash.match(/^#\/u\/(\d+)/);
-  const unit = u && UNITS.find((x) => x.id === Number(u[1]));
-  return unit ? viewUnit(unit) : viewHome();
+  if (/^#\/u\/\d+/.test(hash)) { history.replaceState(null, "", "#/"); } // 예전 회차 과제 주소는 홈으로
+  return viewHome();
 }
 window.addEventListener("hashchange", route);
 
@@ -619,7 +607,6 @@ function lessonIcon(lid) {
   if (s === "viewed") return `<span class="st st-tried" title="읽는 중">•</span>`;
   return `<span class="st st-none" title="아직">○</span>`;
 }
-const unitProblems = (u) => PROBLEMS.filter((p) => p.unit === u.id);
 const firstUnsolved = (list) => list.find((p) => !solved(p.id));
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 const pmark = (p) => p.type === "quiz" ? '<span class="pmark quiz" title="개념 퀴즈">퀴즈</span>' : p.challenge ? '<span class="pmark challenge" title="도전 문제">도전</span>' : "";
@@ -725,9 +712,8 @@ function runData() {
   const runs = TRACKS.filter((t) => t.ready).map(trackRun).filter((r) => r.courses > 0);
   // 진행 중 = 하나라도 끝낸 것이 있거나 최근 기록이 있는 트랙 (최근 학습 순)
   const active = runs.filter((r) => r.done > 0 || r.last).sort((a, b) => String(b.last).localeCompare(String(a.last)) || b.p - a.p);
-  // 목록: 진행 중 트랙(최근 순) 다음에 아직 시작 안 한 트랙(트랙 순서)
-  const rows = [...active, ...runs.filter((r) => !active.includes(r))];
-  const main = rows.find((r) => r.t.id === runPick) || active[0] || runs[0];
+  // 목록: 커리큘럼 순서(TRACKS 순서) 그대로, 진행률이 0%보다 큰 트랙만. 최근 학습 트랙은 왼쪽 카드의 기본값으로만 쓴다.
+  const rows = runs.filter((r) => r.p > 0);
   return { runs, active, rows, main };
 }
 function runCard(d = runData()) {
@@ -755,7 +741,7 @@ function runCard(d = runData()) {
 // 트랙별 진행률 목록 (로그인 후 홈 오른쪽 카드)
 function runListCard(d = runData()) {
   const { rows, main } = d;
-  if (rows.length < 2) return "";
+  if (!rows.length) return "";
   return `<section class="panel run-list" aria-label="트랙별 진행률">
     <div class="run-list-head"><span class="eyebrow">All Tracks</span><h2>트랙별 진행률</h2><p class="muted">트랙을 누르면 왼쪽 카드가 그 트랙으로 바뀝니다.</p></div>
     <ul class="run-others">${rows.map((r) => `<li ${trackStyle(r.t)}><button type="button" class="ro-row${r === main ? " on" : ""}" data-run="${r.t.id}" aria-pressed="${r === main}"><span class="ro-name">${esc(r.t.label)}</span><span class="ro-lane"><span style="width:${r.p}%"></span><i style="left:${r.p}%"></i></span><b>${r.p}%</b></button></li>`).join("")}</ul>
@@ -764,7 +750,8 @@ function runListCard(d = runData()) {
 function homeCards() {
   if (!state.session) return `${guestCard()}${runCard()}`;
   const d = runData();
-  return `${runCard(d)}${runListCard(d)}`;
+  const list = runListCard(d);
+  return list ? `${runCard(d)}${list}` : runCard(d);
 }
 
 function trackCard(t) {
@@ -783,7 +770,7 @@ const TRACK_GROUPS = [
   { id: "code", label: "프로그래밍 기초", en: "Programming", blurb: "데이터를 코드로 읽고 다루는 기본기", tracks: ["python-basic", "sql"] },
   { id: "analytics", label: "분석 · 시각화", en: "Analytics", blurb: "데이터를 정리하고, 그려서 읽는 힘", tracks: ["python-da", "python-viz"] },
   { id: "ml", label: "통계 · 머신러닝", en: "Statistics · ML", blurb: "데이터로 판단하고 예측하는 모델", tracks: ["stats", "ml"] },
-  { id: "dl", label: "딥러닝", en: "Deep Learning", blurb: "신경망의 원리를 개념과 영상으로", tracks: ["dl"] },
+  { id: "tsdl", label: "시계열 · 딥러닝", en: "Time Series · DL", blurb: "시간의 흐름과 신경망으로 넓히는 예측", tracks: ["ts", "dl"] },
 ];
 
 function trackGroupsHtml() {
@@ -807,7 +794,7 @@ function viewHome() {
       <div><h1>${state.session ? `${esc(state.session.student.name)}님, 오늘의 빌드업을 시작해 볼까요?` : "개념을 읽고, 바로 실행해 보는 데이터 학습 트랙"}</h1>
         <div class="home-progress"><span>레슨 <b>${totals.lessonsDone} / ${totals.lessons}</b></span><span>문제 <b>${totals.solved} / ${totals.problems}</b></span><span class="meter-bar"><span style="width:${pct(totals.lessonsDone + totals.solved, totals.lessons + totals.problems)}%"></span></span></div></div>
     </div>
-    <div class="daily-grid">${homeCards()}</div>
+    <div class="daily-grid${state.session && !runData().rows.length ? " solo" : ""}">${homeCards()}</div>
     <section class="part"><h2 class="part-title">학습 트랙</h2>
       <div class="tgroups">${trackGroupsHtml()}</div></section>
   </main>`;
@@ -1352,32 +1339,6 @@ function bindQuestionInputs(root, answers, onChange, onEnter) {
     t.addEventListener("input", () => { answers[t.dataset.i] = t.value; onChange(); });
     t.addEventListener("keydown", (e) => { if (e.key === "Enter") onEnter?.(); });
   });
-}
-
-// ── 회차 과제 페이지 (QAQC 과정) ─────────────────────────────
-function viewUnit(u) {
-  const list = unitProblems(u);
-  const done = list.filter((p) => solved(p.id)).length;
-  const next = firstUnsolved(list);
-  const prevU = UNITS.find((x) => x.id === u.id - 1);
-  const nextU = UNITS.find((x) => x.id === u.id + 1);
-  const courses = [...new Set(list.map((p) => p.noteUnit))].map(courseOfUnit).filter(Boolean);
-  $app.innerHTML = `${topbar()}<main class="page unit-page">
-    <nav class="crumb"><a href="#/">홈</a><span class="sep">/</span><span class="muted">${u.id}회차</span></nav>
-    <header class="unit-hero">
-      <span class="unit-num">${u.id}회차</span>
-      <h1>${esc(u.title)}</h1>
-      <p class="muted">${esc(u.summary)}</p>
-      <div class="unit-actions"><span class="ucard-count">${done} / ${list.length} 완료</span>
-        ${next ? `<a class="btn primary" href="#/p/${next.id}">${done ? "이어 풀기" : "시작하기"} →</a>` : ""}</div>
-    </header>
-    <ol class="plist simple panel">${list.map((p) => `<li><a class="srow" href="#/p/${p.id}">
-      ${statusIcon(p.id)}<span class="pid">${no(p.id)}</span><span class="ptitle">${esc(p.title)}</span>${pmark(p)}</a></li>`).join("")}</ol>
-    ${courses.length ? `<section class="part"><h2 class="part-title">관련 코스 · 레슨</h2><ol class="plist simple panel">${courses.map((c) => `<li><a class="srow" href="${courseHref(c)}"><span class="st st-none">→</span><span class="ptitle">${esc(c.title)}</span><span class="muted" style="font-size:13px">레슨 ${c.lessons.length}개</span></a></li>`).join("")}</ol></section>` : ""}
-    <nav class="unit-nav">${prevU ? `<a class="btn small ghost" href="#/u/${prevU.id}">← ${esc(prevU.title)}</a>` : "<span></span>"}${nextU ? `<a class="btn small ghost" href="#/u/${nextU.id}">${esc(nextU.title)} →</a>` : ""}</nav>
-  </main>`;
-  bindTopbar();
-  preload();
 }
 
 // ── 개념 퀴즈 ────────────────────────────────────────────
@@ -1954,11 +1915,14 @@ function viewProblem(p) {
 
 // ── 어드민 ───────────────────────────────────────────────
 function routeAdmin(hash) {
+  clearTimeout(liveTimer);
   if (!state.adminToken) return viewAdminLogin();
-  const section = hash.split("/")[2] || "matrix";
-  const tabs = [["matrix", "회차 과제"], ["progress", "학습 현황"], ["feedback", "만족도"], ["roster", "명단 · 번호"], ["stats", "문제 통계"]];
+  let section = hash.split("/")[2] || "live";
+  if (section === "matrix") { section = "progress"; history.replaceState(null, "", "#/admin/progress"); } // 예전 회차 과제 탭 주소
+  const tabs = [["live", "실시간"], ["progress", "진도율"], ["stats", "문제 통계"], ["feedback", "만족도"], ["roster", "명단 · 번호"]];
   $app.innerHTML = `${topbar({ admin: true })}<main class="page wide">
     <div class="admin-bar"><nav class="admin-tabs">${tabs.map(([k, l]) => `<a href="#/admin/${k}" ${k === section ? 'aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
+      ${section === "roster" ? "" : `<label class="group-select hide-test" title="명단에서 '순위 제외'로 표시한 계정(테스트 계정)을 집계 · 표에서 뺍니다"><input type="checkbox" id="hide-test" ${state.adminHideTest ? "checked" : ""}><span>테스트 계정 제외</span></label>`}
       <label class="group-select"><span>그룹</span><select id="group-select"><option value="">전체</option></select></label></div>
     <div id="admin-body"><p class="muted">불러오는 중…</p></div></main>`;
   bindTopbar();
@@ -1979,7 +1943,7 @@ function routeAdmin(hash) {
     if (section === "progress") return adminProgress(body).catch(fail);
     if (section === "stats") return adminStats(body).catch(fail);
     if (section === "feedback") return adminFeedback(body).catch(fail);
-    return adminMatrix(body).catch(fail);
+    return adminLive(body).catch(fail);
   };
   api.groups(state.adminToken).then((res) => {
     state.groups = res.groups || [];
@@ -1991,6 +1955,11 @@ function routeAdmin(hash) {
   sel.addEventListener("change", () => {
     state.adminGroup = sel.value;
     store.set("rb-admin-group", sel.value);
+    run();
+  });
+  $app.querySelector("#hide-test")?.addEventListener("change", (e) => {
+    state.adminHideTest = e.target.checked;
+    store.set("rb-admin-hide-test", e.target.checked);
     run();
   });
 }
@@ -2023,11 +1992,13 @@ function viewAdminLogin() {
 }
 
 const inGroup = (s) => !state.adminGroup || (state.adminGroup === "-" ? !s.group : s.group === state.adminGroup);
+// 집계 대상: 고른 그룹 + (켜져 있으면) 순위 제외 · 테스트 계정 빼기
+const counted = (s) => inGroup(s) && !(state.adminHideTest && s.exclude_from_rank);
 const groupLabel = (code) => state.groups.find((g) => g.code === code)?.label || code || "그룹 없음";
 
 async function loadAdminData() {
   const [roster, matrix] = await Promise.all([api.roster(state.adminToken), api.matrix(state.adminToken)]);
-  const students = roster.students.filter(inGroup);
+  const students = roster.students.filter(counted);
   const ids = new Set(students.map((s) => s.id));
   const raw = matrix.cells.filter((c) => ids.has(c.student_id));
   const cells = {};
@@ -2045,11 +2016,12 @@ function downloadCsv(filename, rows) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// 학습 현황: 수강생별 트랙 레슨 · 문제 진도. 회차 과제 밖의 학습도 모두 포함한다.
+// 진도율: 수강생별 전체 · 트랙별 진도율. 레슨(필수)은 체크 퀴즈 통과, 문제는 정답 1번이면 완료로 센다.
+// 전체 진도율 = (통과한 레슨 + 맞힌 문제) ÷ (준비된 코스의 필수 레슨 + 연습문제)
 async function adminProgress(body) {
   const [{ students, raw }, lessonRes] = await Promise.all([loadAdminData(), api.adminLessons(state.adminToken)]);
   if (!students.length) {
-    body.innerHTML = `<div class="panel empty-state"><b>아직 등록된 수강생이 없습니다.</b>명단 · 번호 탭에서 이름을 붙여넣거나 가입 코드를 안내하세요.</div>`;
+    body.innerHTML = `<div class="panel empty-state"><b>집계할 수강생이 없습니다.</b>명단 · 번호 탭에서 이름을 붙여넣거나 가입 코드를 안내하세요. 그룹 선택이나 '테스트 계정 제외'도 확인하세요.</div>`;
     return;
   }
   const passed = {}, solvedSet = {}, last = {};
@@ -2067,97 +2039,246 @@ async function adminProgress(body) {
     const prog = programOfJoinCode(s.group);
     const byTrack = tracks.map((t) => {
       const courses = coursesOf(t.id).filter(isReady);
-      const ls = courses.flatMap(coreLessons), ps = courses.flatMap((c) => courseProblems(c, prog));
-      return {
-        lessons: ls.length, lessonsDone: ls.filter((l) => passed[s.id]?.has(l.id)).length,
-        problems: ps.length, solved: ps.filter((p) => solvedSet[s.id]?.has(p.id)).length,
-      };
+      const ls = courses.flatMap((c) => c.lessons.filter((l) => !l.optional)), ps = courses.flatMap((c) => courseProblems(c, prog));
+      const r = { t, lessons: ls.length, lessonsDone: ls.filter((l) => passed[s.id]?.has(l.id)).length, problems: ps.length, solved: ps.filter((p) => solvedSet[s.id]?.has(p.id)).length };
+      r.pct = pct(r.lessonsDone + r.solved, r.lessons + r.problems);
+      return r;
     });
     const sum = (k) => byTrack.reduce((a, t) => a + t[k], 0);
-    return { s, byTrack, lessons: sum("lessons"), lessonsDone: sum("lessonsDone"), problems: sum("problems"), solved: sum("solved"), last: last[s.id] };
+    const r = { s, byTrack, lessons: sum("lessons"), lessonsDone: sum("lessonsDone"), problems: sum("problems"), solved: sum("solved"), last: last[s.id] };
+    r.ratio = (r.lessonsDone + r.solved) / ((r.lessons + r.problems) || 1);
+    return r;
   };
-  const rows = students.map(statOf).sort((a, b) => (Date.parse(b.last) || 0) - (Date.parse(a.last) || 0) || a.s.name.localeCompare(b.s.name, "ko"));
+  let sortKey = store.get("rb-progress-sort") || "pct";
+  const all = students.map(statOf);
+  const sorters = {
+    pct: (a, b) => b.ratio - a.ratio || a.s.name.localeCompare(b.s.name, "ko"),
+    recent: (a, b) => (Date.parse(b.last) || 0) - (Date.parse(a.last) || 0) || a.s.name.localeCompare(b.s.name, "ko"),
+    name: (a, b) => a.s.name.localeCompare(b.s.name, "ko"),
+  };
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
   const weekAgo = Date.now() - 7 * 864e5;
-  const recent = rows.filter((r) => Date.parse(r.last) >= weekAgo).length;
-  const avg = (k) => (rows.reduce((a, r) => a + r[k], 0) / rows.length).toFixed(1);
-  const cell = (t) => (t.lessonsDone || t.solved
-    ? `<td class="num">${t.lessonsDone} · ${t.solved}</td>`
-    : `<td class="num muted">·</td>`);
-  body.innerHTML = `<div style="display:grid;gap:16px">
+  const recent = all.filter((r) => Date.parse(r.last) >= weekAgo).length;
+  const today = all.filter((r) => Date.parse(r.last) >= t0.getTime()).length;
+  const avgPct = (all.reduce((a, r) => a + r.ratio, 0) / all.length) * 100;
+  // 트랙별 반 평균 (그 트랙을 한 번이라도 시작한 학생 수도 같이)
+  const trackAvg = tracks.map((t, i) => ({ t, avg: all.reduce((a, r) => a + r.byTrack[i].pct, 0) / all.length, started: all.filter((r) => r.byTrack[i].lessonsDone + r.byTrack[i].solved > 0).length }));
+  const fmtPct = (v) => (v > 0 && v < 1 ? v.toFixed(1) : Math.round(v)) + "%";
+  const bar = (v, t) => `<div class="prog-bar" ${t ? trackStyle(t) : ""}><span style="width:${Math.min(100, v)}%"></span></div>`;
+  const cell = (x) => (x.lessonsDone || x.solved
+    ? `<td class="prog-cell" ${trackStyle(x.t)} title="${esc(`${x.t.label} · 레슨 ${x.lessonsDone}/${x.lessons} · 문제 ${x.solved}/${x.problems}`)}"><b>${x.pct}%</b>${bar(x.pct, x.t)}</td>`
+    : `<td class="prog-cell muted">·</td>`);
+  const render = () => {
+    const rows = [...all].sort(sorters[sortKey]);
+    body.innerHTML = `<div style="display:grid;gap:16px">
     <div class="kpis">
-      <div class="panel kpi"><span class="k">수강생</span><span class="v">${rows.length}명</span></div>
-      <div class="panel kpi"><span class="k">최근 7일 학습</span><span class="v">${recent}명</span></div>
-      <div class="panel kpi"><span class="k">1인 평균 레슨</span><span class="v">${avg("lessonsDone")}</span></div>
-      <div class="panel kpi"><span class="k">1인 평균 문제</span><span class="v">${avg("solved")}</span></div>
+      <div class="panel kpi"><span class="k">수강생</span><span class="v">${all.length}<small>명</small></span></div>
+      <div class="panel kpi"><span class="k">평균 전체 진도율</span><span class="v">${fmtPct(avgPct)}</span></div>
+      <div class="panel kpi"><span class="k">오늘 학습</span><span class="v">${today}<small>명</small></span></div>
+      <div class="panel kpi"><span class="k">최근 7일 학습</span><span class="v">${recent}<small>명</small></span></div>
     </div>
-    <div class="toolbar"><span class="muted" style="font-size:13px">트랙 칸은 완료한 레슨 · 맞힌 문제 수입니다. 최근 학습한 수강생부터 보여줍니다.</span>
-      <span class="spacer"></span><button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
-    <div class="panel table-scroll"><table class="stats-table"><thead><tr><th>이름</th><th class="num">레슨</th><th class="num">문제</th><th>최근 학습</th>${tracks.map((t) => `<th class="num">${esc(t.label)}</th>`).join("")}</tr></thead><tbody>
-    ${rows.map((r) => `<tr><td>${esc(r.s.name)}</td><td class="num">${r.lessonsDone}/${r.lessons}</td><td class="num">${r.solved}/${r.problems}</td><td class="muted">${r.last ? esc(fmtTime(r.last)) : "–"}</td>${r.byTrack.map(cell).join("")}</tr>`).join("")}
+    <div class="panel card-pad"><h3>트랙별 반 평균</h3><div class="prog-tracks">${trackAvg.map((x) => `<div class="prog-track" ${trackStyle(x.t)}><div class="pt-head"><span class="live-track" ${trackStyle(x.t)}>${esc(x.t.label)}</span><b>${fmtPct(x.avg)}</b></div>${bar(x.avg, x.t)}<span class="muted">시작한 학생 ${x.started}명</span></div>`).join("")}</div></div>
+    <div class="toolbar"><span class="muted" style="font-size:13px">진도율 = (통과한 레슨 + 맞힌 문제) ÷ (필수 레슨 + 연습문제). 레슨은 체크 퀴즈를 통과해야 완료입니다.</span>
+      <span class="spacer"></span><label class="live-auto">정렬 <select id="prog-sort" class="mini-select"><option value="pct">진도율 높은 순</option><option value="recent">최근 학습 순</option><option value="name">이름 순</option></select></label>
+      <button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
+    <div class="panel table-scroll"><table class="stats-table prog-table"><thead><tr><th>이름</th><th>전체 진도율</th><th class="num">레슨</th><th class="num">문제</th><th>최근 학습</th>${tracks.map((t) => `<th class="prog-cell">${esc(t.label)}</th>`).join("")}</tr></thead><tbody>
+    ${rows.map((r) => `<tr><th scope="row" class="live-name">${esc(r.s.name)}</th>
+      <td><div class="prog-total"><b>${fmtPct(r.ratio * 100)}</b>${bar(r.ratio * 100)}</div></td>
+      <td class="num">${r.lessonsDone}<span class="muted">/${r.lessons}</span></td><td class="num">${r.solved}<span class="muted">/${r.problems}</span></td>
+      <td class="muted">${r.last ? esc(fmtTime(r.last)) : "–"}</td>${r.byTrack.map(cell).join("")}</tr>`).join("")}
     </tbody></table></div></div>`;
-  body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/progress"));
-  body.querySelector("#csv").addEventListener("click", () => {
-    const head = ["이름", "그룹", "레슨 완료", "레슨 전체", "문제 해결", "문제 전체", "최근 학습", ...tracks.flatMap((t) => [`${t.label} 레슨`, `${t.label} 문제`])];
-    const lines = rows.map((r) => [r.s.name, groupLabel(r.s.group), r.lessonsDone, r.lessons, r.solved, r.problems, r.last ? fmtTime(r.last) : "", ...r.byTrack.flatMap((t) => [t.lessonsDone, t.solved])]);
-    downloadCsv("학습현황.csv", [head, ...lines]);
-  });
+    const sel = body.querySelector("#prog-sort");
+    sel.value = sortKey;
+    sel.addEventListener("change", () => { sortKey = sel.value; store.set("rb-progress-sort", sortKey); render(); });
+    body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/progress"));
+    body.querySelector("#csv").addEventListener("click", () => {
+      const head = ["이름", "그룹", "전체 진도율(%)", "레슨 완료", "레슨 전체", "문제 해결", "문제 전체", "최근 학습", ...tracks.flatMap((t) => [`${t.label} 진도율(%)`, `${t.label} 레슨`, `${t.label} 문제`])];
+      const lines = rows.map((r) => [r.s.name, groupLabel(r.s.group), (r.ratio * 100).toFixed(1), r.lessonsDone, r.lessons, r.solved, r.problems, r.last ? fmtTime(r.last) : "", ...r.byTrack.flatMap((t) => [t.pct, `${t.lessonsDone}/${t.lessons}`, `${t.solved}/${t.problems}`])]);
+      downloadCsv(`진도율_${new Date().toISOString().slice(0, 10)}.csv`, [head, ...lines]);
+    });
+  };
+  render();
 }
 
-async function adminMatrix(body) {
-  const { students, cells, raw } = await loadAdminData();
-  const today = new Date().toDateString();
-  const todaySubs = raw.filter((c) => c.last_at && new Date(c.last_at).toDateString() === today).length;
-  const solvedBy = (sid) => PROBLEMS.filter((p) => cells[sid + "|" + p.id]?.solved).length;
-  const avgSolved = students.length ? (students.reduce((a, s) => a + solvedBy(s.id), 0) / students.length).toFixed(1) : "0";
-  const active = new Set(raw.map((c) => c.student_id)).size;
+// ── 실시간: 수업 중 모니터링 ─────────────────────────────────
+// 누가 지금 학습 중인지, 어디(트랙 · 코스 · 레슨/문제)에 있는지, 오늘 얼마나 했는지, 어느 문제에서 막혔는지.
+// 트랙 레슨 · 문제를 모두 센다. 30초마다 다시 불러온다(탭을 보고 있을 때만).
+let liveTimer = null;
+const LIVE_MIN = 10; // 마지막 활동이 이 분 안이면 '학습 중'
+const STUCK_TRIES = 2; // 오늘 시도했고 아직 못 맞힌 문제를 이 횟수 이상 틀렸으면 '막힘'
+const agoText = (iso) => {
+  const m = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+  return m < 1 ? "방금" : m < 60 ? `${m}분 전` : m < 1440 ? `${Math.floor(m / 60)}시간 전` : fmtTime(iso);
+};
+const hhmm = (iso) => { const d = new Date(iso); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+const later = (a, b) => (!a ? b : !b ? a : Date.parse(b) > Date.parse(a) ? b : a);
+function placeOf(kind, id) {
+  if (kind === "lesson") {
+    const l = lessonById[id], c = l && courseById[l.course];
+    return { kind, id, title: l?.title || id, course: c, track: c && trackById[c.track] };
+  }
+  const p = byId[id], c = p && courseOf(p);
+  return { kind, id, title: p?.title || id, course: c, track: c && trackById[c.track] };
+}
+const placeLabel = (pl) => `${pl.course ? `<span class="muted">${esc(pl.course.title)} ›</span> ` : ""}${esc(pl.title)}`;
+const trackChip = (t) => (t ? `<span class="live-track" ${trackStyle(t)}>${esc(t.label)}</span>` : `<span class="live-track">기타</span>`);
 
+async function adminLive(body) {
+  clearTimeout(liveTimer);
+  const t0 = new Date();
+  t0.setHours(0, 0, 0, 0);
+  const since = t0.toISOString();
+  const isToday = (iso) => !!iso && Date.parse(iso) >= t0.getTime();
+  const [{ students, raw }, lessonRes, actRes] = await Promise.all([
+    loadAdminData(),
+    api.adminLessons(state.adminToken),
+    // admin_activity 는 2026-11-10 마이그레이션 함수. 아직 실행 전이면(404) 문제별 마지막 제출로만 계산한다.
+    api.adminActivity(state.adminToken, since).catch((err) => {
+      if (err.code === "server" && (err.status === 404 || /PGRST202/.test(err.detail || ""))) return null;
+      throw err;
+    }),
+  ]);
   if (!students.length) {
-    body.innerHTML = `<div class="panel empty-state"><b>아직 등록된 수강생이 없습니다.</b>명단 · 번호 탭에서 이름을 붙여넣으면 4자리 번호가 발급됩니다.<a class="btn primary" href="#/admin/roster">명단 등록하기</a></div>`;
+    body.innerHTML = `<div class="panel empty-state"><b>집계할 수강생이 없습니다.</b>그룹 선택이나 '테스트 계정 제외'를 확인하세요.</div>`;
     return;
   }
-  const head = PROBLEMS.map((p, i) => `<th class="${i && PROBLEMS[i - 1].unit !== p.unit ? "unit-sep" : ""}" title="${esc(p.title)}">${no(p.id)}</th>`).join("");
-  const rows = students
-    .map((s) => {
-      const tds = PROBLEMS.map((p, i) => {
-        const c = cells[s.id + "|" + p.id];
-        const cls = c ? (c.solved ? "solved" : "tried") : "";
-        const label = c ? (c.solved ? (c.attempts > 1 ? `✓${c.attempts}` : "✓") : c.attempts) : "·";
-        const title = c ? `${s.name} · ${no(p.id)} · ${c.solved ? "정답" : "미통과"} · 시도 ${c.attempts}회 · 최근 ${fmtTime(c.last_at)}` : `${s.name} · ${no(p.id)} · 미제출`;
-        return `<td class="${i && PROBLEMS[i - 1].unit !== p.unit ? "unit-sep" : ""}"><button class="cell ${cls}" title="${esc(title)}" data-s="${s.id}" data-p="${p.id}" ${c ? "" : "disabled"}>${label}</button></td>`;
-      }).join("");
-      return `<tr><th class="sname" scope="row">${esc(s.name)}</th><td class="ssum">${solvedBy(s.id)}</td>${tds}</tr>`;
-    })
-    .join("");
+  const ids = new Set(students.map((s) => s.id));
+  const lessons = (lessonRes.rows || []).filter((r) => ids.has(r.student_id));
+  const hasPassedAt = lessons.some((r) => "passed_at" in r);
+  const acts = actRes ? (actRes.items || []).filter((a) => ids.has(a.student_id)) : null;
 
+  const per = new Map(students.map((s) => [s.id, { s, last: null, lastPlace: null, lessonsToday: 0, solvedToday: 0, subsToday: 0, failsToday: 0, stuck: [], passed: new Set(), solved: new Set() }]));
+  const feed = [];
+  const setLast = (r, at, kind, id) => { if (at && (!r.last || Date.parse(at) >= Date.parse(r.last))) { r.last = at; r.lastPlace = placeOf(kind, id); } };
+
+  for (const l of lessons) {
+    const r = per.get(l.student_id);
+    setLast(r, l.updated_at, "lesson", l.lesson_id);
+    if (l.status === "passed") r.passed.add(l.lesson_id);
+    // passed_at 이 없으면(마이그레이션 전) 마지막으로 연 시각으로 대신 센다 → 다시 연 레슨도 '오늘'로 잡힐 수 있다.
+    const passAt = l.status === "passed" ? (hasPassedAt ? l.passed_at : l.updated_at) : null;
+    if (isToday(passAt)) { r.lessonsToday++; feed.push({ at: passAt, r, kind: "lesson-pass", place: placeOf("lesson", l.lesson_id) }); }
+    if (isToday(l.updated_at) && (!passAt || Date.parse(l.updated_at) - Date.parse(passAt) > 60000)) feed.push({ at: l.updated_at, r, kind: "lesson-view", place: placeOf("lesson", l.lesson_id) });
+  }
+  const cellOf = {};
+  for (const c of raw) {
+    const r = per.get(c.student_id);
+    cellOf[c.student_id + "|" + c.problem_id] = c;
+    setLast(r, c.last_at, "problem", c.problem_id);
+    if (c.solved) r.solved.add(c.problem_id);
+    if (isToday(c.first_solved_at)) r.solvedToday++;
+    if (!acts && isToday(c.last_at)) {
+      r.subsToday++;
+      feed.push({ at: c.last_at, r, kind: c.solved ? "sub-pass" : "sub-fail", place: placeOf("problem", c.problem_id), attempts: c.attempts });
+    }
+  }
+  const lastErr = {};
+  if (acts) for (const a of acts) {
+    const r = per.get(a.student_id);
+    r.subsToday++;
+    if (!a.passed) { r.failsToday++; if (a.error) lastErr[a.student_id + "|" + a.problem_id] = a.error; }
+    feed.push({ at: a.created_at, r, kind: a.passed ? "sub-pass" : "sub-fail", place: placeOf("problem", a.problem_id), score: a.total_count ? `${a.passed_count}/${a.total_count}` : "", error: a.error });
+  }
+  // 막힌 문제: 오늘 손댔고, 아직 한 번도 못 맞혔고, STUCK_TRIES 번 이상 틀린 문제
+  for (const c of raw) {
+    if (c.solved || c.attempts < STUCK_TRIES || !isToday(c.last_at)) continue;
+    per.get(c.student_id).stuck.push({ c, place: placeOf("problem", c.problem_id), error: lastErr[c.student_id + "|" + c.problem_id] });
+  }
+  const status = (r) => (!r.last ? "none" : Date.now() - Date.parse(r.last) <= LIVE_MIN * 60000 ? "live" : isToday(r.last) ? "today" : "away");
+  const order = { live: 0, today: 1, away: 2, none: 3 };
+  const rows = [...per.values()].map((r) => {
+    r.status = status(r);
+    r.stuck.sort((a, b) => Date.parse(b.c.last_at) - Date.parse(a.c.last_at));
+    // 지금 있는 트랙의 진도 (레슨 · 문제)
+    const t = r.lastPlace?.track;
+    if (t) {
+      const prog = programOfJoinCode(r.s.group);
+      const cs = coursesOf(t.id).filter(isReady);
+      const ls = cs.flatMap((c) => c.lessons.filter((l) => !l.optional)), ps = cs.flatMap((c) => courseProblems(c, prog));
+      r.trackProg = { t, ld: ls.filter((l) => r.passed.has(l.id)).length, lt: ls.length, pd: ps.filter((p) => r.solved.has(p.id)).length, pt: ps.length };
+    }
+    return r;
+  }).sort((a, b) => order[a.status] - order[b.status] || b.stuck.length - a.stuck.length || (Date.parse(b.last) || 0) - (Date.parse(a.last) || 0) || a.s.name.localeCompare(b.s.name, "ko"));
+
+  const sum = (k) => rows.reduce((a, r) => a + r[k], 0);
+  const nLive = rows.filter((r) => r.status === "live").length;
+  const nToday = rows.filter((r) => r.status === "live" || r.status === "today").length;
+  const nStuck = rows.filter((r) => r.stuck.length).length;
+  // 오늘 학생들이 머문 트랙 (마지막 위치 기준)
+  const trackNow = {};
+  for (const r of rows) if (r.status === "live" || r.status === "today") { const k = r.lastPlace?.track?.id || "-"; trackNow[k] = (trackNow[k] || 0) + 1; }
+  // 반 전체에서 막힌 문제
+  const stuckBy = {};
+  for (const r of rows) for (const x of r.stuck) (stuckBy[x.c.problem_id] ||= { place: x.place, who: [] }).who.push({ r, c: x.c });
+  const stuckTop = Object.entries(stuckBy).map(([pid, v]) => ({ pid, ...v, solvedToday: raw.filter((c) => c.problem_id === pid && isToday(c.first_solved_at)).length }))
+    .sort((a, b) => b.who.length - a.who.length || b.who.reduce((s, w) => s + w.c.attempts, 0) - a.who.reduce((s, w) => s + w.c.attempts, 0)).slice(0, 8);
+  feed.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+
+  const STATUS = { live: ["학습 중", `${LIVE_MIN}분 안에 활동`], today: ["쉬는 중", "오늘 학습했고 최근 활동 없음"], away: ["오늘 미접속", ""], none: ["기록 없음", ""] };
+  const stuckChip = (x, r) => `<button class="live-stuck ${x.c.attempts >= 4 ? "hot" : ""}" data-s="${r.s.id}" data-p="${x.c.problem_id}" title="${esc(`${x.place.title} · ${x.c.attempts}번 제출, 아직 정답 없음 · 마지막 ${hhmm(x.c.last_at)}${x.error ? "\n" + x.error : ""}`)}">${esc(x.place.title)} <b>✗${x.c.attempts}</b></button>`;
+  const progCell = (p) => (p ? `<div class="live-prog" ${trackStyle(p.t)}><div class="bar"><span style="width:${p.lt ? Math.round((p.ld / p.lt) * 100) : 0}%"></span></div>
+      <span class="muted">레슨 ${p.ld}/${p.lt} · 문제 ${p.pd}/${p.pt}</span></div>` : `<span class="muted">–</span>`);
+  const rowHtml = (r) => `<tr class="live-row st-${r.status}">
+    <th scope="row" class="live-name"><span class="live-dot st-${r.status}" title="${esc(STATUS[r.status][1])}"></span>${esc(r.s.name)}<div class="live-status">${STATUS[r.status][0]}</div></th>
+    <td class="live-where">${r.lastPlace ? `${trackChip(r.lastPlace.track)} <span class="live-kind">${r.lastPlace.kind === "lesson" ? "레슨" : "문제"}</span><div>${placeLabel(r.lastPlace)}</div>` : `<span class="muted">아직 학습 기록이 없습니다</span>`}</td>
+    <td class="num">${r.last ? `<span title="${esc(fmtTime(r.last))}">${esc(agoText(r.last))}</span>` : "–"}</td>
+    <td class="num">${r.lessonsToday || `<span class="muted">0</span>`}</td>
+    <td class="num">${r.solvedToday}<span class="muted"> / ${r.subsToday}${acts ? "회" : "문제"}</span></td>
+    <td>${r.stuck.length ? r.stuck.map((x) => stuckChip(x, r)).join("") : `<span class="muted">–</span>`}</td>
+    <td>${progCell(r.trackProg)}</td></tr>`;
+  const FEED = { "lesson-pass": ["✓", "레슨 통과", "pass"], "lesson-view": ["·", "레슨 열람", ""], "sub-pass": ["✓", "정답", "pass"], "sub-fail": ["✗", "오답", "fail"] };
+  const feedHtml = feed.slice(0, 40).map((e) => {
+    const [ic, label, cls] = FEED[e.kind];
+    const extra = e.kind === "sub-fail" ? (e.score ? ` ${e.score}` : e.attempts ? ` (누적 ${e.attempts}회)` : "") : "";
+    return `<li class="${cls}"><span class="t mono">${hhmm(e.at)}</span><span class="ic">${ic}</span><div><b>${esc(e.r.s.name)}</b> <span class="muted">${label}${esc(extra)}</span><div class="f-place">${placeLabel(e.place)}</div>${e.error ? `<div class="f-err mono">${esc(e.error)}</div>` : ""}</div></li>`;
+  }).join("");
+
+  const auto = store.get("rb-live-auto") ?? true;
   body.innerHTML = `<div style="display:grid;gap:16px">
     <div class="kpis">
-      <div class="panel kpi"><span class="k">수강생</span><span class="v">${students.length}명</span></div>
-      <div class="panel kpi"><span class="k">한 번이라도 제출</span><span class="v">${active}명</span></div>
-      <div class="panel kpi"><span class="k">1인 평균 해결</span><span class="v">${avgSolved} / ${PROBLEMS.length}</span></div>
-      <div class="panel kpi"><span class="k">오늘 제출이 있었던 칸</span><span class="v">${todaySubs}</span></div>
+      <div class="panel kpi"><span class="k">지금 학습 중 (${LIVE_MIN}분 이내)</span><span class="v">${nLive}<small> / ${rows.length}명</small></span></div>
+      <div class="panel kpi"><span class="k">오늘 접속</span><span class="v">${nToday}<small>명</small></span></div>
+      <div class="panel kpi"><span class="k">오늘 통과한 레슨</span><span class="v">${sum("lessonsToday")}<small>개</small></span></div>
+      <div class="panel kpi"><span class="k">오늘 맞힌 문제 / ${acts ? "제출" : "제출한 문제"}</span><span class="v">${sum("solvedToday")}<small> / ${sum("subsToday")}</small></span></div>
+      <div class="panel kpi ${nStuck ? "warn" : ""}"><span class="k">막힌 학생</span><span class="v">${nStuck}<small>명</small></span></div>
     </div>
-    <div class="toolbar"><div class="legend"><span><i style="background:var(--pass-soft);border:1px solid var(--pass)"></i>정답 (숫자 = 시도 횟수)</span>
-      <span><i style="background:var(--fail-soft);border:1px solid var(--fail)"></i>미통과 (숫자 = 시도 횟수)</span><span>· 미제출</span></div>
-      <span class="spacer"></span><button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
-    <div class="panel matrix-scroll"><table class="matrix"><thead><tr><th class="sname">이름</th><th>해결</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="muted" style="font-size:13px">QAQC 회차 과제만 모은 표입니다. 칸을 누르면 그 학생의 제출 코드와 실패한 케이스를 볼 수 있습니다. 트랙 전체 학습은 학습 현황 탭에서 봅니다.</p></div>`;
+    <div class="toolbar"><div class="live-tracks"><span class="muted">지금 있는 트랙</span>${Object.entries(trackNow).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${trackChip(trackById[k])}<b>${n}</b>`).join("") || `<span class="muted">오늘 활동 없음</span>`}</div>
+      <span class="spacer"></span><label class="live-auto"><input type="checkbox" id="live-auto" ${auto ? "checked" : ""}> 30초마다 자동 새로고침</label>
+      <span class="muted" style="font-size:13px">갱신 ${hhmm(new Date().toISOString())}</span><button class="btn small" id="refresh">새로고침</button><button class="btn small" id="csv">CSV 내보내기</button></div>
+    ${acts ? "" : `<p class="live-note">오늘 제출 횟수 · 오류 메시지 · 제출 단위 활동 기록은 <code>supabase/migrations_2026-11-10_admin_live.sql</code>을 실행하면 보입니다. 지금은 문제마다 마지막 제출만으로 셉니다(‘제출’ 칸 = 오늘 제출한 문제 수).</p>`}
+    <div class="live-grid">
+      <div class="panel table-scroll"><table class="stats-table live-table"><thead><tr><th>이름</th><th>지금 하는 것</th><th class="num">마지막 활동</th><th class="num">오늘 레슨</th><th class="num">오늘 정답 / 제출</th><th>막힌 문제</th><th>현재 트랙 진도</th></tr></thead>
+        <tbody>${rows.map(rowHtml).join("")}</tbody></table></div>
+      <div class="live-side">
+        <section class="panel card-pad"><h3>지금 막힌 문제</h3>
+          ${stuckTop.length ? `<ol class="live-stucklist">${stuckTop.map((x) => `<li><div>${trackChip(x.place.track)} ${placeLabel(x.place)}</div>
+            <div class="muted" style="font-size:13px">막힘 <b class="fail-ink">${x.who.length}명</b> · 오늘 맞힌 학생 ${x.solvedToday}명</div>
+            <div>${x.who.map((w) => `<button class="live-stuck ${w.c.attempts >= 4 ? "hot" : ""}" data-s="${w.r.s.id}" data-p="${x.pid}">${esc(w.r.s.name)} <b>✗${w.c.attempts}</b></button>`).join("")}</div></li>`).join("")}</ol>`
+            : `<p class="muted" style="margin:0;font-size:14px">오늘 ${STUCK_TRIES}번 이상 틀리고 아직 못 맞힌 문제가 없습니다.</p>`}</section>
+        <section class="panel card-pad"><h3>최근 활동</h3>${feedHtml ? `<ul class="live-feed">${feedHtml}</ul>` : `<p class="muted" style="margin:0;font-size:14px">오늘 활동이 아직 없습니다.</p>`}</section>
+      </div>
+    </div>
+    <p class="muted" style="font-size:13px;margin:0">‘학습 중’은 ${LIVE_MIN}분 안에 레슨을 열었거나 문제를 제출한 학생입니다. ‘막힌 문제’는 오늘 손댄 문제 중 ${STUCK_TRIES}번 이상 틀리고 아직 맞히지 못한 문제이고, 누르면 제출 코드와 실패한 케이스를 봅니다. 레슨 열람만으로는 진도가 오르지 않고, 체크 퀴즈를 통과해야 ‘레슨 통과’로 셉니다.</p></div>`;
 
-  body.querySelector("#refresh").addEventListener("click", () => routeAdmin("#/admin/matrix"));
-  body.querySelector("#csv").addEventListener("click", () => {
-    const header = ["이름", "해결 수", ...PROBLEMS.map((p) => `${no(p.id)} ${p.title}`)];
-    const lines = students.map((s) => [
-      s.name,
-      solvedBy(s.id),
-      ...PROBLEMS.map((p) => {
-        const c = cells[s.id + "|" + p.id];
-        return c ? `${c.solved ? "정답" : "미통과"}(${c.attempts}회)` : "";
-      }),
-    ]);
-    downloadCsv(`제출현황_${new Date().toISOString().slice(0, 10)}.csv`, [header, ...lines]);
-  });
-  body.querySelectorAll(".cell[data-s]").forEach((b) =>
+  body.querySelector("#refresh").addEventListener("click", () => adminLive(body).catch(() => toast("새로고침하지 못했습니다.")));
+  body.querySelector("#live-auto").addEventListener("change", (e) => { store.set("rb-live-auto", e.target.checked); adminLive(body).catch(() => {}); });
+  body.querySelectorAll(".live-stuck[data-s]").forEach((b) =>
     b.addEventListener("click", () => openSubmissionDrawer(students.find((s) => s.id === b.dataset.s), byId[b.dataset.p]))
   );
+  body.querySelector("#csv").addEventListener("click", () => {
+    const head = ["이름", "그룹", "상태", "마지막 활동", "지금 트랙", "지금 위치", "오늘 레슨 통과", "오늘 맞힌 문제", acts ? "오늘 제출 횟수" : "오늘 제출한 문제", "막힌 문제", "트랙 레슨", "트랙 문제"];
+    const lines = rows.map((r) => [r.s.name, groupLabel(r.s.group), STATUS[r.status][0], r.last ? fmtTime(r.last) : "", r.lastPlace?.track?.label || "", r.lastPlace ? `${r.lastPlace.course?.title || ""} › ${r.lastPlace.title}` : "",
+      r.lessonsToday, r.solvedToday, r.subsToday, r.stuck.map((x) => `${x.place.title}(${x.c.attempts}회)`).join(" / "),
+      r.trackProg ? `${r.trackProg.ld}/${r.trackProg.lt}` : "", r.trackProg ? `${r.trackProg.pd}/${r.trackProg.pt}` : ""]);
+    downloadCsv(`실시간현황_${new Date().toISOString().slice(0, 10)}.csv`, [head, ...lines]);
+  });
+  if (auto) {
+    liveTimer = setTimeout(function tick() {
+      if (!document.body.contains(body) || (location.hash.split("/")[2] || "live") !== "live") return;
+      if (document.hidden) { liveTimer = setTimeout(tick, 30000); return; }
+      adminLive(body).catch(() => { liveTimer = setTimeout(tick, 30000); });
+    }, 30000);
+  }
 }
 
 async function openSubmissionDrawer(student, p) {
@@ -2165,7 +2286,7 @@ async function openSubmissionDrawer(student, p) {
   const el = document.createElement("aside");
   el.className = "drawer";
   el.setAttribute("aria-label", "제출 상세");
-  el.innerHTML = `<div class="drawer-head"><div><div class="eyebrow">${no(p.id)} · ${esc(p.title)}</div><h3>${esc(student.name)}의 제출</h3></div><span class="spacer"></span><button class="btn small" data-close>닫기</button></div>
+  el.innerHTML = `<div class="drawer-head"><div><div class="eyebrow">${esc(courseOf(p)?.title || "")}${courseOf(p) ? " · " : ""}${p.type === "quiz" ? "개념 퀴즈" : esc(p.title)}</div><h3>${esc(student.name)}의 제출</h3></div><span class="spacer"></span><button class="btn small" data-close>닫기</button></div>
     <div class="drawer-body"><p class="muted">불러오는 중…</p></div>`;
   document.body.appendChild(el);
   const close = () => { el.remove(); document.removeEventListener("keydown", onKey); };
@@ -2194,7 +2315,6 @@ async function adminRoster(body) {
   const students = (await api.roster(state.adminToken)).students.filter(inGroup);
   const g = state.adminGroup;
   const groupName = g ? (g === "-" ? "그룹 없음" : groupLabel(g)) : "";
-  const pickGroup = `<p class="muted" style="margin:0;font-size:14px">위쪽 <b>그룹</b>에서 그룹을 먼저 고르세요.</p>`;
   body.innerHTML = `<div class="roster-grid"><div style="display:grid;gap:16px;align-content:start">
     <section class="panel lime card-pad"><h3>그룹 관리</h3>
       <p class="muted" style="margin:0;font-size:14px">그룹 코드가 곧 회원가입 코드입니다. 수강생이 가입할 때 넣은 코드로 그룹이 나뉘고, 로고 아래에 그룹 이름이 보입니다. 순위('n명 중 k번째')도 같은 그룹 안에서 매깁니다. 테스트 계정은 명단에서 '순위 제외'를 누르면 순위에 세지 않습니다.</p>
@@ -2205,11 +2325,6 @@ async function adminRoster(body) {
       <div class="toolbar group-form"><div class="field"><input id="g-code" maxlength="30" autocomplete="off" placeholder="코드 (예: QAQC9)" aria-label="그룹 코드"></div>
         <div class="field" style="flex:1"><input id="g-label" maxlength="60" autocomplete="off" placeholder="표시 이름 (예: Team Sparta · QAQC 9기)" aria-label="그룹 표시 이름"></div>
         <button class="btn primary" id="g-save">그룹 추가</button></div>
-    </section>
-    <section class="panel card-pad"><h3>오늘의 과제${groupName ? ` · ${esc(groupName)}` : ""}</h3>
-      ${g ? `<p class="muted" style="margin:0;font-size:14px">이 그룹 수강생의 홈 맨 위에 '오늘 해야 할 과제'로 보입니다. 5문제를 권장하고, 하나도 고르지 않으면 각자 안 푼 문제 5개가 자동으로 보입니다.</p>` : pickGroup}
-      <div class="today-pick">${UNITS.map((u) => `<fieldset><legend>${u.id}회차 ${esc(u.title)}</legend>${PROBLEMS.filter((p) => p.unit === u.id).map((p) => `<label><input type="checkbox" value="${p.id}"> <span class="mono">${no(p.id)}</span> ${esc(p.title)}</label>`).join("")}</fieldset>`).join("")}</div>
-      <div class="toolbar"><span class="muted" id="today-n" style="font-size:14px"></span><span class="spacer"></span><button class="btn small ghost" id="today-clear">모두 해제</button><button class="btn primary" id="today-save" ${g ? "" : "disabled"}>저장</button></div>
     </section>
     <section class="panel card-pad"><h3>수강생 직접 등록${groupName ? ` · ${esc(groupName)}` : ""}</h3>
       <p class="muted" style="margin:0;font-size:14px">한 줄에 한 명씩 이름을 붙여넣으세요. 등록하면 4자리 번호가 자동으로 발급되고 ${g && g !== "-" ? "이 그룹에 들어갑니다" : "그룹 없이 등록됩니다"}. 번호는 이 화면에서 <b>한 번만</b> 보이니 바로 복사해 두세요.</p>
@@ -2224,30 +2339,6 @@ async function adminRoster(body) {
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
     </section></div>`;
-
-  const boxes = [...body.querySelectorAll(".today-pick input")];
-  const countToday = () => {
-    const n = boxes.filter((b) => b.checked).length;
-    body.querySelector("#today-n").textContent = `${n}문제 선택${n > 5 ? " (5문제 권장)" : ""}`;
-  };
-  boxes.forEach((b) => b.addEventListener("change", countToday));
-  const todayKey = g === "-" ? "" : g;
-  if (!g) boxes.forEach((b) => (b.disabled = true));
-  else api.adminGetToday(state.adminToken, todayKey).then((res) => { boxes.forEach((b) => (b.checked = (res.ids || []).includes(b.value))); countToday(); }).catch(() => {});
-  countToday();
-  body.querySelector("#today-clear").addEventListener("click", () => { boxes.forEach((b) => (b.checked = false)); countToday(); });
-  body.querySelector("#today-save").addEventListener("click", async (e) => {
-    e.target.disabled = true;
-    try {
-      const ids = boxes.filter((b) => b.checked).map((b) => b.value);
-      await api.setToday(state.adminToken, ids, todayKey);
-      toast(ids.length ? `오늘의 과제 ${ids.length}문제를 저장했습니다.` : "오늘의 과제를 비웠습니다. 수강생마다 안 푼 문제가 자동으로 보입니다.");
-    } catch (err) {
-      toast(errorMessage(err));
-    } finally {
-      e.target.disabled = false;
-    }
-  });
 
   body.querySelector("#g-save").addEventListener("click", async (e) => {
     const code = body.querySelector("#g-code").value;
@@ -2433,26 +2524,27 @@ async function adminFeedback(body) {
 
 async function adminStats(body) {
   const { students, raw } = await loadAdminData();
-  const n = students.length || 1;
-  const rows = PROBLEMS.map((p) => {
-    const cs = raw.filter((c) => c.problem_id === p.id);
-    const solved = cs.filter((c) => c.solved);
+  const byP = {};
+  for (const c of raw) (byP[c.problem_id] ||= []).push(c);
+  const rows = Object.entries(byP).filter(([pid]) => byId[pid]).map(([pid, cs]) => {
+    const p = byId[pid], c = courseOf(p);
+    const solved = cs.filter((x) => x.solved);
     return {
-      p,
+      p, c, t: c && trackById[c.track],
       tried: cs.length,
       solved: solved.length,
-      rate: solved.length / n,
-      avg: solved.length ? solved.reduce((a, c) => a + c.attempts, 0) / solved.length : null,
-      stuck: cs.filter((c) => !c.solved).length,
+      rate: solved.length / cs.length,
+      avg: solved.length ? solved.reduce((a, x) => a + x.attempts, 0) / solved.length : null,
+      stuck: cs.filter((x) => !x.solved).length,
     };
-  }).sort((a, b) => a.rate - b.rate || b.stuck - a.stuck);
+  }).sort((a, b) => b.stuck - a.stuck || a.rate - b.rate || b.tried - a.tried);
   body.innerHTML = `<div style="display:grid;gap:12px">
-    <p class="muted" style="margin:0">정답률이 낮은 문제부터 보여줍니다. 정답률은 제출 건수가 아니라 <b>수강생 기준</b>(맞힌 학생 수 ÷ 전체 ${students.length}명)입니다. 평균 시도는 맞힌 학생이 정답까지 제출한 횟수입니다.</p>
-    <div class="panel table-scroll"><table class="stats-table"><thead><tr><th>문제</th><th>정답률</th><th class="num">시도한 학생</th><th class="num">막힌 학생</th><th class="num">정답까지 평균 시도</th></tr></thead><tbody>
-    ${rows.map((r) => `<tr><td><span class="mono muted">${no(r.p.id)}</span> ${esc(r.p.title)}</td>
+    <p class="muted" style="margin:0">수강생 ${students.length}명이 한 번이라도 제출한 문제 ${rows.length}개입니다. 막힌 학생(제출했지만 아직 못 맞힌 학생)이 많은 문제부터 보여 줍니다. 정답률은 <b>시도한 학생 중 맞힌 학생</b> 비율이고, 평균 시도는 맞힌 학생이 정답까지 제출한 횟수입니다.</p>
+    ${rows.length ? `<div class="panel table-scroll"><table class="stats-table"><thead><tr><th>문제</th><th>정답률</th><th class="num">시도한 학생</th><th class="num">막힌 학생</th><th class="num">정답까지 평균 시도</th></tr></thead><tbody>
+    ${rows.map((r) => `<tr><td>${trackChip(r.t)} ${r.c ? `<span class="muted">${esc(r.c.title)} ›</span> ` : ""}${r.p.type === "quiz" ? "개념 퀴즈" : esc(r.p.title)}</td>
       <td><div class="rate"><div class="bar"><span class="${r.rate < 0.4 ? "low" : r.rate < 0.7 ? "mid" : ""}" style="width:${Math.round(r.rate * 100)}%"></span></div><b>${Math.round(r.rate * 100)}%</b></div></td>
-      <td class="num">${r.tried}명</td><td class="num">${r.stuck}명</td><td class="num">${r.avg == null ? "–" : r.avg.toFixed(1) + "회"}</td></tr>`).join("")}
-    </tbody></table></div></div>`;
+      <td class="num">${r.tried}명</td><td class="num">${r.stuck ? `<b class="fail-ink">${r.stuck}명</b>` : "0명"}</td><td class="num">${r.avg == null ? "–" : r.avg.toFixed(1) + "회"}</td></tr>`).join("")}
+    </tbody></table></div>` : `<div class="panel empty-state">아직 제출이 없습니다.</div>`}</div>`;
 }
 
 applyFontScale();

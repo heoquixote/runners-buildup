@@ -34,7 +34,7 @@ HINTS = {
     "KeyError": "딕셔너리에 없는 키입니다.",
     "AttributeError": "그 자료형에는 없는 메서드입니다. 철자를 확인하세요.",
     "EOFError": "더 읽을 입력이 없습니다. input()을 너무 많이 호출하거나 반복문이 끝나지 않는지 확인하세요.",
-    "ModuleNotFoundError": "이 사이트에서는 표준 라이브러리와 numpy · pandas · matplotlib · seaborn · scipy · scikit-learn을 쓸 수 있습니다. 모듈 이름 철자를 확인하세요.",
+    "ModuleNotFoundError": "이 사이트에서는 표준 라이브러리와 numpy · pandas · matplotlib · seaborn · scipy · scikit-learn · statsmodels를 쓸 수 있습니다. 모듈 이름 철자를 확인하세요.",
     "RecursionError": "함수가 자기 자신을 끝없이 호출하고 있습니다.",
 }
 
