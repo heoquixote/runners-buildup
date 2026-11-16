@@ -714,6 +714,7 @@ function runData() {
   const active = runs.filter((r) => r.done > 0 || r.last).sort((a, b) => String(b.last).localeCompare(String(a.last)) || b.p - a.p);
   // 목록: 커리큘럼 순서(TRACKS 순서) 그대로, 진행률이 0%보다 큰 트랙만. 최근 학습 트랙은 왼쪽 카드의 기본값으로만 쓴다.
   const rows = runs.filter((r) => r.p > 0);
+  const main = runs.find((r) => r.t.id === runPick) || active[0] || runs[0];
   return { runs, active, rows, main };
 }
 function runCard(d = runData()) {
