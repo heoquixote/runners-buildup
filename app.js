@@ -225,7 +225,7 @@ function topbar({ admin = false } = {}) {
 const GROUP_LOGOS = { QAQC8: "assets/sparta.png" };
 function brandSub(admin) {
   const st = admin ? null : state.session?.student;
-  if (!st?.org_label) return `<span class="brand-course">Runners Build-up · Learning Tracks</span>`;
+  if (!st?.org_label) return `<span class="brand-course">Learners Build-up · Learning Tracks</span>`;
   const logo = GROUP_LOGOS[st.org] ? `<img src="${GROUP_LOGOS[st.org]}" alt="" width="14" height="14">` : "";
   return `<span class="brand-course org">${logo}${esc(st.org_label)}</span>`;
 }
