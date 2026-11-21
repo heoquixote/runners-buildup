@@ -176,6 +176,15 @@ em, i { font-style: normal; }
   background: var(--warn-soft); color: var(--ink-2); border: 1px solid rgba(255,207,74,.25); border-radius: var(--radius); padding: 10px 12px; font-size: 13px;
 }
 .demo-note b { color: var(--warn); }
+/* 구글 로그인 */
+.google-block { display: grid; gap: 14px; }
+.google-block[hidden] { display: none; }
+.google-btn { gap: 10px; background: #fff; color: #1f1f1f; border-color: #fff; }
+.google-btn:hover { background: #f1f3f4; border-color: #f1f3f4; }
+.or-line { display: flex; align-items: center; gap: 10px; color: var(--subtle); font-size: 12px; }
+.or-line::before, .or-line::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.google-link { border-top: 1px solid var(--line); padding-top: 14px; }
+.google-link summary { cursor: pointer; color: var(--ink-2); font-size: 14px; font-weight: 600; }
 
 /* ── 홈 ── */
 .hero { display: flex; justify-content: space-between; align-items: end; gap: 20px; flex-wrap: wrap; }
@@ -429,6 +438,7 @@ details.hint[open] summary { color: var(--ink); margin-bottom: 6px; }
 .new-pins { background: var(--accent-soft); border: 1px solid rgba(200,255,61,.25); border-radius: var(--radius); padding: 12px; display: grid; gap: 8px; }
 .lock-chip { font-size: 13px; padding: 0 8px; border-radius: 999px; background: var(--fail-soft); color: var(--fail); margin-left: 6px; }
 .lock-chip.rank-off { background: rgba(255,255,255,.08); color: var(--muted); }
+.lock-chip.google-chip { background: rgba(122,168,255,.14); color: var(--blue); }
 
 .stats-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .stats-table th, .stats-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }

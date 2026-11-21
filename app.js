@@ -134,6 +134,8 @@ function errorMessage(err) {
       not_found: "대상을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.",
       locked: "5번 틀려서 잠시 잠겼습니다. 5분 뒤에 다시 시도하거나 강사님께 번호 재발급을 요청하세요.",
       session: "로그인이 만료되었습니다. 다시 로그인해 주세요.",
+      google_auth: "구글 인증을 확인하지 못했습니다. 구글로 다시 로그인해 주세요.",
+      already_linked: "이 구글 계정이나 학생 계정은 이미 다른 계정과 연결되어 있습니다. 구글로 다시 로그인하거나 강사님께 문의하세요.",
       network: "서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.",
       server: "서버 오류가 발생했습니다. 잠시 후 다시 시도하세요.",
     }[code] || "알 수 없는 오류가 발생했습니다."
@@ -256,6 +258,10 @@ async function route() {
   if (hash.startsWith("#/admin")) return routeAdmin(hash);
   if (hash.startsWith("#/guide")) return viewGuide();
   shownHash = hash;
+  if (hash.startsWith("#/google")) {
+    if (state.session) { location.hash = "#/"; return; }
+    return viewGoogleSignup();
+  }
   if (hash.startsWith("#/signup") || hash.startsWith("#/login")) {
     if (state.session) { location.hash = "#/"; return; }
     return hash.startsWith("#/signup") ? viewSignup() : viewLogin();
@@ -291,11 +297,13 @@ function viewLogin() {
   $app.innerHTML = `<main class="login-wrap"><form class="login panel lime" id="login-form" novalidate>
     ${authHead("login")}
     ${demo}
+    ${googleBlock()}
     ${loginFields()}
     <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
     <div class="login-foot"><span>번호를 잊었다면 강사님께 재발급을 요청하세요.</span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   bindLoginForm($app.querySelector("#login-form"), () => goAfterLogin("#/"));
+  bindGoogle($app.querySelector("#login-form"));
 }
 
 const loginFields = () => `<div class="field"><label for="login-name">이름</label><input id="login-name" autocomplete="username" required maxlength="40"></div>
@@ -365,6 +373,7 @@ function loginModal({ target = null, title = "" } = {}) {
     <div><div class="eyebrow">Login</div><h2 id="lm-title">${target ? "문제 풀이는 로그인이 필요합니다" : "로그인"}</h2>
       <p class="lead">${target ? `<b>${esc(title)}</b> 문제를 풀고 기록을 남기려면 로그인해 주세요. 레슨과 예제 실행은 로그인 없이도 볼 수 있습니다.` : "로그인하면 레슨 진도와 문제 풀이 기록이 저장됩니다."}</p></div>
     ${api.mode === "demo" ? `<div class="demo-note"><b>데모 모드</b>입니다. 이름 <code>체험학생</code>, 번호 <code>1234</code>로 들어가 보세요.</div>` : ""}
+    ${googleBlock()}
     ${loginFields()}
     <div class="login-foot"><span>아직 계정이 없나요? <a href="#/signup" data-signup><b>회원가입</b></a></span><span>번호를 잊었다면 강사님께 문의하세요.</span></div>
   </form>`;
@@ -377,6 +386,7 @@ function loginModal({ target = null, title = "" } = {}) {
     else if (e.target.closest("[data-signup]")) close(); // 가입 뒤에도 같은 곳으로 간다
   });
   bindLoginForm(wrap.querySelector("form"), () => { close(); goAfterLogin("#/"); });
+  bindGoogle(wrap.querySelector("form"));
 }
 
 function authHead(active) {
@@ -386,6 +396,148 @@ function authHead(active) {
       <a href="#/login" ${active === "login" ? 'aria-current="page"' : ""}>로그인</a>
       <a href="#/signup" ${active === "signup" ? 'aria-current="page"' : ""}>회원가입</a>
     </nav>`;
+}
+
+// ── 구글 로그인 ──────────────────────────────────────────
+// 구글 인증은 Supabase Auth(PKCE)로 받고, 바로 google_login 함수로 넘겨 이름+번호 로그인과
+// 같은 세션 토큰을 받는다. 처음 온 구글 계정은 #/google 화면에서 이름 · 가입 코드를 정한다.
+const GOOGLE_RETURN_KEY = "rb-google-return";
+const GOOGLE_PENDING_KEY = "rb-google-pending";
+let googleOnPromise = null;
+const googleOn = () => (googleOnPromise ||= api.googleEnabled());
+const GOOGLE_G = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
+
+function googleBlock(kind = "login") {
+  return `<div class="google-block" data-google-block hidden>
+    <button type="button" class="btn block google-btn" data-google>${GOOGLE_G}<span>${kind === "signup" ? "Google로 가입하기" : "Google로 계속하기"}</span></button>
+    <div class="or-line"><span>${kind === "signup" ? "또는 이름 + 번호로 가입" : "또는 이름 + 번호로 로그인"}</span></div>
+  </div>`;
+}
+
+function bindGoogle(root) {
+  const block = root.querySelector("[data-google-block]");
+  if (!block) return;
+  googleOn().then((on) => { block.hidden = !on; });
+  block.querySelector("[data-google]").addEventListener("click", async (e) => {
+    e.currentTarget.disabled = true;
+    // 돌아온 뒤 갈 화면: 로그인 창을 띄운 문제가 있으면 그 문제, 아니면 보던 화면
+    let back = afterLogin || location.hash || "#/";
+    if (/^#\/(login|signup|google)/.test(back)) back = "#/";
+    try { localStorage.setItem(GOOGLE_RETURN_KEY, back); } catch {}
+    try { await api.googleStart(location.origin + location.pathname); }
+    catch { e.currentTarget.disabled = false; toast("구글 로그인을 시작하지 못했습니다. 새로고침 후 다시 시도하세요."); }
+  });
+}
+
+function startSession(res) {
+  state.session = { token: res.token, student: res.student };
+  store.set(SESSION_KEY, state.session);
+  state.progressLoaded = false;
+  preload();
+}
+
+// 구글에서 돌아왔을 때 (?code=… 또는 ?error=…): 첫 화면을 그리기 전에 한 번 처리한다
+async function handleGoogleReturn() {
+  const q = new URLSearchParams(location.search);
+  const hq = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+  const code = q.get("code");
+  const error = q.get("error_description") || q.get("error") || hq.get("error_description") || (hq.get("error") ? hq.get("error") : null);
+  if (!code && !error) return;
+  let back = "#/";
+  try { back = localStorage.getItem(GOOGLE_RETURN_KEY) || "#/"; localStorage.removeItem(GOOGLE_RETURN_KEY); } catch {}
+  history.replaceState(null, "", location.pathname + back); // 주소창에서 code 를 지운다
+  if (error) return toast("구글 로그인이 취소되었거나 실패했습니다. " + error.replace(/\+/g, " "));
+  try {
+    const accessToken = await api.googleExchange(code);
+    try {
+      const res = await api.googleLogin(accessToken);
+      startSession(res);
+      toast(`${res.student.name} 님, 환영합니다.`);
+    } catch (err) {
+      if (err.code !== "need_signup") throw err;
+      try {
+        sessionStorage.setItem(GOOGLE_PENDING_KEY, JSON.stringify({
+          token: accessToken, email: err.email || "", name: err.name || "", needCode: err.join_code_required !== false, back,
+        }));
+      } catch {}
+      history.replaceState(null, "", location.pathname + "#/google");
+    }
+  } catch (err) {
+    toast(errorMessage(err));
+  }
+}
+
+function viewGoogleSignup() {
+  let pending = null;
+  try { pending = JSON.parse(sessionStorage.getItem(GOOGLE_PENDING_KEY)); } catch {}
+  if (!pending?.token) { location.hash = "#/login"; return; }
+  $app.innerHTML = `<main class="login-wrap"><div class="login panel lime">
+    <div><img src="assets/dl-logo.png" alt="Data Learners" width="56" height="49" class="auth-mark"><div class="eyebrow">Google · 처음 오셨네요</div><h1>가입 마무리</h1>
+      <p class="lead"><b>${esc(pending.email || "구글 계정")}</b>(으)로 처음 들어오셨습니다. 이름${pending.needCode ? "과 가입 코드" : ""}만 정하면 바로 시작합니다.</p></div>
+    <form id="gs-form" novalidate style="display:grid;gap:14px">
+      <div class="field"><label for="gs-name">이름</label><input id="gs-name" autocomplete="name" required maxlength="40" placeholder="실명으로 입력하세요" value="${esc(pending.name || "")}">
+        <p class="hint-text">강사님이 제출 현황을 이 이름으로 확인합니다.</p></div>
+      <div class="field" ${pending.needCode ? "" : "hidden"}><label for="gs-code">가입 코드</label><input id="gs-code" autocomplete="off" maxlength="30" placeholder="수업 시간에 안내받은 코드"></div>
+      <p class="form-error" id="gs-error"></p>
+      <button class="btn primary block" type="submit" id="gs-btn">가입하고 시작하기</button>
+    </form>
+    <details class="google-link">
+      <summary>이미 이름 + 번호로 가입했나요? 기존 계정에 구글 연결하기</summary>
+      <form id="gl-form" novalidate style="display:grid;gap:14px;margin-top:12px">
+        <p class="hint-text" style="margin:0">한 번 연결하면 다음부터는 구글 버튼만 눌러도 기존 기록 그대로 들어옵니다.</p>
+        <div class="field"><label for="gl-name">이름</label><input id="gl-name" autocomplete="username" required maxlength="40"></div>
+        <div class="field"><label for="gl-pin">4자리 번호</label><input id="gl-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" required></div>
+        <p class="form-error" id="gl-error"></p>
+        <button class="btn block" type="submit" id="gl-btn">연결하고 들어가기</button>
+      </form>
+    </details>
+    <div class="login-foot"><a href="#/" data-cancel>취소하고 둘러보기</a><a href="#/guide/start">시작 가이드</a></div>
+  </div></main>`;
+  const done = (res, msg) => {
+    try { sessionStorage.removeItem(GOOGLE_PENDING_KEY); } catch {}
+    startSession(res);
+    toast(msg);
+    location.hash = pending.back && !/^#\/(login|signup|google)/.test(pending.back) ? pending.back : "#/";
+  };
+  // 구글 access token 은 1시간 뒤 만료된다. 만료(401)면 처음부터 다시
+  const fail = (errEl, btn, err) => {
+    if (err.status === 401 || err.code === "google_auth") {
+      try { sessionStorage.removeItem(GOOGLE_PENDING_KEY); } catch {}
+      errEl.textContent = "구글 인증 시간이 지났습니다. 로그인 화면에서 Google 버튼을 다시 눌러 주세요.";
+      return;
+    }
+    errEl.textContent = errorMessage(err);
+    btn.disabled = false;
+  };
+  $app.querySelector("[data-cancel]").addEventListener("click", () => { try { sessionStorage.removeItem(GOOGLE_PENDING_KEY); } catch {} });
+
+  const gs = $app.querySelector("#gs-form");
+  gs.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errEl = gs.querySelector("#gs-error"), btn = gs.querySelector("#gs-btn");
+    const name = gs.querySelector("#gs-name").value.trim();
+    const code = gs.querySelector("#gs-code").value.trim();
+    if (!name) return (errEl.textContent = "이름을 입력하세요.");
+    if (pending.needCode && !code) return (errEl.textContent = "가입 코드를 입력하세요.");
+    btn.disabled = true; errEl.textContent = "";
+    try { const res = await api.googleSignup(pending.token, name, code); done(res, `${res.student.name} 님, 가입을 환영합니다.`); }
+    catch (err) { fail(errEl, btn, err); }
+  });
+
+  const gl = $app.querySelector("#gl-form");
+  const pinInput = gl.querySelector("#gl-pin");
+  pinInput.addEventListener("input", () => (pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 4)));
+  gl.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errEl = gl.querySelector("#gl-error"), btn = gl.querySelector("#gl-btn");
+    const name = gl.querySelector("#gl-name").value.trim();
+    if (!name) return (errEl.textContent = "이름을 입력하세요.");
+    if (!/^\d{4}$/.test(pinInput.value)) return (errEl.textContent = "번호는 숫자 4자리입니다.");
+    btn.disabled = true; errEl.textContent = "";
+    try { const res = await api.googleLink(pending.token, name, pinInput.value); done(res, `${res.student.name} 님 계정에 구글을 연결했습니다.`); }
+    catch (err) { fail(errEl, btn, err); }
+  });
+  gs.querySelector("#gs-name").focus();
 }
 
 // ── 사용 방법 · 코드 작성법 ───────────────────────────────
@@ -543,6 +695,7 @@ daily_defect_rate = np.round(
 async function viewSignup() {
   $app.innerHTML = `<main class="login-wrap"><form class="login panel lime" id="signup-form" novalidate>
     ${authHead("signup")}
+    ${googleBlock("signup")}
     <div class="field"><label for="su-name">이름</label><input id="su-name" autocomplete="name" required maxlength="40" placeholder="실명으로 입력하세요">
       <p class="hint-text">강사님이 제출 현황을 이 이름으로 확인합니다.</p></div>
     <div class="field"><label for="su-pin">4자리 번호 정하기</label><input id="su-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required>
@@ -556,6 +709,7 @@ async function viewSignup() {
     <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#signup-form");
+  bindGoogle(form);
   const pins = [form.querySelector("#su-pin"), form.querySelector("#su-pin2")];
   pins.forEach((el) => el.addEventListener("input", () => (el.value = el.value.replace(/\D/g, "").slice(0, 4))));
   form.querySelector("#su-name").focus();
@@ -2335,7 +2489,7 @@ async function adminRoster(body) {
     </section></div>
     <section class="panel card-pad"><div class="toolbar"><h3>${groupName ? esc(groupName) + " · " : ""}등록된 수강생 ${students.length}명</h3></div>
       ${students.length ? `<div class="table-scroll"><table class="pin-list"><thead><tr><th>이름</th><th>그룹</th><th>등록일</th><th></th></tr></thead><tbody>
-      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}${s.exclude_from_rank ? '<span class="lock-chip rank-off">순위 제외</span>' : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
+      ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}${s.exclude_from_rank ? '<span class="lock-chip rank-off">순위 제외</span>' : ""}${s.google ? `<span class="lock-chip google-chip" title="${esc(s.email || "구글 계정 연결됨")}">Google</span>` : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
         <td class="act"><span class="pin-slot"></span> <button class="btn small ghost" data-rankx title="켜면 이 계정은 다른 수강생의 'N명 중 M번째'에 세지 않습니다">${s.exclude_from_rank ? "순위 포함" : "순위 제외"}</button> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
@@ -2549,4 +2703,4 @@ async function adminStats(body) {
 }
 
 applyFontScale();
-route();
+handleGoogleReturn().finally(route);

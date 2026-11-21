@@ -11,6 +11,9 @@ class ApiError extends Error {
   }
 }
 
+const PKCE_KEY = "rb-google-pkce";
+const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
 function unwrap(res) {
   if (!res || res.ok === false) throw new ApiError(res?.error || "unknown", res || {});
   return res;
@@ -19,18 +22,20 @@ function unwrap(res) {
 class SupabaseApi {
   constructor(url, key) {
     this.base = url.replace(/\/$/, "") + "/rest/v1/rpc/";
+    this.authBase = url.replace(/\/$/, "") + "/auth/v1/";
     this.key = key;
     this.mode = "supabase";
     // 레거시 anon 키(JWT)는 Authorization 에도 넣고, 새 publishable 키는 apikey 헤더만 쓴다
     this.headers = { apikey: key, "Content-Type": "application/json" };
     if (key.startsWith("eyJ")) this.headers.Authorization = `Bearer ${key}`;
   }
-  async call(fn, args) {
+  async call(fn, args, bearer) {
     let response;
     try {
       response = await fetch(this.base + fn, {
         method: "POST",
-        headers: this.headers,
+        // 구글 로그인 함수는 Supabase Auth 가 준 access token 으로 부른다 (authenticated 역할)
+        headers: bearer ? { ...this.headers, Authorization: `Bearer ${bearer}` } : this.headers,
         body: JSON.stringify(args),
       });
     } catch {
@@ -47,6 +52,41 @@ class SupabaseApi {
   login(name, pin) { return this.call("student_login", { p_name: name, p_pin: pin }); }
   signup(name, pin, joinCode) { return this.call("student_signup", { p_name: name, p_pin: pin, p_join_code: joinCode }); }
   signupInfo() { return this.call("signup_info", {}); }
+  // ── 구글 로그인 (Supabase Auth · PKCE) ──
+  // 구글 인증만 Supabase Auth 에 맡기고, 받은 access token 으로 google_* 함수를 불러
+  // 이름+번호 로그인과 같은 세션 토큰을 받는다. Supabase Auth 세션은 따로 유지하지 않는다.
+  async googleEnabled() {
+    try {
+      const r = await fetch(this.authBase + "settings", { headers: { apikey: this.key } });
+      return !!(r.ok && (await r.json()).external?.google);
+    } catch { return false; }
+  }
+  async googleStart(redirectTo) {
+    const verifier = b64url(crypto.getRandomValues(new Uint8Array(48)));
+    const challenge = b64url(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))));
+    try { localStorage.setItem(PKCE_KEY, verifier); } catch {}
+    const q = new URLSearchParams({ provider: "google", redirect_to: redirectTo, code_challenge: challenge, code_challenge_method: "s256" });
+    location.assign(this.authBase + "authorize?" + q);
+  }
+  async googleExchange(code) {
+    let verifier = null;
+    try { verifier = localStorage.getItem(PKCE_KEY); localStorage.removeItem(PKCE_KEY); } catch {}
+    if (!verifier) throw new ApiError("google_auth");
+    let r;
+    try {
+      r = await fetch(this.authBase + "token?grant_type=pkce", {
+        method: "POST",
+        headers: { apikey: this.key, "Content-Type": "application/json" },
+        body: JSON.stringify({ auth_code: code, code_verifier: verifier }),
+      });
+    } catch { throw new ApiError("network"); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.access_token) throw new ApiError("google_auth", { detail: j.error_description || j.msg || "" });
+    return j.access_token;
+  }
+  googleLogin(accessToken) { return this.call("google_login", {}, accessToken); }
+  googleSignup(accessToken, name, joinCode) { return this.call("google_signup", { p_name: name, p_join_code: joinCode }, accessToken); }
+  googleLink(accessToken, name, pin) { return this.call("google_link", { p_name: name, p_pin: pin }, accessToken); }
   getToday(token) { return this.call("get_today", { p_token: token }); }
   me(token) { return this.call("student_me", { p_token: token }); }
   submit(token, problemId, code, result) {
@@ -158,6 +198,7 @@ class DemoApi {
     this.save(db);
     return { ok: true, token, student: { id: student.id, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) } };
   }
+  async googleEnabled() { return false; } // 데모 모드에서는 구글 로그인을 숨긴다
   async signupInfo() {
     return { ok: true, join_code_required: this.load().groups.length > 0 };
   }
