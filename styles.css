@@ -161,6 +161,7 @@ em, i { font-style: normal; }
 .login .lead { color: var(--muted); margin: 6px 0 0; font-size: 14px; }
 .field { display: grid; gap: 6px; }
 .field label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.field label .opt { font-weight: 500; color: var(--subtle); }
 .field .hint-text { font-size: 13px; color: var(--subtle); margin: 0; }
 .field input, .field textarea {
   width: 100%; padding: 12px 14px; border-radius: var(--radius);

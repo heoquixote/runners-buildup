@@ -128,7 +128,7 @@ function errorMessage(err) {
       pin_format: "번호는 숫자 4자리입니다.",
       name_format: "이름은 1~40자로 입력하세요.",
       name_taken: "이미 가입된 이름입니다. 본인이면 로그인하고, 동명이인이면 이름 뒤에 숫자를 붙여 주세요 (예: 김민수2).",
-      join_code: "가입 코드가 맞지 않습니다. 강사님이 알려 준 코드를 확인하세요.",
+      join_code: "가입 코드가 맞지 않습니다. 강사님이 알려 준 코드를 확인하거나, 코드가 없다면 칸을 비워 두세요.",
       code_format: "그룹 코드는 영문·숫자 30자 이내, 이름은 60자 이내로 입력하세요.",
       group_in_use: "이 그룹에 수강생이 있어 삭제할 수 없습니다. 수강생을 먼저 삭제하세요.",
       not_found: "대상을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.",
@@ -474,11 +474,12 @@ function viewGoogleSignup() {
   if (!pending?.token) { location.hash = "#/login"; return; }
   $app.innerHTML = `<main class="login-wrap"><div class="login panel lime">
     <div><img src="assets/dl-logo.png" alt="Data Learners" width="56" height="49" class="auth-mark"><div class="eyebrow">Google · 처음 오셨네요</div><h1>가입 마무리</h1>
-      <p class="lead"><b>${esc(pending.email || "구글 계정")}</b>(으)로 처음 들어오셨습니다. 이름${pending.needCode ? "과 가입 코드" : ""}만 정하면 바로 시작합니다.</p></div>
+      <p class="lead"><b>${esc(pending.email || "구글 계정")}</b>(으)로 처음 들어오셨습니다. 이름만 정하면 바로 시작합니다.</p></div>
     <form id="gs-form" novalidate style="display:grid;gap:14px">
       <div class="field"><label for="gs-name">이름</label><input id="gs-name" autocomplete="name" required maxlength="40" placeholder="실명으로 입력하세요" value="${esc(pending.name || "")}">
         <p class="hint-text">강사님이 제출 현황을 이 이름으로 확인합니다.</p></div>
-      <div class="field" ${pending.needCode ? "" : "hidden"}><label for="gs-code">가입 코드</label><input id="gs-code" autocomplete="off" maxlength="30" placeholder="수업 시간에 안내받은 코드"></div>
+      <div class="field" ${pending.needCode ? "" : "hidden"}><label for="gs-code">가입 코드 <span class="opt">(선택)</span></label><input id="gs-code" autocomplete="off" maxlength="30" placeholder="예: QAQC8">
+        <p class="hint-text">수업에서 받은 코드가 있을 때만 입력하세요. 비워 두면 기본 데이터 과정으로 시작합니다.</p></div>
       <p class="form-error" id="gs-error"></p>
       <button class="btn primary block" type="submit" id="gs-btn">가입하고 시작하기</button>
     </form>
@@ -519,7 +520,6 @@ function viewGoogleSignup() {
     const name = gs.querySelector("#gs-name").value.trim();
     const code = gs.querySelector("#gs-code").value.trim();
     if (!name) return (errEl.textContent = "이름을 입력하세요.");
-    if (pending.needCode && !code) return (errEl.textContent = "가입 코드를 입력하세요.");
     btn.disabled = true; errEl.textContent = "";
     try { const res = await api.googleSignup(pending.token, name, code); done(res, `${res.student.name} 님, 가입을 환영합니다.`); }
     catch (err) { fail(errEl, btn, err); }
@@ -702,7 +702,8 @@ async function viewSignup() {
     <div class="field"><label for="su-pin">4자리 번호 정하기</label><input id="su-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required>
       <p class="hint-text">로그인할 때 쓰는 번호입니다. 잊지 않을 숫자로 정하세요.</p></div>
     <div class="field"><label for="su-pin2">번호 확인</label><input id="su-pin2" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required></div>
-    <div class="field" id="su-code-field" hidden><label for="su-code">가입 코드</label><input id="su-code" autocomplete="off" maxlength="30" placeholder="수업 시간에 안내받은 코드">
+    <div class="field" id="su-code-field" hidden><label for="su-code">가입 코드 <span class="opt">(선택)</span></label><input id="su-code" autocomplete="off" maxlength="30" placeholder="예: QAQC8">
+      <p class="hint-text">수업에서 받은 코드가 있을 때만 입력하세요. 비워 두면 기본 데이터 과정으로 시작합니다.</p>
       ${api.mode === "demo" ? '<p class="hint-text">데모 모드의 가입 코드는 <code>QAQC8</code>입니다.</p>' : ""}</div>
     <p class="form-error" id="su-error"></p>
     <button class="btn primary block" type="submit" id="su-btn">가입하고 시작하기</button>
@@ -729,7 +730,6 @@ async function viewSignup() {
     if (!name) return (errEl.textContent = "이름을 입력하세요.");
     if (!/^\d{4}$/.test(pin)) return (errEl.textContent = "번호는 숫자 4자리로 정하세요.");
     if (pin !== pin2) return (errEl.textContent = "번호 확인이 일치하지 않습니다.");
-    if (needCode && !form.querySelector("#su-code-field").hidden && !code) return (errEl.textContent = "가입 코드를 입력하세요.");
     const btn = form.querySelector("#su-btn");
     btn.disabled = true;
     errEl.textContent = "";

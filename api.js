@@ -208,7 +208,7 @@ class DemoApi {
     if (!name || name.length > 40) throw new ApiError("name_format");
     if (!/^\d{4}$/.test(pin)) throw new ApiError("pin_format");
     let org = (joinCode || "").trim().toUpperCase() || null;
-    if (db.groups.length && !db.groups.some((g) => g.code === org)) throw new ApiError("join_code");
+    if (org && db.groups.length && !db.groups.some((g) => g.code === org)) throw new ApiError("join_code"); // 비우면 기본 과정
     if (!db.groups.length) org = null;
     if (db.students.some((s) => s.name === name)) throw new ApiError("name_taken");
     const id = crypto.randomUUID();
