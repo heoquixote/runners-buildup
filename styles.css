@@ -987,9 +987,14 @@ kbd {
 .day-why textarea:focus, .day-why textarea:focus-visible { outline: none; box-shadow: none; border-color: var(--fail); }
 .celebrate.dayend .btns { justify-content: flex-end; margin-top: 18px; flex-wrap: nowrap; }
 .dayend .btns .btn.primary { flex: 1; justify-content: center; transition: background .2s, border-color .2s, color .2s; }
-/* 만족도를 고르기 전: 회색 톤이지만 누르면 그대로 넘어간다 */
-.dayend .btns .btn.primary.idle { background: var(--surface-2); border-color: var(--line); color: var(--muted); font-weight: 600; }
-.dayend .btns .btn.primary.idle:hover { background: var(--surface-2); border-color: var(--muted); color: var(--ink-2); box-shadow: none; }
+/* 만족도를 고르기 전: 버튼 잠금(비활성). 점수를 고르면 라임으로 켜진다 */
+.dayend .btns .btn.primary.idle { background: var(--surface-2); border-color: var(--line); color: var(--subtle); font-weight: 600; cursor: not-allowed; opacity: .7; }
+.dayend .btns .btn.primary.idle:hover { background: var(--surface-2); border-color: var(--line); color: var(--subtle); box-shadow: none; transform: none; }
+.dayend-q .req { color: var(--accent); font-weight: 600; }
+.celebrate.dayend .dayend-hint { margin: 14px 0 0; font-size: 12.5px; color: var(--subtle); text-align: center; }
+.dayend-hint[hidden] { display: none; }
+.celebrate.dayend .dayend-hint.nudge { color: var(--fail); animation: dayend-nudge .35s; }
+@keyframes dayend-nudge { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 @media (max-width: 420px) { .rate .w { font-size: 10px; } .celebrate.dayend { padding: 24px 18px 18px; } }
 /* 어드민 만족도 */
 .fb-score { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font: 700 13px var(--font-en); background: var(--surface-3); color: var(--ink-2); }

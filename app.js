@@ -249,7 +249,8 @@ async function route() {
   if (!state.session && pm && byId[pm[1]]) return askLoginFor(byId[pm[1]]);
   if (cleanupView) { cleanupView(); cleanupView = null; }
   window.confetti?.reset?.();
-  document.querySelector(".overlay, .drawer")?.remove();
+  // 만족도를 아직 고르지 않은 DAY 완료 팝업(data-lock)은 뒤로 가기 등 주소 변경으로도 닫히지 않는다
+  document.querySelectorAll(".overlay:not([data-lock]), .drawer").forEach((el) => el.remove());
   editor = null;
   const hash = location.hash || "#/";
   window.scrollTo(0, 0);
@@ -1681,6 +1682,7 @@ function dayComplete(c, info) {
   const rankLine = info?.rank ? `<p class="dayend-rank">방금 푼 문제는 <b>${Math.max(info.total, info.rank)}명</b> 중 <b>${info.rank}번째</b>로 맞혔어요.</p>` : "";
   const wrap = document.createElement("div");
   wrap.className = "overlay";
+  wrap.dataset.lock = "";
   wrap.innerHTML = `<div class="celebrate dayend" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="day-title">
     <div class="dayend-badge"><i>✓</i>Day ${dd(c)} Complete</div>
     <h2 id="day-title"><em>DAY ${dd(c)}</em> 학습이 끝났습니다!${nc ? "<br>다음 일자를 시도해볼까요?" : `<br>${esc(t?.label || "")} 트랙을 완주했어요.`}</h2>
@@ -1688,19 +1690,20 @@ function dayComplete(c, info) {
     ${rankLine}
     ${nc ? `<div class="dayend-next"><div class="d">DAY<b>${dd(nc)}</b></div><div class="t">${esc(nc.title)}<small>레슨 ${ncLessons.length}개${ncProbs ? ` · 문제 ${ncProbs}개` : ""}${ncMin ? ` · 약 ${ncMin}분` : ""}</small></div></div>` : ""}
     <hr>
-    <p class="dayend-q">이번 DAY는 어땠나요? <span>선택</span></p>
+    <p class="dayend-q">이번 DAY는 어땠나요? <span class="req">필수</span></p>
     <div class="rate" role="radiogroup" aria-label="만족도">${RATE_WORDS.map((w, i) => `<button type="button" role="radio" aria-checked="false" data-score="${i + 1}"><span class="n">${i + 1}</span><span class="w">${w}</span></button>`).join("")}</div>
     <div class="day-why" hidden>
       <p class="day-wq">어떤 점이 아쉬웠나요?<span>여러 개 선택 가능</span></p>
       <div class="day-chips">${FEEDBACK_REASONS.map((r) => `<button type="button" aria-pressed="false" data-reason="${esc(r)}">${esc(r)}</button>`).join("")}</div>
       <textarea maxlength="1000" placeholder="자세히 적어 주시면 다음 DAY에 반영할게요 (선택)"></textarea>
     </div>
-    <div class="btns"><button type="button" class="btn ghost" data-skip>닫기</button>${nc ? `<a class="btn primary idle" href="${courseHref(nc)}" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary idle" href="#/t/${c.track}" data-go>트랙으로 돌아가기 →</a>`}</div>
+    <p class="dayend-hint" aria-live="polite">만족도를 선택하면 다음으로 넘어갈 수 있어요.</p>
+    <div class="btns">${nc ? `<a class="btn primary idle" href="${courseHref(nc)}" aria-disabled="true" data-go>DAY ${dd(nc)} 시작하기 →</a>` : `<a class="btn primary idle" href="#/t/${c.track}" aria-disabled="true" data-go>트랙으로 돌아가기 →</a>`}</div>
   </div>`;
   document.body.appendChild(wrap);
   const box = wrap.querySelector(".dayend");
   const why = box.querySelector(".day-why");
-  const skip = box.querySelector("[data-skip]"), go = box.querySelector("[data-go]");
+  const go = box.querySelector("[data-go]"), hint = box.querySelector(".dayend-hint");
   const goLabel = go.textContent;
   let score = 0, sentKey = "";
   const reasons = () => [...box.querySelectorAll("[data-reason][aria-pressed=true]")].map((b) => b.dataset.reason);
@@ -1723,17 +1726,27 @@ function dayComplete(c, info) {
     const low = score <= 2;
     why.hidden = !low;
     box.querySelector(".dayend-next")?.toggleAttribute("hidden", low);
-    skip.textContent = low ? "건너뛰기" : "닫기";
     go.textContent = low ? (nc ? `보내고 DAY ${dd(nc)} 시작 →` : "보내고 트랙으로 →") : goLabel;
     go.classList.remove("idle");
+    go.removeAttribute("aria-disabled");
+    hint.hidden = true;
+    delete wrap.dataset.lock;
     send();
   }));
   box.querySelectorAll("[data-reason]").forEach((b) => b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"))));
-  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
-  function onKey(e) { if (e.key === "Escape") { send(); close(); } }
-  document.addEventListener("keydown", onKey);
-  skip.addEventListener("click", () => { if (score > 2) send(); close(); });
-  go.addEventListener("click", () => { send(); close(); });
+  // 만족도를 고르기 전에는 빠져나갈 수 없다: 닫기 버튼·바깥 클릭·ESC 없음, 시작 버튼도 잠금
+  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey, true); };
+  function onKey(e) { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); } }
+  document.addEventListener("keydown", onKey, true);
+  go.addEventListener("click", (e) => {
+    if (!score) {
+      e.preventDefault();
+      hint.classList.remove("nudge"); void hint.offsetWidth; hint.classList.add("nudge");
+      box.querySelector("[data-score]").focus();
+      return;
+    }
+    send(); close();
+  });
   box.focus();
   fireConfetti(true);
 }
