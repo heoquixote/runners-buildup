@@ -715,7 +715,7 @@ async function viewSignup() {
   if (!(location.hash || "").startsWith("#/signup/form")) return viewSignupChoose();
   $app.innerHTML = `<main class="login-wrap"><form class="login panel lime" id="signup-form" novalidate>
     ${authHead("signup")}
-    <a class="back-link" href="#/signup">← 가입 방법 다시 고르기</a>
+    <a class="back-link" href="#/signup" data-back-choose hidden>← 가입 방법 다시 고르기</a>
     <div class="field"><label for="su-name">이름</label><input id="su-name" autocomplete="name" required maxlength="40" placeholder="실명으로 입력하세요">
       <p class="hint-text">강사님이 제출 현황을 이 이름으로 확인합니다.</p></div>
     <div class="field"><label for="su-pin">4자리 번호 정하기</label><input id="su-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required>
@@ -730,6 +730,8 @@ async function viewSignup() {
     <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#signup-form");
+  // 구글 로그인이 꺼져 있으면 고를 방법이 하나뿐이라 되돌아가기 링크를 숨긴다
+  googleOn().then((on) => { const b = form.querySelector("[data-back-choose]"); if (b) b.hidden = !on; });
   const pins = [form.querySelector("#su-pin"), form.querySelector("#su-pin2")];
   pins.forEach((el) => el.addEventListener("input", () => (el.value = el.value.replace(/\D/g, "").slice(0, 4))));
   form.querySelector("#su-name").focus();
