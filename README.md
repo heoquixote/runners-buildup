@@ -46,6 +46,8 @@
 
 이미 운영 중인 프로젝트에 업데이트를 반영할 때는 `supabase/migrations_*.sql`을 날짜순으로 SQL Editor에서 실행합니다 (2026-11-03: 레슨 진도 `lesson_progress` → 일일 학습 `daily`).
 
+구글 로그인(2026-11-21)을 켜려면 [docs/google-login-setup.md](docs/google-login-setup.md)의 순서대로 `supabase/migrations_2026-11-21_google_login.sql` 실행 → Google Cloud OAuth 클라이언트 → Supabase Google Provider · Redirect URLs를 설정합니다.
+
 어드민 비밀번호를 바꾸려면 SQL Editor에서 `select public.set_admin_password('새-비밀번호');`를 실행합니다.
 
 ## 로컬에서 보기
