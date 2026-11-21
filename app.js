@@ -128,7 +128,7 @@ function errorMessage(err) {
       pin_format: "번호는 숫자 4자리입니다.",
       name_format: "이름은 1~40자로 입력하세요.",
       name_taken: "이미 가입된 이름입니다. 본인이면 로그인하고, 동명이인이면 이름 뒤에 숫자를 붙여 주세요 (예: 김민수2).",
-      join_code: "가입 코드가 맞지 않습니다. 강사님이 알려 준 코드를 확인하세요.",
+      join_code: "가입 코드가 맞지 않습니다. 강사님이 알려 준 코드를 확인하거나, 코드가 없다면 칸을 비워 두세요.",
       code_format: "그룹 코드는 영문·숫자 30자 이내, 이름은 60자 이내로 입력하세요.",
       group_in_use: "이 그룹에 수강생이 있어 삭제할 수 없습니다. 수강생을 먼저 삭제하세요.",
       not_found: "대상을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.",
@@ -408,10 +408,10 @@ let googleOnPromise = null;
 const googleOn = () => (googleOnPromise ||= api.googleEnabled());
 const GOOGLE_G = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
 
-function googleBlock(kind = "login") {
+function googleBlock() {
   return `<div class="google-block" data-google-block hidden>
-    <button type="button" class="btn block google-btn" data-google>${GOOGLE_G}<span>${kind === "signup" ? "Google로 가입하기" : "Google로 계속하기"}</span></button>
-    <div class="or-line"><span>${kind === "signup" ? "또는 이름 + 번호로 가입" : "또는 이름 + 번호로 로그인"}</span></div>
+    <button type="button" class="btn block google-btn" data-google>${GOOGLE_G}<span>Google로 계속하기</span></button>
+    <div class="or-line"><span>또는 이름 + 번호로 로그인</span></div>
   </div>`;
 }
 
@@ -474,11 +474,12 @@ function viewGoogleSignup() {
   if (!pending?.token) { location.hash = "#/login"; return; }
   $app.innerHTML = `<main class="login-wrap"><div class="login panel lime">
     <div><img src="assets/dl-logo.png" alt="Data Learners" width="56" height="49" class="auth-mark"><div class="eyebrow">Google · 처음 오셨네요</div><h1>가입 마무리</h1>
-      <p class="lead"><b>${esc(pending.email || "구글 계정")}</b>(으)로 처음 들어오셨습니다. 이름${pending.needCode ? "과 가입 코드" : ""}만 정하면 바로 시작합니다.</p></div>
+      <p class="lead"><b>${esc(pending.email || "구글 계정")}</b>(으)로 처음 들어오셨습니다. 이름만 정하면 바로 시작합니다.</p></div>
     <form id="gs-form" novalidate style="display:grid;gap:14px">
       <div class="field"><label for="gs-name">이름</label><input id="gs-name" autocomplete="name" required maxlength="40" placeholder="실명으로 입력하세요" value="${esc(pending.name || "")}">
         <p class="hint-text">강사님이 제출 현황을 이 이름으로 확인합니다.</p></div>
-      <div class="field" ${pending.needCode ? "" : "hidden"}><label for="gs-code">가입 코드</label><input id="gs-code" autocomplete="off" maxlength="30" placeholder="수업 시간에 안내받은 코드"></div>
+      <div class="field" ${pending.needCode ? "" : "hidden"}><label for="gs-code">가입 코드 <span class="opt">(선택)</span></label><input id="gs-code" autocomplete="off" maxlength="30" placeholder="예: QAQC8">
+        <p class="hint-text">수업에서 받은 코드가 있을 때만 입력하세요. 비워 두면 기본 데이터 과정으로 시작합니다.</p></div>
       <p class="form-error" id="gs-error"></p>
       <button class="btn primary block" type="submit" id="gs-btn">가입하고 시작하기</button>
     </form>
@@ -519,7 +520,6 @@ function viewGoogleSignup() {
     const name = gs.querySelector("#gs-name").value.trim();
     const code = gs.querySelector("#gs-code").value.trim();
     if (!name) return (errEl.textContent = "이름을 입력하세요.");
-    if (pending.needCode && !code) return (errEl.textContent = "가입 코드를 입력하세요.");
     btn.disabled = true; errEl.textContent = "";
     try { const res = await api.googleSignup(pending.token, name, code); done(res, `${res.student.name} 님, 가입을 환영합니다.`); }
     catch (err) { fail(errEl, btn, err); }
@@ -693,16 +693,36 @@ daily_defect_rate = np.round(
 }
 
 // ── 회원가입 ─────────────────────────────────────────────
+// 첫 화면은 'Google로 가입하기' · '회원가입' 두 버튼. 이름 · 번호 · 가입 코드는 '회원가입'을 누른 다음 화면(#/signup/form)
+function viewSignupChoose() {
+  $app.innerHTML = `<main class="login-wrap"><div class="login panel lime" id="signup-choose">
+    ${authHead("signup")}
+    <div class="google-block" data-google-block hidden>
+      <button type="button" class="btn block google-btn" data-google>${GOOGLE_G}<span>Google로 가입하기</span></button>
+    </div>
+    <a class="btn primary block" href="#/signup/form">회원가입</a>
+    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
+    <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
+  </div></main>`;
+  bindGoogle($app.querySelector("#signup-choose"));
+  // 구글 로그인이 꺼져 있으면 고를 것이 없으니 바로 입력 화면으로
+  googleOn().then((on) => {
+    if (!on && location.hash === "#/signup") { history.replaceState(null, "", "#/signup/form"); viewSignup(); }
+  });
+}
+
 async function viewSignup() {
+  if (!(location.hash || "").startsWith("#/signup/form")) return viewSignupChoose();
   $app.innerHTML = `<main class="login-wrap"><form class="login panel lime" id="signup-form" novalidate>
     ${authHead("signup")}
-    ${googleBlock("signup")}
+    <a class="back-link" href="#/signup">← 가입 방법 다시 고르기</a>
     <div class="field"><label for="su-name">이름</label><input id="su-name" autocomplete="name" required maxlength="40" placeholder="실명으로 입력하세요">
       <p class="hint-text">강사님이 제출 현황을 이 이름으로 확인합니다.</p></div>
     <div class="field"><label for="su-pin">4자리 번호 정하기</label><input id="su-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required>
       <p class="hint-text">로그인할 때 쓰는 번호입니다. 잊지 않을 숫자로 정하세요.</p></div>
     <div class="field"><label for="su-pin2">번호 확인</label><input id="su-pin2" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required></div>
-    <div class="field" id="su-code-field" hidden><label for="su-code">가입 코드</label><input id="su-code" autocomplete="off" maxlength="30" placeholder="수업 시간에 안내받은 코드">
+    <div class="field" id="su-code-field" hidden><label for="su-code">가입 코드 <span class="opt">(선택)</span></label><input id="su-code" autocomplete="off" maxlength="30" placeholder="예: QAQC8">
+      <p class="hint-text">수업에서 받은 코드가 있을 때만 입력하세요. 비워 두면 기본 데이터 과정으로 시작합니다.</p>
       ${api.mode === "demo" ? '<p class="hint-text">데모 모드의 가입 코드는 <code>QAQC8</code>입니다.</p>' : ""}</div>
     <p class="form-error" id="su-error"></p>
     <button class="btn primary block" type="submit" id="su-btn">가입하고 시작하기</button>
@@ -710,7 +730,6 @@ async function viewSignup() {
     <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#signup-form");
-  bindGoogle(form);
   const pins = [form.querySelector("#su-pin"), form.querySelector("#su-pin2")];
   pins.forEach((el) => el.addEventListener("input", () => (el.value = el.value.replace(/\D/g, "").slice(0, 4))));
   form.querySelector("#su-name").focus();
@@ -729,7 +748,6 @@ async function viewSignup() {
     if (!name) return (errEl.textContent = "이름을 입력하세요.");
     if (!/^\d{4}$/.test(pin)) return (errEl.textContent = "번호는 숫자 4자리로 정하세요.");
     if (pin !== pin2) return (errEl.textContent = "번호 확인이 일치하지 않습니다.");
-    if (needCode && !form.querySelector("#su-code-field").hidden && !code) return (errEl.textContent = "가입 코드를 입력하세요.");
     const btn = form.querySelector("#su-btn");
     btn.disabled = true;
     errEl.textContent = "";
