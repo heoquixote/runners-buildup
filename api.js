@@ -50,6 +50,7 @@ class SupabaseApi {
     return unwrap(await response.json());
   }
   login(name, pin) { return this.call("student_login", { p_name: name, p_pin: pin }); }
+  changePassword(token, oldPw, newPw) { return this.call("student_change_password", { p_token: token, p_old: oldPw, p_new: newPw }); }
   signup(name, pin, joinCode) { return this.call("student_signup", { p_name: name, p_pin: pin, p_join_code: joinCode }); }
   signupInfo() { return this.call("signup_info", {}); }
   // ── 구글 로그인 (Supabase Auth · PKCE) ──
@@ -196,7 +197,19 @@ class DemoApi {
     const token = crypto.randomUUID();
     db.sessions[token] = { student_id: student.id };
     this.save(db);
-    return { ok: true, token, student: { id: student.id, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) } };
+    return { ok: true, token, must_change: pin.length < 6, student: { id: student.id, name: student.name, org: student.org || null, org_label: labelOf(db, student.org) } };
+  }
+  async changePassword(token, oldPw, newPw) {
+    const db = this.load();
+    const sid = this.studentOf(db, token);
+    const s = db.students.find((x) => x.id === sid);
+    if (!s) throw new ApiError("session");
+    if (!newPw || newPw.length < 6 || newPw.length > 72) throw new ApiError("password_format");
+    if (newPw === oldPw) throw new ApiError("same_password");
+    if (s.pin !== oldPw) throw new ApiError("invalid");
+    s.pin = newPw;
+    this.save(db);
+    return { ok: true };
   }
   async googleEnabled() { return false; } // 데모 모드에서는 구글 로그인을 숨긴다
   async signupInfo() {

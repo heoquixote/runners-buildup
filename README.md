@@ -48,6 +48,8 @@
 
 구글 로그인(2026-11-21)을 켜려면 [docs/google-login-setup.md](docs/google-login-setup.md)의 순서대로 `supabase/migrations_2026-11-21_google_login.sql` 실행 → Google Cloud OAuth 클라이언트 → Supabase Google Provider · Redirect URLs를 설정합니다.
 
+로그인 보안 강화(2026-11-25)는 `supabase/migrations_2026-11-25_login_hardening.sql`을 실행합니다. 5번 틀릴 때마다 잠금이 5분부터 두 배씩(최대 1시간) 늘고, 예전 4자리 번호로 로그인하면 새 비밀번호(6자 이상)를 정하는 창이 뜹니다. 어드민이 재발급하는 임시 비밀번호는 영문·숫자 8자리입니다.
+
 어드민 비밀번호를 바꾸려면 SQL Editor에서 `select public.set_admin_password('새-비밀번호');`를 실행합니다.
 
 ## 로컬에서 보기
