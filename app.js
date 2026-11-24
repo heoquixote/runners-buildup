@@ -301,7 +301,6 @@ function viewLogin() {
     ${demo}
     ${googleBlock()}
     ${loginFields()}
-    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
     <div class="login-foot"><span>비밀번호를 잊었다면 강사님께 재발급을 요청하세요.</span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   bindLoginForm($app.querySelector("#login-form"), () => goAfterLogin("#/"));
@@ -700,7 +699,6 @@ function viewSignupChoose() {
       <button type="button" class="btn block google-btn" data-google>${GOOGLE_G}<span>Google로 가입하기</span></button>
     </div>
     <a class="btn primary block" href="#/signup/form">회원가입</a>
-    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
     <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </div></main>`;
   bindGoogle($app.querySelector("#signup-choose"));
@@ -725,7 +723,6 @@ async function viewSignup() {
       ${api.mode === "demo" ? '<p class="hint-text">데모 모드의 가입 코드는 <code>QAQC8</code>입니다.</p>' : ""}</div>
     <p class="form-error" id="su-error"></p>
     <button class="btn primary block" type="submit" id="su-btn">가입하고 시작하기</button>
-    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
     <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#signup-form");
