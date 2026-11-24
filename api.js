@@ -176,7 +176,7 @@ class DemoApi {
   async login(name, pin) {
     const db = this.load();
     name = name.trim();
-    if (!/^\d{4}$/.test(pin)) throw new ApiError("pin_format");
+    if (!pin || pin.length < 4 || pin.length > 72) throw new ApiError("pin_format");
     const same = db.students.filter((s) => s.name === name);
     const lockedUntil = Math.max(0, ...same.map((s) => s.locked_until || 0));
     if (lockedUntil > Date.now()) throw new ApiError("locked", { until: new Date(lockedUntil).toISOString() });
@@ -206,7 +206,7 @@ class DemoApi {
     const db = this.load();
     name = name.trim().replace(/\s+/g, " ");
     if (!name || name.length > 40) throw new ApiError("name_format");
-    if (!/^\d{4}$/.test(pin)) throw new ApiError("pin_format");
+    if (!pin || pin.length < 6 || pin.length > 72) throw new ApiError("password_format");
     let org = (joinCode || "").trim().toUpperCase() || null;
     if (org && db.groups.length && !db.groups.some((g) => g.code === org)) throw new ApiError("join_code"); // 비우면 기본 과정
     if (!db.groups.length) org = null;

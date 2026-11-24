@@ -124,15 +124,16 @@ function errorMessage(err) {
   const code = err instanceof ApiError ? err.code : "unknown";
   return (
     {
-      invalid: "이름 또는 번호가 맞지 않습니다.",
-      pin_format: "번호는 숫자 4자리입니다.",
+      invalid: "이름 또는 비밀번호가 맞지 않습니다.",
+      pin_format: "비밀번호를 확인하세요.",
+      password_format: "비밀번호는 6자 이상으로 정하세요.",
       name_format: "이름은 1~40자로 입력하세요.",
       name_taken: "이미 가입된 이름입니다. 본인이면 로그인하고, 동명이인이면 이름 뒤에 숫자를 붙여 주세요 (예: 김민수2).",
       join_code: "가입 코드가 맞지 않습니다. 강사님이 알려 준 코드를 확인하거나, 코드가 없다면 칸을 비워 두세요.",
       code_format: "그룹 코드는 영문·숫자 30자 이내, 이름은 60자 이내로 입력하세요.",
       group_in_use: "이 그룹에 수강생이 있어 삭제할 수 없습니다. 수강생을 먼저 삭제하세요.",
       not_found: "대상을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.",
-      locked: "5번 틀려서 잠시 잠겼습니다. 5분 뒤에 다시 시도하거나 강사님께 번호 재발급을 요청하세요.",
+      locked: "5번 틀려서 잠시 잠겼습니다. 5분 뒤에 다시 시도하거나 강사님께 비밀번호 재발급을 요청하세요.",
       session: "로그인이 만료되었습니다. 다시 로그인해 주세요.",
       google_auth: "구글 인증을 확인하지 못했습니다. 구글로 다시 로그인해 주세요.",
       already_linked: "이 구글 계정이나 학생 계정은 이미 다른 계정과 연결되어 있습니다. 구글로 다시 로그인하거나 강사님께 문의하세요.",
@@ -293,36 +294,34 @@ window.addEventListener("hashchange", route);
 // ── 로그인 ───────────────────────────────────────────────
 function viewLogin() {
   const demo = api.mode === "demo"
-    ? `<div class="demo-note"><b>데모 모드</b>입니다. 기록은 이 브라우저에만 저장됩니다. 이름 <code>체험학생</code>, 번호 <code>1234</code>로 들어가 보세요.</div>`
+    ? `<div class="demo-note"><b>데모 모드</b>입니다. 기록은 이 브라우저에만 저장됩니다. 이름 <code>체험학생</code>, 비밀번호 <code>1234</code>로 들어가 보세요.</div>`
     : "";
   $app.innerHTML = `<main class="login-wrap"><form class="login panel lime" id="login-form" novalidate>
     ${authHead("login")}
     ${demo}
     ${googleBlock()}
     ${loginFields()}
-    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
-    <div class="login-foot"><span>번호를 잊었다면 강사님께 재발급을 요청하세요.</span><a href="#/admin">강사 로그인</a></div>
+    <div class="login-foot"><span>비밀번호를 잊었다면 강사님께 재발급을 요청하세요.</span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   bindLoginForm($app.querySelector("#login-form"), () => goAfterLogin("#/"));
   bindGoogle($app.querySelector("#login-form"));
 }
 
 const loginFields = () => `<div class="field"><label for="login-name">이름</label><input id="login-name" autocomplete="username" required maxlength="40"></div>
-    <div class="field"><label for="login-pin">4자리 번호</label><input id="login-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" required></div>
+    <div class="field"><label for="login-pin">비밀번호</label><input id="login-pin" type="password" maxlength="72" autocomplete="current-password" required></div>
     <p class="form-error" id="login-error"></p>
     <button class="btn primary block" type="submit" id="login-btn">들어가기</button>`;
 
 // 로그인 페이지와 로그인 창이 같이 쓰는 폼 동작
 function bindLoginForm(form, onSuccess) {
   const pinInput = form.querySelector("#login-pin");
-  pinInput.addEventListener("input", () => (pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 4)));
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = form.querySelector("#login-name").value.trim();
     const pin = pinInput.value;
     const errEl = form.querySelector("#login-error");
     if (!name) return (errEl.textContent = "이름을 입력하세요.");
-    if (!/^\d{4}$/.test(pin)) return (errEl.textContent = "번호는 숫자 4자리입니다.");
+    if (!pin) return (errEl.textContent = "비밀번호를 입력하세요.");
     const btn = form.querySelector("#login-btn");
     btn.disabled = true;
     errEl.textContent = "";
@@ -373,10 +372,10 @@ function loginModal({ target = null, title = "" } = {}) {
     <button type="button" class="lm-close" data-close aria-label="닫기">×</button>
     <div><div class="eyebrow">Login</div><h2 id="lm-title">${target ? "문제 풀이는 로그인이 필요합니다" : "로그인"}</h2>
       <p class="lead">${target ? `<b>${esc(title)}</b> 문제를 풀고 기록을 남기려면 로그인해 주세요. 레슨과 예제 실행은 로그인 없이도 볼 수 있습니다.` : "로그인하면 레슨 진도와 문제 풀이 기록이 저장됩니다."}</p></div>
-    ${api.mode === "demo" ? `<div class="demo-note"><b>데모 모드</b>입니다. 이름 <code>체험학생</code>, 번호 <code>1234</code>로 들어가 보세요.</div>` : ""}
+    ${api.mode === "demo" ? `<div class="demo-note"><b>데모 모드</b>입니다. 이름 <code>체험학생</code>, 비밀번호 <code>1234</code>로 들어가 보세요.</div>` : ""}
     ${googleBlock()}
     ${loginFields()}
-    <div class="login-foot"><span>아직 계정이 없나요? <a href="#/signup" data-signup><b>회원가입</b></a></span><span>번호를 잊었다면 강사님께 문의하세요.</span></div>
+    <div class="login-foot"><span>아직 계정이 없나요? <a href="#/signup" data-signup><b>회원가입</b></a></span><span>비밀번호를 잊었다면 강사님께 문의하세요.</span></div>
   </form>`;
   document.body.appendChild(wrap);
   const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
@@ -411,7 +410,7 @@ const GOOGLE_G = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="t
 function googleBlock() {
   return `<div class="google-block" data-google-block hidden>
     <button type="button" class="btn block google-btn" data-google>${GOOGLE_G}<span>Google로 계속하기</span></button>
-    <div class="or-line"><span>또는 이름 + 번호로 로그인</span></div>
+    <div class="or-line"><span>또는 이름 + 비밀번호로 로그인</span></div>
   </div>`;
 }
 
@@ -484,11 +483,11 @@ function viewGoogleSignup() {
       <button class="btn primary block" type="submit" id="gs-btn">가입하고 시작하기</button>
     </form>
     <details class="google-link">
-      <summary>이미 이름 + 번호로 가입했나요? 기존 계정에 구글 연결하기</summary>
+      <summary>이미 이름 + 비밀번호로 가입했나요? 기존 계정에 구글 연결하기</summary>
       <form id="gl-form" novalidate style="display:grid;gap:14px;margin-top:12px">
         <p class="hint-text" style="margin:0">한 번 연결하면 다음부터는 구글 버튼만 눌러도 기존 기록 그대로 들어옵니다.</p>
         <div class="field"><label for="gl-name">이름</label><input id="gl-name" autocomplete="username" required maxlength="40"></div>
-        <div class="field"><label for="gl-pin">4자리 번호</label><input id="gl-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" required></div>
+        <div class="field"><label for="gl-pin">비밀번호</label><input id="gl-pin" type="password" maxlength="72" autocomplete="current-password" required></div>
         <p class="form-error" id="gl-error"></p>
         <button class="btn block" type="submit" id="gl-btn">연결하고 들어가기</button>
       </form>
@@ -527,13 +526,12 @@ function viewGoogleSignup() {
 
   const gl = $app.querySelector("#gl-form");
   const pinInput = gl.querySelector("#gl-pin");
-  pinInput.addEventListener("input", () => (pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 4)));
   gl.addEventListener("submit", async (e) => {
     e.preventDefault();
     const errEl = gl.querySelector("#gl-error"), btn = gl.querySelector("#gl-btn");
     const name = gl.querySelector("#gl-name").value.trim();
     if (!name) return (errEl.textContent = "이름을 입력하세요.");
-    if (!/^\d{4}$/.test(pinInput.value)) return (errEl.textContent = "번호는 숫자 4자리입니다.");
+    if (!pinInput.value) return (errEl.textContent = "비밀번호를 입력하세요.");
     btn.disabled = true; errEl.textContent = "";
     try { const res = await api.googleLink(pending.token, name, pinInput.value); done(res, `${res.student.name} 님 계정에 구글을 연결했습니다.`); }
     catch (err) { fail(errEl, btn, err); }
@@ -564,12 +562,12 @@ function viewGuide() {
         <li><h3>회원가입</h3>
           <ul><li>오른쪽 위 <b>회원가입</b>을 누릅니다.</li>
           <li><b>이름</b>: 실명으로 적으세요. 강사님이 제출 현황을 이 이름으로 확인합니다.</li>
-          <li><b>4자리 번호</b>: 로그인할 때 쓰는 비밀번호입니다. 직접 정하고, 확인 칸에 한 번 더 적습니다.</li>
+          <li><b>비밀번호</b>: 로그인할 때 씁니다. 6자 이상으로 직접 정하고, 확인 칸에 한 번 더 적습니다.</li>
           <li><b>가입 코드</b>: 수업 시간에 강사님이 알려 준 코드를 그대로 적습니다. 대소문자는 구분하지 않습니다.</li>
           <li><b>가입하고 시작하기</b>를 누르면 바로 로그인된 상태로 홈으로 갑니다.</li></ul></li>
         <li><h3>다음부터는 로그인</h3>
-          <ul><li>오른쪽 위 <b>로그인</b>에서 가입한 이름과 4자리 번호를 넣습니다.</li>
-          <li>로그인은 이 브라우저에 유지됩니다. 다른 컴퓨터나 휴대폰에서도 같은 이름과 번호로 들어오면 진도가 그대로 이어집니다.</li>
+          <ul><li>오른쪽 위 <b>로그인</b>에서 가입한 이름과 비밀번호를 넣습니다.</li>
+          <li>로그인은 이 브라우저에 유지됩니다. 다른 컴퓨터나 휴대폰에서도 같은 이름과 비밀번호로 들어오면 진도가 그대로 이어집니다.</li>
           <li>공용 컴퓨터라면 끝날 때 <b>로그아웃</b>을 눌러 주세요.</li></ul></li>
         <li><h3>홈에서 오늘 할 일 고르기</h3>
           <ul><li><b>내 트랙</b>: 최근 공부한 트랙의 진행률입니다. <b>이어서 달리기</b>를 누르면 멈춘 레슨으로 갑니다.</li>
@@ -588,8 +586,8 @@ function viewGuide() {
       <div class="table-scroll"><table class="ex-table guide-table"><thead><tr><th>가입 · 로그인할 때 이런 메시지가 뜨면</th><th>이렇게 하세요</th></tr></thead><tbody>
         <tr><td>이미 가입된 이름입니다</td><td>본인이면 <b>로그인</b>으로 들어가세요. 동명이인이면 이름 뒤에 숫자를 붙여 가입합니다 (예: 김민수2).</td></tr>
         <tr><td>가입 코드가 맞지 않습니다</td><td>강사님이 알려 준 코드를 다시 확인하세요. 앞뒤 공백은 신경 쓰지 않아도 됩니다.</td></tr>
-        <tr><td>이름 또는 번호가 맞지 않습니다</td><td>가입할 때 쓴 이름을 띄어쓰기까지 똑같이 적었는지 확인하세요.</td></tr>
-        <tr><td>5번 틀려서 잠시 잠겼습니다</td><td>5분 뒤에 다시 시도하세요. 번호가 기억나지 않으면 강사님께 재발급을 요청합니다.</td></tr>
+        <tr><td>이름 또는 비밀번호가 맞지 않습니다</td><td>가입할 때 쓴 이름을 띄어쓰기까지 똑같이 적었는지 확인하세요.</td></tr>
+        <tr><td>5번 틀려서 잠시 잠겼습니다</td><td>5분 뒤에 다시 시도하세요. 비밀번호가 기억나지 않으면 강사님께 재발급을 요청합니다.</td></tr>
         <tr><td>로그인이 만료되었습니다</td><td>다시 로그인하면 됩니다. 저장된 진도는 사라지지 않습니다.</td></tr>
       </tbody></table></div>
     </section>
@@ -701,7 +699,6 @@ function viewSignupChoose() {
       <button type="button" class="btn block google-btn" data-google>${GOOGLE_G}<span>Google로 가입하기</span></button>
     </div>
     <a class="btn primary block" href="#/signup/form">회원가입</a>
-    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
     <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </div></main>`;
   bindGoogle($app.querySelector("#signup-choose"));
@@ -718,22 +715,20 @@ async function viewSignup() {
     <a class="back-link" href="#/signup" data-back-choose hidden>← 가입 방법 다시 고르기</a>
     <div class="field"><label for="su-name">이름</label><input id="su-name" autocomplete="name" required maxlength="40" placeholder="실명으로 입력하세요">
       <p class="hint-text">강사님이 제출 현황을 이 이름으로 확인합니다.</p></div>
-    <div class="field"><label for="su-pin">4자리 번호 정하기</label><input id="su-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required>
-      <p class="hint-text">로그인할 때 쓰는 번호입니다. 잊지 않을 숫자로 정하세요.</p></div>
-    <div class="field"><label for="su-pin2">번호 확인</label><input id="su-pin2" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password" required></div>
+    <div class="field"><label for="su-pin">비밀번호</label><input id="su-pin" type="password" maxlength="72" autocomplete="new-password" required>
+      <p class="hint-text">6자 이상. 영문 · 숫자 · 기호 모두 쓸 수 있습니다.</p></div>
+    <div class="field"><label for="su-pin2">비밀번호 확인</label><input id="su-pin2" type="password" maxlength="72" autocomplete="new-password" required></div>
     <div class="field" id="su-code-field" hidden><label for="su-code">가입 코드 <span class="opt">(선택)</span></label><input id="su-code" autocomplete="off" maxlength="30" placeholder="예: QAQC8">
       <p class="hint-text">수업에서 받은 코드가 있을 때만 입력하세요. 비워 두면 기본 데이터 과정으로 시작합니다.</p>
       ${api.mode === "demo" ? '<p class="hint-text">데모 모드의 가입 코드는 <code>QAQC8</code>입니다.</p>' : ""}</div>
     <p class="form-error" id="su-error"></p>
     <button class="btn primary block" type="submit" id="su-btn">가입하고 시작하기</button>
-    <a class="btn ghost block" href="#/">로그인 없이 둘러보기</a>
     <div class="login-foot"><span>이미 가입했다면 로그인 탭에서 들어가세요. 처음이라면 <a href="#/guide/start">시작 가이드</a></span><a href="#/admin">강사 로그인</a></div>
   </form></main>`;
   const form = $app.querySelector("#signup-form");
   // 구글 로그인이 꺼져 있으면 고를 방법이 하나뿐이라 되돌아가기 링크를 숨긴다
   googleOn().then((on) => { const b = form.querySelector("[data-back-choose]"); if (b) b.hidden = !on; });
   const pins = [form.querySelector("#su-pin"), form.querySelector("#su-pin2")];
-  pins.forEach((el) => el.addEventListener("input", () => (el.value = el.value.replace(/\D/g, "").slice(0, 4))));
   form.querySelector("#su-name").focus();
   let needCode = true;
   api.signupInfo().then((res) => {
@@ -748,8 +743,8 @@ async function viewSignup() {
     const [pin, pin2] = pins.map((el) => el.value);
     const code = form.querySelector("#su-code").value.trim();
     if (!name) return (errEl.textContent = "이름을 입력하세요.");
-    if (!/^\d{4}$/.test(pin)) return (errEl.textContent = "번호는 숫자 4자리로 정하세요.");
-    if (pin !== pin2) return (errEl.textContent = "번호 확인이 일치하지 않습니다.");
+    if (pin.length < 6) return (errEl.textContent = "비밀번호는 6자 이상으로 정하세요.");
+    if (pin !== pin2) return (errEl.textContent = "비밀번호 확인이 일치하지 않습니다.");
     const btn = form.querySelector("#su-btn");
     btn.disabled = true;
     errEl.textContent = "";
@@ -2107,7 +2102,7 @@ function routeAdmin(hash) {
   if (!state.adminToken) return viewAdminLogin();
   let section = hash.split("/")[2] || "live";
   if (section === "matrix") { section = "progress"; history.replaceState(null, "", "#/admin/progress"); } // 예전 회차 과제 탭 주소
-  const tabs = [["live", "실시간"], ["progress", "진도율"], ["stats", "문제 통계"], ["feedback", "만족도"], ["roster", "명단 · 번호"]];
+  const tabs = [["live", "실시간"], ["progress", "진도율"], ["stats", "문제 통계"], ["feedback", "만족도"], ["roster", "명단 · 비밀번호"]];
   $app.innerHTML = `${topbar({ admin: true })}<main class="page wide">
     <div class="admin-bar"><nav class="admin-tabs">${tabs.map(([k, l]) => `<a href="#/admin/${k}" ${k === section ? 'aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
       ${section === "roster" ? "" : `<label class="group-select hide-test" title="명단에서 '순위 제외'로 표시한 계정(테스트 계정)을 집계 · 표에서 뺍니다"><input type="checkbox" id="hide-test" ${state.adminHideTest ? "checked" : ""}><span>테스트 계정 제외</span></label>`}
@@ -2155,7 +2150,7 @@ function routeAdmin(hash) {
 function viewAdminLogin() {
   const demo = api.mode === "demo" ? `<div class="demo-note"><b>데모 모드</b> 어드민 비밀번호는 <code>${DEMO_ADMIN_PASSWORD}</code>입니다.</div>` : "";
   $app.innerHTML = `<main class="login-wrap"><form class="login panel" id="admin-form" novalidate>
-    <div><div class="eyebrow">강사 전용</div><h1>어드민 로그인</h1><p class="lead">제출 현황을 보고 수강생 번호를 관리합니다.</p></div>
+    <div><div class="eyebrow">강사 전용</div><h1>어드민 로그인</h1><p class="lead">제출 현황을 보고 수강생 비밀번호를 관리합니다.</p></div>
     ${demo}
     <div class="field"><label for="admin-pw">어드민 비밀번호</label><input id="admin-pw" type="password" autocomplete="current-password"></div>
     <p class="form-error" id="admin-error"></p>
@@ -2209,7 +2204,7 @@ function downloadCsv(filename, rows) {
 async function adminProgress(body) {
   const [{ students, raw }, lessonRes] = await Promise.all([loadAdminData(), api.adminLessons(state.adminToken)]);
   if (!students.length) {
-    body.innerHTML = `<div class="panel empty-state"><b>집계할 수강생이 없습니다.</b>명단 · 번호 탭에서 이름을 붙여넣거나 가입 코드를 안내하세요. 그룹 선택이나 '테스트 계정 제외'도 확인하세요.</div>`;
+    body.innerHTML = `<div class="panel empty-state"><b>집계할 수강생이 없습니다.</b>명단 · 비밀번호 탭에서 이름을 붙여넣거나 가입 코드를 안내하세요. 그룹 선택이나 '테스트 계정 제외'도 확인하세요.</div>`;
     return;
   }
   const passed = {}, solvedSet = {}, last = {};
@@ -2515,15 +2510,15 @@ async function adminRoster(body) {
         <button class="btn primary" id="g-save">그룹 추가</button></div>
     </section>
     <section class="panel card-pad"><h3>수강생 직접 등록${groupName ? ` · ${esc(groupName)}` : ""}</h3>
-      <p class="muted" style="margin:0;font-size:14px">한 줄에 한 명씩 이름을 붙여넣으세요. 등록하면 4자리 번호가 자동으로 발급되고 ${g && g !== "-" ? "이 그룹에 들어갑니다" : "그룹 없이 등록됩니다"}. 번호는 이 화면에서 <b>한 번만</b> 보이니 바로 복사해 두세요.</p>
+      <p class="muted" style="margin:0;font-size:14px">한 줄에 한 명씩 이름을 붙여넣으세요. 등록하면 4자리 숫자 임시 비밀번호가 자동으로 발급되고 ${g && g !== "-" ? "이 그룹에 들어갑니다" : "그룹 없이 등록됩니다"}. 임시 비밀번호는 이 화면에서 <b>한 번만</b> 보이니 바로 복사해 두세요.</p>
       <div class="field"><label for="names">이름 목록</label><textarea id="names" placeholder="홍길동&#10;김품질&#10;이검사"></textarea></div>
-      <div><button class="btn primary" id="add-btn">등록하고 번호 발급</button></div>
+      <div><button class="btn primary" id="add-btn">등록하고 비밀번호 발급</button></div>
       <div id="new-pins"></div>
     </section></div>
     <section class="panel card-pad"><div class="toolbar"><h3>${groupName ? esc(groupName) + " · " : ""}등록된 수강생 ${students.length}명</h3></div>
       ${students.length ? `<div class="table-scroll"><table class="pin-list"><thead><tr><th>이름</th><th>그룹</th><th>등록일</th><th></th></tr></thead><tbody>
       ${students.map((s) => `<tr data-id="${s.id}"><td>${esc(s.name)}${s.locked ? '<span class="lock-chip">잠김</span>' : ""}${s.exclude_from_rank ? '<span class="lock-chip rank-off">순위 제외</span>' : ""}${s.google ? `<span class="lock-chip google-chip" title="${esc(s.email || "구글 계정 연결됨")}">Google</span>` : ""}</td><td class="muted">${esc(s.group || "–")}</td><td class="muted">${fmtTime(s.created_at)}</td>
-        <td class="act"><span class="pin-slot"></span> <button class="btn small ghost" data-rankx title="켜면 이 계정은 다른 수강생의 'N명 중 M번째'에 세지 않습니다">${s.exclude_from_rank ? "순위 포함" : "순위 제외"}</button> <button class="btn small" data-reset>번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
+        <td class="act"><span class="pin-slot"></span> <button class="btn small ghost" data-rankx title="켜면 이 계정은 다른 수강생의 'N명 중 M번째'에 세지 않습니다">${s.exclude_from_rank ? "순위 포함" : "순위 제외"}</button> <button class="btn small" data-reset>비밀번호 재발급</button> <button class="btn small danger" data-del>삭제</button></td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty-state">아직 없습니다. 왼쪽에 이름을 붙여넣어 등록하세요.</div>`}
       ${api.mode === "demo" ? `<div><button class="btn small ghost" id="reset-demo">데모 데이터 초기화</button></div>` : ""}
     </section></div>`;
@@ -2582,15 +2577,15 @@ async function adminRoster(body) {
       const res = await api.addStudents(state.adminToken, names, g && g !== "-" ? g : null);
       const text = res.created.map((c) => `${c.name}\t${c.pin}`).join("\n");
       body.querySelector("#names").value = "";
-      body.querySelector("#new-pins").innerHTML = `<div class="new-pins"><b>${res.created.length}명 등록 완료. 번호를 지금 복사해 두세요.</b>
+      body.querySelector("#new-pins").innerHTML = `<div class="new-pins"><b>${res.created.length}명 등록 완료. 비밀번호를 지금 복사해 두세요.</b>
         <table class="pin-list"><tbody>${res.created.map((c) => `<tr><td>${esc(c.name)}</td><td class="pin">${c.pin}</td></tr>`).join("")}</tbody></table>
-        <div class="toolbar"><button class="btn small" id="copy-pins">이름·번호 복사</button><button class="btn small" id="csv-pins">CSV로 받기</button><a class="btn small ghost" href="#/admin/roster" id="done-pins">목록 새로고침</a></div></div>`;
+        <div class="toolbar"><button class="btn small" id="copy-pins">이름·비밀번호 복사</button><button class="btn small" id="csv-pins">CSV로 받기</button><a class="btn small ghost" href="#/admin/roster" id="done-pins">목록 새로고침</a></div></div>`;
       body.querySelector("#copy-pins").addEventListener("click", async () => {
         try { await navigator.clipboard.writeText(text); toast("복사했습니다. 엑셀에 붙여넣으면 두 칸으로 나뉩니다."); }
         catch { toast("복사하지 못했습니다. 표를 드래그해서 복사하세요."); }
       });
       body.querySelector("#csv-pins").addEventListener("click", () =>
-        downloadCsv(`수강생번호_${new Date().toISOString().slice(0, 10)}.csv`, [["이름", "번호"], ...res.created.map((c) => [c.name, c.pin])])
+        downloadCsv(`수강생번호_${new Date().toISOString().slice(0, 10)}.csv`, [["이름", "임시 비밀번호"], ...res.created.map((c) => [c.name, c.pin])])
       );
       body.querySelector("#done-pins").addEventListener("click", (ev) => { ev.preventDefault(); routeAdmin("#/admin/roster"); });
     } catch (err) {
@@ -2608,7 +2603,7 @@ async function adminRoster(body) {
         const res = await api.resetPin(state.adminToken, id);
         tr.querySelector(".pin-slot").innerHTML = `<span class="pin">${res.pin}</span>`;
         tr.querySelector(".lock-chip:not(.rank-off)")?.remove();
-        toast(`${res.name} 님의 새 번호는 ${res.pin}입니다.`);
+        toast(`${res.name} 님의 새 임시 비밀번호는 ${res.pin}입니다.`);
       } catch (err) {
         toast(errorMessage(err));
       } finally {

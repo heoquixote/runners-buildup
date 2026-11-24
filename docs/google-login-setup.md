@@ -21,7 +21,7 @@
 
 1. Supabase 대시보드 → 프로젝트 `wffcaraiaoliwpmyqmmq` → **SQL Editor** → **New query**
 2. 저장소의 `supabase/migrations_2026-11-21_google_login.sql` 전체를 붙여넣고 **Run**
-3. 이어서 `supabase/migrations_2026-11-21_optional_join_code.sql`도 같은 방법으로 실행합니다 (가입 코드를 선택 항목으로 바꾸는 SQL).
+3. 이어서 `supabase/migrations_2026-11-21_optional_join_code.sql`(가입 코드 선택), `supabase/migrations_2026-11-21_password.sql`(4자리 번호 → 비밀번호)도 같은 방법으로 차례로 실행합니다.
 4. `Success. No rows returned`가 나오면 끝입니다. 여러 번 실행해도 안전합니다.
 
 이 SQL이 하는 일: 학생 표에 구글 계정 연결 칸(`auth_user_id`, `email`)을 추가하고, 구글 로그인용 함수 3개(`google_login`, `google_signup`, `google_link`)를 만듭니다. 기존 학생과 기록은 바뀌지 않습니다.
@@ -79,10 +79,10 @@
 
 | 상황 | 흐름 |
 |---|---|
-| 처음 구글로 온 학생 | Google 버튼 → 구글 계정 선택 → **가입 마무리** 화면에서 이름 입력, 가입 코드는 선택 → 가입 완료. 코드를 비우면 기본 데이터 과정, QAQC8이면 QAQC 과정 (이름 + 번호 회원가입도 같은 규칙) |
-| 이미 이름 + 번호로 가입한 학생 | Google 버튼 → 가입 마무리 화면 아래 **기존 계정에 구글 연결하기** → 이름 + 4자리 번호 → 연결. 기록은 그대로이고, 다음부터는 구글 버튼만 누르면 됩니다 |
+| 처음 구글로 온 학생 | Google 버튼 → 구글 계정 선택 → **가입 마무리** 화면에서 이름 입력, 가입 코드는 선택 → 가입 완료. 코드를 비우면 기본 데이터 과정, QAQC8이면 QAQC 과정 (이름 + 비밀번호 회원가입도 같은 규칙) |
+| 이미 이름 + 비밀번호로 가입한 학생 | Google 버튼 → 가입 마무리 화면 아래 **기존 계정에 구글 연결하기** → 이름 + 비밀번호 → 연결. 기록은 그대로이고, 다음부터는 구글 버튼만 누르면 됩니다 |
 | 구글로 가입한 뒤 다시 올 때 | Google 버튼 → 바로 로그인 (보던 문제가 있었다면 그 문제로 돌아갑니다) |
-| 구글 가입자가 번호 로그인도 원할 때 | 어드민 → 명단 → **번호 재발급**을 누르면 번호가 생겨 두 방식 모두 쓸 수 있습니다 |
+| 구글 가입자가 비밀번호 로그인도 원할 때 | 어드민 → 명단 → **비밀번호 재발급**을 누르면 임시 비밀번호가 생겨 두 방식 모두 쓸 수 있습니다 |
 
 이름은 지금처럼 사이트 전체에서 겹칠 수 없습니다. 이미 있는 이름을 쓰면 "이미 가입된 이름" 안내가 나오고, 본인이면 아래 "기존 계정에 구글 연결하기"를 쓰면 됩니다.
 
@@ -94,13 +94,13 @@
 | 구글 화면에 `redirect_uri_mismatch` | 2단계 리디렉션 URI 오타. `https://wffcaraiaoliwpmyqmmq.supabase.co/auth/v1/callback` 정확히 (끝에 `/` 없음) |
 | 로그인 뒤 엉뚱한 주소(Site URL)로 감 | 3단계 Redirect URLs에 그 배포 주소가 빠짐 |
 | "이 앱은 테스트 중" / 특정 계정만 됨 | 2단계 3번 **앱 게시**를 안 함 |
-| 돌아온 뒤 "서버 오류" | 1단계 SQL을 실행하지 않음 |
+| 돌아온 뒤 "서버 오류" | 1단계 SQL을 실행하지 않음 (`migrations_2026-11-21_password.sql` 포함) |
 | "구글 인증 시간이 지났습니다" | 가입 마무리 화면을 1시간 넘게 열어 둠. Google 버튼을 다시 누르면 됩니다 |
 
 ## 구조 메모 (개발용)
 
-- 구글 인증만 Supabase Auth(PKCE)에 맡기고, 돌아오면 받은 access token으로 `google_login()`을 불러 **기존과 같은 `sessions` 토큰**을 받습니다. 이후 진도 · 제출 · 메달 · 어드민은 이름 + 번호 로그인과 완전히 같은 경로를 탑니다. Supabase Auth 세션은 저장하지 않습니다.
-- `students.auth_user_id`(unique)가 구글 계정 ↔ 학생 행을 1:1로 잇습니다. 구글 가입자는 `pin_hash`가 null이라 번호 로그인이 되지 않습니다.
+- 구글 인증만 Supabase Auth(PKCE)에 맡기고, 돌아오면 받은 access token으로 `google_login()`을 불러 **기존과 같은 `sessions` 토큰**을 받습니다. 이후 진도 · 제출 · 메달 · 어드민은 이름 + 비밀번호 로그인과 완전히 같은 경로를 탑니다. Supabase Auth 세션은 저장하지 않습니다.
+- `students.auth_user_id`(unique)가 구글 계정 ↔ 학생 행을 1:1로 잇습니다. 구글 가입자는 `pin_hash`가 null이라 비밀번호 로그인이 되지 않습니다.
 - 구글 함수는 `authenticated` 역할(구글 JWT)에만 열려 있고 anon 키로는 부를 수 없습니다.
 - 버튼 표시 여부는 `GET /auth/v1/settings`의 `external.google`로 판단합니다. 데모 모드(Supabase 미설정)에서는 숨깁니다.
 - 어드민에서 학생을 삭제해도 Supabase Auth 사용자는 남습니다. 그 구글 계정으로 다시 오면 가입 마무리 화면부터 다시 시작합니다.
