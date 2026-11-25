@@ -133,7 +133,8 @@ function errorMessage(err) {
       code_format: "그룹 코드는 영문·숫자 30자 이내, 이름은 60자 이내로 입력하세요.",
       group_in_use: "이 그룹에 수강생이 있어 삭제할 수 없습니다. 수강생을 먼저 삭제하세요.",
       not_found: "대상을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.",
-      locked: "5번 틀려서 잠시 잠겼습니다. 5분 뒤에 다시 시도하거나 강사님께 비밀번호 재발급을 요청하세요.",
+      locked: "여러 번 틀려서 잠시 잠겼습니다. 잠시 뒤에 다시 시도하거나 강사님께 비밀번호 재발급을 요청하세요.",
+      same_password: "지금 비밀번호와 다른 비밀번호로 정하세요.",
       session: "로그인이 만료되었습니다. 다시 로그인해 주세요.",
       google_auth: "구글 인증을 확인하지 못했습니다. 구글로 다시 로그인해 주세요.",
       already_linked: "이 구글 계정이나 학생 계정은 이미 다른 계정과 연결되어 있습니다. 구글로 다시 로그인하거나 강사님께 문의하세요.",
@@ -332,6 +333,7 @@ function bindLoginForm(form, onSuccess) {
       state.progressLoaded = false;
       preload();
       onSuccess();
+      if (res.must_change) passwordChangeModal(pin);
     } catch (err) {
       errEl.textContent = errorMessage(err);
       btn.disabled = false;
@@ -387,6 +389,46 @@ function loginModal({ target = null, title = "" } = {}) {
   });
   bindLoginForm(wrap.querySelector("form"), () => { close(); goAfterLogin("#/"); });
   bindGoogle(wrap.querySelector("form"));
+}
+
+// 예전 4자리 번호로 로그인하면 바로 새 비밀번호를 정하게 한다 (짧은 번호는 무차별 대입에 약하다)
+function passwordChangeModal(oldPw) {
+  document.querySelector(".overlay[data-pwchange]")?.remove();
+  const wrap = document.createElement("div");
+  wrap.className = "overlay";
+  wrap.dataset.lock = "";
+  wrap.dataset.pwchange = "";
+  wrap.innerHTML = `<form class="login login-modal panel lime" role="dialog" aria-modal="true" aria-labelledby="pw-title" novalidate>
+    <div><div class="eyebrow">Security</div><h2 id="pw-title">새 비밀번호를 정해 주세요</h2>
+      <p class="lead">4자리 번호는 쉽게 추측될 수 있어요. 6자 이상 새 비밀번호로 바꾸면 다음부터 그 비밀번호로 로그인합니다.</p></div>
+    <div class="field"><label for="pw-new">새 비밀번호 (6자 이상)</label><input id="pw-new" type="password" minlength="6" maxlength="72" autocomplete="new-password" required></div>
+    <div class="field"><label for="pw-new2">새 비밀번호 확인</label><input id="pw-new2" type="password" minlength="6" maxlength="72" autocomplete="new-password" required></div>
+    <p class="form-error" id="pw-error"></p>
+    <button class="btn primary block" type="submit" id="pw-btn">비밀번호 바꾸기</button>
+  </form>`;
+  document.body.appendChild(wrap);
+  const form = wrap.querySelector("form");
+  const errEl = wrap.querySelector("#pw-error");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const p1 = wrap.querySelector("#pw-new").value;
+    const p2 = wrap.querySelector("#pw-new2").value;
+    if (p1.length < 6) return (errEl.textContent = "비밀번호는 6자 이상으로 정하세요.");
+    if (p1 !== p2) return (errEl.textContent = "두 비밀번호가 같지 않습니다.");
+    const btn = wrap.querySelector("#pw-btn");
+    btn.disabled = true;
+    errEl.textContent = "";
+    try {
+      await api.changePassword(state.session?.token, oldPw, p1);
+      wrap.remove();
+      toast("비밀번호를 바꿨습니다. 다음부터 새 비밀번호로 로그인하세요.");
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "session") wrap.remove();
+      errEl.textContent = errorMessage(err);
+      btn.disabled = false;
+    }
+  });
+  wrap.querySelector("#pw-new").focus();
 }
 
 function authHead(active) {
