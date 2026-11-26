@@ -103,20 +103,25 @@ async function loadFeed() {
   return { feed, source: "채널 페이지", tried };
 }
 
+// 쇼츠(제목에 #shorts)는 본편 자리에 연결하지 않는다. 같은 주제 쇼츠가 본편보다 먼저 올라오면
+// 그 자리를 쇼츠가 차지해 본편이 "매칭 안 됨"으로 밀리던 문제(11/25 PR #95) 때문.
+export const isShort = (v) => /#shorts/i.test(v.title);
+
 // 아직 영상이 없는 항목(videos.js 의 youtube_id: null 줄)만 후보로 삼는다.
 export function plan(feed, src) {
   const known = new Set([...src.matchAll(/youtube_id: "([\w-]{11})"|watch\?v=([\w-]{11})/g)].map((m) => m[1] || m[2]));
   const open = new Set([...src.matchAll(/id: "(dl-m\d+)"[^\n]*youtube_id: null/g)].map((m) => m[1]));
-  const fills = [], unmatched = [], ambiguous = [];
+  const fills = [], unmatched = [], ambiguous = [], shorts = [];
   const taken = new Set();
   for (const v of feed) {
     if (known.has(v.id)) continue;
+    if (isShort(v)) { shorts.push(v); continue; }
     const hits = Object.entries(MATCH).filter(([id, kws]) => open.has(id) && !taken.has(id) && kws.some((k) => norm(v.title).includes(norm(k)))).map(([id]) => id);
     if (hits.length === 1) { fills.push({ ref: hits[0], ...v }); taken.add(hits[0]); }
     else if (hits.length > 1) ambiguous.push({ ...v, hits });
     else unmatched.push(v);
   }
-  return { fills, unmatched, ambiguous };
+  return { fills, unmatched, ambiguous, shorts };
 }
 
 export function apply(src, fills) {
@@ -136,13 +141,14 @@ async function main() {
   console.error(`영상 목록: ${source}에서 ${feed.length}편 (${tried.join(" → ") || "-"})`);
   if (!feed.length) throw new Error(`유튜브에서 영상 목록을 읽지 못했습니다: ${tried.join(" → ")}`);
   const src = readFileSync(VIDEOS_FILE, "utf8");
-  const { fills, unmatched, ambiguous } = plan(feed, src);
+  const { fills, unmatched, ambiguous, shorts } = plan(feed, src);
   if (fills.length && !args.includes("--dry-run")) writeFileSync(VIDEOS_FILE, apply(src, fills));
 
   const lines = [];
   if (fills.length) lines.push("### 영상 연결", ...fills.map((f) => `- \`${f.ref}\` ← [${f.title}](https://www.youtube.com/watch?v=${f.id})${f.published ? ` (${f.published.slice(0, 10)})` : ""}`), "");
   if (ambiguous.length) lines.push("### 후보가 여럿이라 보류", ...ambiguous.map((v) => `- [${v.title}](https://www.youtube.com/watch?v=${v.id}) → ${v.hits.join(", ")}`), "");
   if (unmatched.length) lines.push("### 대기열과 매칭 안 됨 (직접 확인)", ...unmatched.map((v) => `- [${v.title}](https://www.youtube.com/watch?v=${v.id})${v.published ? ` (${v.published.slice(0, 10)})` : ""}`), "");
+  if (shorts.length) lines.push(`쇼츠 ${shorts.length}편은 본편 자리에 연결하지 않고 건너뛰었습니다.`, "");
   const summary = lines.join("\n") || "새로 연결할 영상이 없습니다.";
   console.log(summary);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `filled=${fills.length}\n`);

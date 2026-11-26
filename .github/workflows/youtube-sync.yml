@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write # 봇이 연 PR 은 CI 가 '승인 필요'로 멈추므로 workflow_dispatch 로 직접 실행
 
 concurrency:
   group: youtube-sync
@@ -47,3 +48,6 @@ jobs:
           else
             gh pr create --head "$BRANCH" --base main --title "유튜브 새 영상 연결" --body "$body" --assignee "${{ github.repository_owner }}"
           fi
+          # GITHUB_TOKEN 으로 만든 PR 의 pull_request CI 는 action_required 로 멈춘다(11/24·25).
+          # workflow_dispatch 는 예외라서 같은 브랜치로 CI 를 직접 돌려 PR 에 체크 결과를 남긴다.
+          gh workflow run ci.yml --ref "$BRANCH"
